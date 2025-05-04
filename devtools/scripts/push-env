@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/common"
+
+if [ ! -f .env ]; then
+    cp $1 .env && exit 0
+fi
+
+
+cmp -s $1 .env && exit 0
+
+bkp=".env.bkp-$(now)"
+cp .env $bkp
+chmod -w $bkp
+cp $1 .env

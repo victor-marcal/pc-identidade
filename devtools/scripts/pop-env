@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+latest_backup=$(find . -name ".env.bkp*" | sort -r | head -n 1)
+
+if [ -n "$latest_backup" ]; then
+    cat "$latest_backup" > .env
+    rm "$latest_backup" -f
+fi

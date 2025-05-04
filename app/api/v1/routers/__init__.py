@@ -1,0 +1,1 @@
+CUSTOMERS_PREFIX = "/customers"
