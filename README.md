@@ -71,8 +71,8 @@ Rode o servidor FastAPI com Uvicorn
 uvicorn app.api_main:app --reload
 ```
 
-A aplicação estará disponível em:
-📍 http://127.0.0.1:8000
+A aplicação estará disponível em: 📍 http://127.0.0.1:8000
+
 🩺 Verifique o status em: http://127.0.0.1:8000/api/health
 
 ### Windows 🖥️
@@ -105,14 +105,14 @@ Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
 ENV=dev
 ```
 
-#### 5. Configure variáveis de ambiente
+#### 5. Rode o servidor
 
 ```powershell
 uvicorn app.api_main:app --reload
 ```
 
-A aplicação estará disponível em:
-📍 http://127.0.0.1:8000
+A aplicação estará disponível em: 📍 http://127.0.0.1:8000
+
 🩺 Verifique o status em: http://127.0.0.1:8000/api/health
 
 ## Contribuições e Atualizações
