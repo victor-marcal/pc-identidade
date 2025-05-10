@@ -1,1 +1,1 @@
-CUSTOMERS_PREFIX = "/customers"
+SOMETHING_PREFIX = "/somethings"
