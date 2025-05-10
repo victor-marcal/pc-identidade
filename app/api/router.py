@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
-from app.services.health_check.service import HealthCheckService
+from fastapi import APIRouter
+
+from app.api.v1 import router_selller as v1_router_seller
 
 routes = APIRouter()
 
-@routes.get("/health")
-def get_health(service: HealthCheckService = Depends()):
-    return service.get_health()
+routes.include_router(v1_router_seller)

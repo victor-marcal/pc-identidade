@@ -1,5 +1,6 @@
 from app.settings import AppSettings
 
+
 class BaseHealthCheck:
     def __init__(self, settings: AppSettings):
         self.settings = settings
