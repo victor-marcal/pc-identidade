@@ -15,7 +15,7 @@ class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
         """
         Busca um alguma coisa pelo nome.
         """
-        result = next((s for s in self.memory if s["name"] == name), None)
+        result = next((s for s in self.memory if s.name == name), None)
         if result:
             return result
         raise NotFoundException()
@@ -24,7 +24,7 @@ class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
         """
         Busca um Seller pelo nome_fantasia.
         """
-        result = next((s for s in self.memory if s["nome_fantasia"] == nome_fantasia), None)
+        result = next((s for s in self.memory if s.nome_fantasia == nome_fantasia), None)
         if result:
             return result
         raise NotFoundException()
