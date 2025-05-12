@@ -80,3 +80,4 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
         current_document = await self.find_by_id(entity_id)
         if not current_document:
             raise NotFoundException()
+        self.memory = [doc for doc in self.memory if getattr(doc, "seller_id", None) != entity_id]
