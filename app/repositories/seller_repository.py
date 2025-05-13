@@ -28,6 +28,13 @@ class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
         if result:
             return result
         raise NotFoundException()
+    
+    async def delete_by_id(self, seller_id: str) -> None:
+        for i, seller in enumerate(self.memory):
+            if seller.seller_id == seller_id:
+                del self.memory[i]
+                return
+        raise NotFoundException()
 
 
 __all__ = ["SellerRepository"]

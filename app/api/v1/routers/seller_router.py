@@ -71,7 +71,8 @@ async def update_by_id(
 
 @router.delete("/{seller_id}", status_code=status.HTTP_204_NO_CONTENT)
 @inject
-async def delete(
-    seller_id: str, seller_service: "SellerService" = Depends(Provide[Container.seller_service])
+async def delete_by_id(
+    seller_id: str,
+    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
 ):
     await seller_service.delete_by_id(seller_id)
