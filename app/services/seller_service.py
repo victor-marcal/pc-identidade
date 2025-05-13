@@ -51,3 +51,7 @@ class SellerService(CrudService[Seller, str]):
 
         return await self.repository.update(entity_id, data)
     
+    async def delete_by_id(self, entity_id):
+        await self.repository.find_by_id(entity_id)
+        return await self.repository.delete_by_id(entity_id)
+    
