@@ -75,9 +75,3 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
 
         raise NotFoundException()
 
-    ##async def delete_by_id(self, entity_id: ID) -> None:
-    ##    # XXX TODO
-    ##    current_document = await self.find_by_id(entity_id)
-    ##    if not current_document:
-    ##        raise NotFoundException()
-    ##    self.memory = [doc for doc in self.memory if getattr(doc, "seller_id", None) != entity_id]
