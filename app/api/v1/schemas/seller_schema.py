@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from app.api.common.schemas import SchemaType
+from typing import Optional
 
 class SellerBase(SchemaType):
     seller_id: str = Field(..., description="ID único, alfanumérico e lowercase")
@@ -33,8 +34,20 @@ class SellerCreate(SellerBase):
 
 
 class SellerUpdate(SchemaType):
-    nome_fantasia: str
-    cnpj: str
+    nome_fantasia: Optional[str] = Field(None, description="Nome fantasia exclusivo no sistema")
+    cnpj: Optional[str] = Field(None, description="CNPJ com exatamente 14 dígitos numéricos, sem pontuação")
+
+    @validator('nome_fantasia')
+    def validar_nome_fantasia(cls, v):
+        if v is not None and len(v.strip()) < 3:
+            raise ValueError("O nome_fantasia deve conter ao menos 3 caracteres.")
+        return v
+
+    @validator('cnpj')
+    def validar_cnpj(cls, v):
+        if v is not None and (not v.isdigit() or len(v) != 14):
+            raise ValueError("O CNPJ deve conter exatamente 14 dígitos numéricos, sem pontuação.")
+        return v
 
 
 class SellerResponse(SellerBase):
