@@ -1,10 +1,10 @@
 import os
-
 import dotenv
 from fastapi import FastAPI
 
 from app.container import Container
 from app.settings import api_settings
+
 
 ENV = os.getenv("ENV", "production")
 is_dev = ENV == "dev"
@@ -33,3 +33,4 @@ def init() -> FastAPI:
 
 
 app = init()
+
