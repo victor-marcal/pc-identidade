@@ -63,7 +63,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
 
             # Substitui o documento na memória
             self.memory = [
-                current_document_dict if doc.seller_id == entity_id else doc
+                self.model_class(**current_document_dict) if doc.seller_id == entity_id else doc
                 for doc in self.memory
             ]
 

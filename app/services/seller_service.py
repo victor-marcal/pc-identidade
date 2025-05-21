@@ -14,11 +14,7 @@ class SellerService(CrudService[Seller, str]):
         super().__init__(repository)
 
     async def create(self, data: Seller) -> Seller:
-        if not data.seller_id:
-            raise BadRequestException(message="O seller_id é obrigatório.")
-        if not re.fullmatch(r"^[a-z0-9]+$", data.seller_id):
-            raise BadRequestException(message="O seller_id deve conter apenas letras minúsculas e números, sem espaços ou caracteres especiais.")
-
+        # Validações de unicidade e negócio (não de formato)
         try:
             await self.repository.find_by_id(data.seller_id)
             raise BadRequestException(message="O seller_id informado já está cadastrado. Escolha outro.")
@@ -30,10 +26,6 @@ class SellerService(CrudService[Seller, str]):
             raise BadRequestException(message="O nome_fantasia informado já está cadastrado. Escolha outro.")
         except NotFoundException:
             pass
-    
-        if not data.cnpj or not data.cnpj.isdigit() or len(data.cnpj) != 14:
-            raise BadRequestException(message="O CNPJ é inválido. Deve conter exatamente 14 dígitos numéricos.")
-
 
         return await self.repository.create(data)
 
@@ -45,13 +37,9 @@ class SellerService(CrudService[Seller, str]):
         except NotFoundException:
             pass
 
-        if not data.cnpj or not data.cnpj.isdigit() or len(data.cnpj) != 14:
-            raise BadRequestException(message="O CNPJ é inválido. Deve conter exatamente 14 dígitos numéricos.")
-
-        
         return await self.repository.update(entity_id, data)
     
     async def delete_by_id(self, entity_id):
         await self.repository.find_by_id(entity_id)
         return await self.repository.delete_by_id(entity_id)
-    
+
