@@ -35,10 +35,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
 
     async def find(self, filters: dict, limit: int = 10, offset: int = 0, sort: Optional[dict] = None) -> List[T]:
 
-        filtered_list = [
-            data
-            for data in self.memory
-        ]
+        filtered_list = [data for data in self.memory]
 
         entities = []
         for document in filtered_list:
@@ -61,4 +58,3 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
             return current_document
 
         raise NotFoundException()
-

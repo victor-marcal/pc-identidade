@@ -22,7 +22,7 @@ router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])
     name="Retorna todos os Sellers",
     description="Listar todos os Sellers",
     status_code=status.HTTP_200_OK,
-    summary="Listar todos os Sellers"
+    summary="Listar todos os Sellers",
 )
 @inject
 async def get(
@@ -42,7 +42,7 @@ async def get(
     name="Retorna Sellers por ID",
     description="Buscar um Seller pelo seu 'seller_id'",
     status_code=status.HTTP_200_OK,
-    summary="Buscar Seller por ID"
+    summary="Buscar Seller por ID",
 )
 @inject
 async def get_by_id(
@@ -61,12 +61,10 @@ async def get_by_id(
     name="Criar Seller",
     description="Cria um novo Seller",
     status_code=status.HTTP_201_CREATED,
-    summary="Criar um novo Seller"
+    summary="Criar um novo Seller",
 )
 @inject
-async def create(
-    seller: SellerCreate, seller_service: "SellerService" = Depends(Provide[Container.seller_service])
-):
+async def create(seller: SellerCreate, seller_service: "SellerService" = Depends(Provide[Container.seller_service])):
     """
     Cria um novo seller com ID único, nome fantasia exclusivo e CNPJ com 14 dígitos.
     """
@@ -79,7 +77,7 @@ async def create(
     name="Atualiza Seller",
     description="Atualizar um Seller pelo 'seller_id'",
     status_code=status.HTTP_200_OK,
-    summary="Atualizar um Seller"
+    summary="Atualizar um Seller",
 )
 @inject
 async def update_by_id(
@@ -94,11 +92,11 @@ async def update_by_id(
 
 
 @router.delete(
-        "/{seller_id}", 
-        name="Remover Seller",
-        description="Remove um Seller pelo 'seller_id'",
-        status_code=status.HTTP_204_NO_CONTENT, 
-        summary="Remover um Seller"
+    "/{seller_id}",
+    name="Remover Seller",
+    description="Remove um Seller pelo 'seller_id'",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remover um Seller",
 )
 @inject
 async def delete_by_id(

@@ -1,7 +1,9 @@
 from enum import StrEnum
 from os import environ
 from typing import Tuple, Type
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from pydantic import Field

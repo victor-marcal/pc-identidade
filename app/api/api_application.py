@@ -9,7 +9,6 @@ from .common.routers.health_check_routers import add_health_check_router
 from .middlewares.configure_middlewares import configure_middlewares
 
 
-
 def create_app(settings: ApiSettings, router: APIRouter) -> FastAPI:
     @asynccontextmanager
     async def _lifespan(_app: FastAPI):

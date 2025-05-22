@@ -1,9 +1,11 @@
 import re
+
 from app.common.exceptions.application_exception import ApplicationException
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.common.exceptions.not_found_exception import NotFoundException
 from app.models.seller_model import Seller
 from app.repositories.seller_repository import SellerRepository
+
 from ..models import Seller
 from ..repositories import SellerRepository
 from .base import CrudService
@@ -15,7 +17,7 @@ class SellerService(CrudService[Seller, str]):
         self.repository: SellerRepository = repository
 
     async def create(self, data: Seller) -> Seller:
-         # Verifica se seller_id já existe
+        # Verifica se seller_id já existe
         if await self.repository.find_by_id(data.seller_id):
             raise BadRequestException(message="O seller_id informado já está cadastrado. Escolha outro.")
 
@@ -26,7 +28,7 @@ class SellerService(CrudService[Seller, str]):
         return await self.repository.create(data)
 
     async def update(self, entity_id: str, data: Seller) -> Seller:
-         # Verifica se o seller existe
+        # Verifica se o seller existe
         if not await self.repository.find_by_id(entity_id):
             raise NotFoundException(message=f"Seller com ID '{entity_id}' não encontrado.")
 
@@ -36,10 +38,9 @@ class SellerService(CrudService[Seller, str]):
             raise BadRequestException(message="O nome_fantasia informado já está cadastrado. Escolha outro.")
 
         return await self.repository.update(entity_id, data)
-    
+
     async def delete_by_id(self, entity_id):
         if not await self.repository.find_by_id(entity_id):
             raise NotFoundException(message=f"Seller com ID '{entity_id}' não encontrado.")
 
         return await self.repository.delete_by_id(entity_id)
-
