@@ -148,7 +148,7 @@ Esse arquivo define a variável de ambiente usada pelo Makefile e pelos containe
 Certifique-se de que o Docker esteja em execução e execute:
 
 ```
-docker-compose -f docker-compose-sonar.yml up -d
+docker-compose -f devtools/docker-compose-sonar.yml up -d
 ```
 Esse comando irá:
 
