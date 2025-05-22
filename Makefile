@@ -23,7 +23,7 @@ clean:
 	@rm -f .env.bkp*
 
 build-venv:
-	python -m venv venv
+	python3.12 -m venv venv
 
 requirements-dev:
 	python -m pip install --upgrade pip

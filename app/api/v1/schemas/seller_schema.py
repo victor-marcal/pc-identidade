@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from app.api.common.schemas import SchemaType
 from typing import Optional
+import re
 
 class SellerBase(SchemaType):
     seller_id: str = Field(..., description="ID único, alfanumérico e lowercase")
@@ -9,7 +10,6 @@ class SellerBase(SchemaType):
 
     @validator('seller_id')
     def validar_seller_id(cls, v):
-        import re
         if not v:
             raise ValueError("O seller_id é obrigatório.")
         if not re.fullmatch(r"^[a-z0-9]+$", v):

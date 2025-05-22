@@ -9,17 +9,12 @@ from .common.routers.health_check_routers import add_health_check_router
 from .middlewares.configure_middlewares import configure_middlewares
 
 
-import os
-from app.scripts.init_dev_mock import carregar_mock_sellers
 
 def create_app(settings: ApiSettings, router: APIRouter) -> FastAPI:
     @asynccontextmanager
     async def _lifespan(_app: FastAPI):
         # Qualquer ação necessária na inicialização
-        if os.getenv("ENV") == "dev":
-            import asyncio
-            from app.scripts.init_dev_mock import carregar_mock_sellers
-            asyncio.create_task(carregar_mock_sellers(_app))
+        # XXX - DUVIDA: Ver o por que nao eh uma boa pratica inciar o mock aqui
 
         yield
         # Limpando a bagunça antes de terminar

@@ -1,7 +1,5 @@
 
-import os
 import httpx
-import asyncio
 from fastapi import FastAPI
 
 

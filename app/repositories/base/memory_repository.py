@@ -31,10 +31,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
         # XXX Aqui eu sei que seller tem o id como o campo seller_id
 
         result = next((r for r in self.memory if getattr(r, "seller_id", None) == entity_id), None)
-        if result:
-            return result
-    
-        raise NotFoundException()
+        return result
 
     async def find(self, filters: dict, limit: int = 10, offset: int = 0, sort: Optional[dict] = None) -> List[T]:
 
@@ -60,18 +57,11 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
         current_document = await self.find_by_id(entity_id)
 
         if current_document:
-            # Atualiza os dados do documento atual
-            current_document_dict = current_document.model_dump(by_alias=True)
-            current_document_dict.update(entity_dict)
+            # Atualiza os campos diretamente no objeto existente
+            for key, value in entity_dict.items():
+                setattr(current_document, key, value)
 
-            # Substitui o documento na memória
-            self.memory = [
-                self.model_class(**current_document_dict) if doc.seller_id == entity_id else doc
-                for doc in self.memory
-            ]
-
-            # Retorna a entidade atualizada como uma instância do modelo
-            return self.model_class(**current_document_dict)
+            return current_document
 
         raise NotFoundException()
 
