@@ -38,10 +38,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
         filtered_list = [
             data
             for data in self.memory
-            # TODO Criar filtro
         ]
-
-        # XXX TODO Falta ordenar
 
         entities = []
         for document in filtered_list:

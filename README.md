@@ -126,3 +126,63 @@ O projeto está aberto a contribuições e atualizações da comunidade. O proce
 ## 📖 Recursos úteis
 
 - [Conventional Commits](https://www.conventionalcommits.org)
+
+### 🐳 Para instalar o Docker 
+
+Instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/)
+
+## 🐳 Subindo os containers com Docker
+
+Este projeto já está configurado com Docker e Docker Compose para facilitar a execução tanto da aplicação FastAPI quanto do SonarQube para análise de código.
+
+### 1. Crie o arquivo `.env`
+
+No diretório raiz do projeto, crie um arquivo `.env` com o seguinte conteúdo:
+
+```
+ENV=dev
+```
+Esse arquivo define a variável de ambiente usada pelo Makefile e pelos containers.
+
+### 2. Suba os containers
+Certifique-se de que o Docker esteja em execução e execute:
+
+```
+docker-compose -f devtools/docker-compose-sonar.yml up -d
+```
+Esse comando irá:
+
+* **Construir a imagem da sua aplicação FastAPI.**
+
+* **Iniciar a aplicação na porta 8000.**
+
+* **Iniciar o SonarQube na porta 9000.**
+
+Você poderá acessar os serviços nos seguintes endereços:
+
+* Aplicação FastAPI: http://localhost:8000
+
+* SonarQube: http://localhost:9000
+(usuário padrão: admin, senha: admin)
+
+## 🔍 Análise com SonarQuve
+
+### 1. Gere e exporte o token do SonarQube
+Após acessar o SonarQube:
+
+* **Vá em "My Account" > "Security".**
+
+* **Gere um novo token (ex: pc-identidade-token).**
+
+* **No terminal, exporte o token:**
+
+```
+export SONAR_TOKEN=<seu_token_aqui>
+```
+### 2. Execute o Sonar Scanner
+Com os containers rodando e o token configurado, execute:
+
+```
+SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
+```
+Isso irá enviar os dados da sua aplicação para análise no SonarQube.
