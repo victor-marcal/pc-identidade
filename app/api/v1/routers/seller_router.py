@@ -1,12 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.common.schemas import ListResponse, Paginator, UuidType, get_request_pagination
 from app.container import Container
+from app.models.seller_model import Seller
 
-from ..schemas.seller_schema import SellerCreate, SellerResponse, SellerUpdate
+from ..schemas.seller_schema import SellerCreate, SellerResponse, SellerUpdate, SellerReplace
 from app.models.seller_patch_model import SellerPatch
 from . import SELLER_PREFIX
 
@@ -28,12 +29,16 @@ router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])
 @inject
 async def get(
     paginator: Paginator = Depends(get_request_pagination),
+    cnpj: Optional[str] = Query(None),
     seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
 ):
     """
     Retorna todos os sellers cadastrados no sistema
     """
-    results = await seller_service.find(paginator=paginator, filters={})
+    filters = {}
+    if cnpj:
+        filters["cnpj"] = cnpj
+    results = await seller_service.find(paginator=paginator, filters=filters)
     return paginator.paginate(results=results)
 
 
@@ -110,3 +115,25 @@ async def delete_by_id(
     Remove permanentemente o seller do sistema.
     """
     await seller_service.delete_by_id(seller_id)
+
+
+@router.put(
+    "/{seller_id}",
+    response_model=SellerResponse,
+    name="Substitui Seller",
+    description="Substitui completamente um Seller",
+    status_code=status.HTTP_200_OK,
+    summary="Atualizar Seller (completo)",
+)
+@inject
+async def replace_by_id(
+    seller_id: str,
+    seller_data: SellerReplace,
+    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+):
+    seller = Seller(
+        seller_id=seller_id,
+        nome_fantasia=seller_data.nome_fantasia,
+        cnpj=seller_data.cnpj
+    )
+    return await seller_service.replace(seller_id, seller)

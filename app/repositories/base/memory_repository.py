@@ -34,13 +34,15 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
         return result
 
     async def find(self, filters: dict, limit: int = 10, offset: int = 0, sort: Optional[dict] = None) -> List[T]:
+        filtered_list = self.memory
 
-        filtered_list = [data for data in self.memory]
+        # Aplica filtros dinamicamente
+        for key, value in filters.items():
+            filtered_list = [item for item in filtered_list if getattr(item, key, None) == value]
 
-        entities = []
-        for document in filtered_list:
-            entities.append(document)
-        return entities
+        # TODO: aplicar ordenação por sort se necessário
+
+        return filtered_list[offset:offset + limit]
 
     async def update(self, entity_id: ID, entity: Any) -> Optional[T]:
         # Converte a entidade para um dicionário, excluindo campos desnecessários
