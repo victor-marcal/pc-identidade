@@ -7,6 +7,7 @@ from app.api.common.schemas import ListResponse, Paginator, UuidType, get_reques
 from app.container import Container
 
 from ..schemas.seller_schema import SellerCreate, SellerResponse, SellerUpdate
+from app.models.seller_patch_model import SellerPatch
 from . import SELLER_PREFIX
 
 if TYPE_CHECKING:
@@ -88,7 +89,9 @@ async def update_by_id(
     """
     Atualiza os dados do seller. Pode alterar nome_fantasia e/ou cnpj.
     """
-    return await seller_service.update(seller_id, seller)
+    # Converte apenas os campos que foram enviados na requisição
+    patch_data = SellerPatch(**seller.dict(exclude_unset=True))
+    return await seller_service.update(seller_id, patch_data)
 
 
 @router.delete(

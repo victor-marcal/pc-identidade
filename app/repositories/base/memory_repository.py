@@ -42,7 +42,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
             entities.append(document)
         return entities
 
-    async def update(self, entity_id: ID, entity: Any) -> T:
+    async def update(self, entity_id: ID, entity: Any) -> Optional[T]:
         # Converte a entidade para um dicionário, excluindo campos desnecessários
         entity_dict = entity.model_dump(by_alias=True, exclude={"identity"})
         entity_dict["updated_at"] = utcnow()
@@ -57,4 +57,4 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
 
             return current_document
 
-        raise NotFoundException()
+        return None

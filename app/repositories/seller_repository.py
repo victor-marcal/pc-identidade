@@ -19,11 +19,10 @@ class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
         result = next((s for s in self.memory if s.nome_fantasia == nome_fantasia), None)
         return result
 
-    async def delete_by_id(self, seller_id: str) -> None:
+    async def delete_by_id(self, seller_id: str) -> bool:
         initial_len = len(self.memory)
         self.memory = [seller for seller in self.memory if seller.seller_id != seller_id]
-        if len(self.memory) == initial_len:
-            raise NotFoundException()
+        return len(self.memory) < initial_len  # True se removeu algo, False se não
 
 
 __all__ = ["SellerRepository"]
