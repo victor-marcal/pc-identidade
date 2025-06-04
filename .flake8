@@ -1,0 +1,6 @@
+[flake8]
+exclude = venv*, .venv, .git, devtools
+ignore = E231, E241, F403, E704, W503, E203
+per-file-ignores = __init__.py:F401
+max-line-length = 120
+count = true
