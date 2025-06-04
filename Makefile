@@ -8,6 +8,9 @@ API_MODULE_MAIN := ${APP_DIR}.api_main
 HOST?=0.0.0.0
 PORT?=8000
 INIT?=uvicorn ${API_MODULE_MAIN}:app --host $(HOST) --port $(PORT)
+DOCKER_IMAGE_NAME=pc/identidade
+DOCKERFILE_PATH=./devtools/docker/Dockerfile
+CONTAINER_NAME?=pc-identidade
 
 clean:
 	@find . -name "*.pyc" | xargs rm -rf
@@ -26,7 +29,8 @@ build-venv:
 	python3.12 -m venv venv
 
 requirements-dev:
-	pip install --upgrade pip
+	python3.12 -m pip install --upgrade pip
+	python3.12 -m pip install --upgrade pip wheel setuptools
 	@pip install -r requirements/develop.txt
 
 
@@ -47,11 +51,21 @@ safety:
 	@pip-audit -r requirements/base.txt
 
 dead-fixtures:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=$(ENV)&& pytest --dead-fixtures"
+else
 	@ENV=$(ENV) pytest --dead-fixtures
+endif
 
+test:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=test&& pytest ${ROOT_TESTS_DIR}/"
+else
+	@ENV=test pytest ${ROOT_TESTS_DIR}/
+endif
 
-.PHONY: build
-build: lint-check test
+.PHONY: build test run
+build: check-lint test
 
 
 pop-env:
@@ -61,14 +75,62 @@ load-env:
 	@./devtools/scripts/push-env "devtools/dotenv.$(env)"
 
 load-dev-env:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set env=dev&& make $(MAKE_ARGS) load-env"
+else
 	@env=dev make $(MAKE_ARGS) load-env
+endif
 
 load-test-env:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set env=test&& make $(MAKE_ARGS) load-env"
+else
 	@env=test make $(MAKE_ARGS) load-env
+endif
 
 .PHONY: run
 run:
 	$(INIT)
 
 run-dev:
-	@ENV=$(ENV) $(INIT) --reload
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=dev&& $(INIT) --reload"
+else
+	@ENV=dev $(INIT) --reload
+endif
+
+docker-build:
+	docker build -f $(DOCKERFILE_PATH) -t $(DOCKER_IMAGE_NAME) .
+
+docker-run:
+	docker run --rm --name $(CONTAINER_NAME) -e ENV=dev -p 8000:8000 $(DOCKER_IMAGE_NAME)
+
+docker-shell:
+	docker run --rm -it --name $(CONTAINER_NAME) -e ENV=dev $(DOCKER_IMAGE_NAME) /bin/bash
+
+docker-compose-sonar-up:
+	docker compose -f ./devtools/docker/docker-compose-sonar.yml up -d
+
+docker-compose-sonar-down:
+	docker compose -f ./devtools/docker/docker-compose-sonar.yml down
+
+coverage:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/ --cov-fail-under=90 --durations=5"
+else
+	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/ --cov-fail-under=90 --durations=5
+endif
+
+coverage-no-fail:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/"
+else
+	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/
+endif
+
+coverage-html:
+ifeq ($(OS),Windows_NT)
+	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=html ./tests/"
+else
+	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=html ./tests/
+endif
