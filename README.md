@@ -131,39 +131,68 @@ O projeto está aberto a contribuições e atualizações da comunidade. O proce
 
 Instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
-## 🐳 Subindo os containers com Docker
+## ▶️ Execução
 
-Este projeto já está configurado com Docker e Docker Compose para facilitar a execução tanto da aplicação FastAPI quanto do SonarQube para análise de código.
+Após configuração do ambiente local, caso desejar executar o projeto localmente, configure o arquive de env:
 
-### 1. Crie o arquivo `.env`
-
-No diretório raiz do projeto, crie um arquivo `.env` com o seguinte conteúdo:
-
+```bash
+make load-test-env
 ```
-ENV=dev
+
+Use o comando para subir a api:
+
+```bash
+make run-dev
 ```
-Esse arquivo define a variável de ambiente usada pelo Makefile e pelos containers.
 
-### 2. Suba os containers
-Certifique-se de que o Docker esteja em execução e execute:
+Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) ou em [localhost:8000/redoc](http://0.0.0.0:8000/redoc)
 
+## 📦 Pré-requisitos (ambiente Python)
+
+Antes de rodar os testes, executar a aplicação localmente ou realizar a análise de qualidade com o SonarQube, certifique-se de:
+
+```bash
+make build-venv
+make requirements-dev
 ```
-docker-compose -f devtools/docker-compose-sonar.yml up -d
+
+Esses comandos criam o ambiente virtual e instalam as dependências necessárias para o funcionamento do projeto.
+
+## 🐳 Docker
+
+Para construir a imagem Docker da aplicação, execute:
+
+``` bash
+make docker-build # Criará uma imagem com o nome pc/preco.
 ```
-Esse comando irá:
 
-* **Construir a imagem da sua aplicação FastAPI.**
+Para rodar a aplicação em um contêiner Docker:
 
-* **Iniciar a aplicação na porta 8000.**
+``` bash
+make docker-run # Iniciará um contêiner chamado pc-preco, expondo a porta 8000 do contêiner para a porta 8000 do seu host.
+```
 
-* **Iniciar o SonarQube na porta 9000.**
+Se precisar acessar o shell do contêiner para depuração ou outras operações:
 
-Você poderá acessar os serviços nos seguintes endereços:
+```bash
+make docker-shell # Isso abrirá uma sessão bash interativa dentro do contêiner.
+```
 
-* Aplicação FastAPI: http://localhost:8000
+## 🔍 Análise de Qualidade com SonarQube
 
-* SonarQube: http://localhost:9000
-(usuário padrão: admin, senha: admin)
+Para subir o ambiente do SonarQube com Docker Compose, execute:
+
+``` bash
+make docker-compose-sonar-up # Inicia o servidor SonarQube e seus serviços dependentes (como o banco de dados) via Docker Compose
+```
+
+Após a execução, acesse a interface web do SonarQube em: http://localhost:9000
+
+Se em algum momento quiser parar o ambiente do SonarQube, execute:
+
+```bash
+make docker-compose-sonar-down # Desligará o ambiente do SonarQube e removerá os contêineres
+```
 
 ## 🔍 Análise com SonarQuve
 
@@ -178,11 +207,51 @@ Após acessar o SonarQube:
 
 ```
 export SONAR_TOKEN=<seu_token_aqui>
+export SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
+
+### Windows 🖥️
+caso esteja no windows deverar setar o token e host_url dessa forma:
+```
+$env:SONAR_HOST_URL = "http://localhost:9000"
+$env:SONAR_TOKEN = "seu-token"
+```
+
 ### 2. Execute o Sonar Scanner
 Com os containers rodando e o token configurado, execute:
 
 ```
 SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
+### Windows 🖥️
+caso esteja no windows e melhor:
+
+ 1. Baixar o Sonar Scanner
+🔗 Link oficial:
+Acesse: https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/scanners/sonarscanner/
+
+Clique em Download the SonarScanner.
+
+Baixe o arquivo .zip para Windows (ex: sonar-scanner-cli-5.x.x-windows.zip).
+
+Extraia para um local como: C:\sonar-scanner\
+
+✅ 2. Configurar Variáveis de Ambiente
+🔧 Adicionar ao PATH:
+Abra o menu Iniciar e digite "variáveis de ambiente".
+
+Clique em "Editar variáveis de ambiente do sistema".
+
+Em Variáveis de Sistema, clique em Path > Editar > Novo e adicione:
+exemplo de caminho:
+```
+C:\sonar-scanner\bin
+```
+Clique em OK para fechar tudo.
+
+para rodar no projeto e apenas digitar no terminal 
+```
+sonar-scanner 
+```
+
 Isso irá enviar os dados da sua aplicação para análise no SonarQube.
