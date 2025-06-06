@@ -108,6 +108,12 @@ docker-run:
 docker-shell:
 	docker run --rm -it --name $(CONTAINER_NAME) -e ENV=dev $(DOCKER_IMAGE_NAME) /bin/bash
 
+docker-compose-mongo-up:
+	docker compose -f ./devtools/docker/docker-compose-mongo.yml up -d
+
+docker-compose-mongo-down:
+	docker compose -f ./devtools/docker/docker-compose-mongo.yml down
+
 docker-compose-sonar-up:
 	docker compose -f ./devtools/docker/docker-compose-sonar.yml up -d
 

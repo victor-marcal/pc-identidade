@@ -42,7 +42,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T, ID], Generic[T, ID]):
 
         # TODO: aplicar ordenação por sort se necessário
 
-        return filtered_list[offset:offset + limit]
+        return filtered_list[offset : offset + limit]
 
     async def update(self, entity_id: ID, entity: Any) -> Optional[T]:
         # Converte a entidade para um dicionário, excluindo campos desnecessários

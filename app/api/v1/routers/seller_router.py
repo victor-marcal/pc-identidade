@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, Query, status
 from app.api.common.schemas import ListResponse, Paginator, UuidType, get_request_pagination
 from app.container import Container
 from app.models.seller_model import Seller
-
-from ..schemas.seller_schema import SellerCreate, SellerResponse, SellerUpdate, SellerReplace
 from app.models.seller_patch_model import SellerPatch
+
+from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
 
 if TYPE_CHECKING:
@@ -43,22 +43,31 @@ async def get(
 
 
 @router.get(
-    "/{seller_id}",
+    "/buscar",
     response_model=SellerResponse,
-    name="Retorna Sellers por ID",
-    description="Buscar um Seller pelo seu 'seller_id'",
+    name="Retorna Sellers por ID ou CNPJ",
+    description="Buscar um Seller pelo seu 'seller_id' ou 'cnpj'",
     status_code=status.HTTP_200_OK,
-    summary="Buscar Seller por ID",
+    summary="Buscar Seller por ID ou CNPJ",
 )
 @inject
-async def get_by_id(
-    seller_id: str,
+async def get_by_id_or_cnpj(
+    seller_id: Optional[str] = Query(None, description="ID do Seller"),
+    cnpj: Optional[str] = Query(None, description="CNPJ do Seller"),
     seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
 ):
     """
-    Retorna o seller correspondente ao seller_id"
+    Retorna o seller correspondente ao seller_id ou cnpj.
+    Pelo menos um dos parâmetros deve ser informado.
     """
-    return await seller_service.find_by_id(seller_id)
+    if not seller_id and not cnpj:
+        raise ValueError("Informe seller_id ou cnpj para buscar o seller.")
+    if seller_id and cnpj:
+        raise ValueError("Informe apenas um dos parâmetros: seller_id ou cnpj.")
+    if seller_id:
+        return await seller_service.find_by_id(seller_id)
+    else:
+        return await seller_service.find_by_cnpj(cnpj)
 
 
 @router.post(
@@ -131,9 +140,5 @@ async def replace_by_id(
     seller_data: SellerReplace,
     seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
 ):
-    seller = Seller(
-        seller_id=seller_id,
-        nome_fantasia=seller_data.nome_fantasia,
-        cnpj=seller_data.cnpj
-    )
+    seller = Seller(seller_id=seller_id, nome_fantasia=seller_data.nome_fantasia, cnpj=seller_data.cnpj)
     return await seller_service.replace(seller_id, seller)

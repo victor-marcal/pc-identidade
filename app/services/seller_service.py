@@ -1,10 +1,9 @@
+from app.common.datetime import utcnow
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.common.exceptions.not_found_exception import NotFoundException
-from app.common.datetime import utcnow
 from app.models.seller_model import Seller
-from app.repositories.seller_repository import SellerRepository
-
 from app.models.seller_patch_model import SellerPatch
+from app.repositories.seller_repository import SellerRepository
 
 from ..models import Seller
 from ..repositories import SellerRepository
@@ -26,7 +25,6 @@ class SellerService(CrudService[Seller, str]):
             raise BadRequestException(message="O nome_fantasia informado já está cadastrado. Escolha outro.")
 
         return await self.repository.create(data)
-    
 
     async def update(self, entity_id: str, data: SellerPatch) -> Seller:
         current = await self.repository.find_by_id(entity_id)
@@ -52,13 +50,18 @@ class SellerService(CrudService[Seller, str]):
         if not deleted:
             raise NotFoundException(message=f"Seller com ID '{entity_id}' não encontrado.")
         return deleted
-    
+
     async def find_by_id(self, seller_id: str) -> Seller:
         seller = await self.repository.find_by_id(seller_id)
         if not seller:
-            raise NotFoundException(message=f"Seller com ID '{seller_id}' não encontrado.")
+            raise NotFoundException(message=f"Nenhum Seller com ID '{seller_id}' encontrado.")
         return seller
-
+    
+    async def find_by_cnpj(self, cnpj: str) -> Seller:
+        seller = await self.repository.find_by_cnpj(cnpj)
+        if not seller:
+            raise NotFoundException(message=f"Nenhum Seller com CNPJ '{cnpj}' encontrado.")
+        return seller
 
     async def replace(self, entity_id: str, data: Seller) -> Seller:
         existing = await self.repository.find_by_id(entity_id)
@@ -74,7 +77,7 @@ class SellerService(CrudService[Seller, str]):
             nome_fantasia=data.nome_fantasia,
             cnpj=data.cnpj,
             created_at=existing.created_at,
-            updated_at=utcnow()
+            updated_at=utcnow(),
         )
 
         return await self.repository.update(entity_id, updated_seller)

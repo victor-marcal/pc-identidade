@@ -1,1 +1,2 @@
 ENV=dev
+APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000

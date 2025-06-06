@@ -24,5 +24,8 @@ class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
         self.memory = [seller for seller in self.memory if seller.seller_id != seller_id]
         return len(self.memory) < initial_len  # True se removeu algo, False se não
 
+    async def find_by_cnpj(self, cnpj: str) -> Optional[Seller]:
+        result = next((s for s in self.memory if s.cnpj == cnpj), None)
+        return result
 
 __all__ = ["SellerRepository"]
