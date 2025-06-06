@@ -163,13 +163,13 @@ Esses comandos criam o ambiente virtual e instalam as dependências necessárias
 Para construir a imagem Docker da aplicação, execute:
 
 ``` bash
-make docker-build # Criará uma imagem com o nome pc/preco.
+make docker-build # Criará uma imagem com o nome pc/identidade.
 ```
 
 Para rodar a aplicação em um contêiner Docker:
 
 ``` bash
-make docker-run # Iniciará um contêiner chamado pc-preco, expondo a porta 8000 do contêiner para a porta 8000 do seu host.
+make docker-run # Iniciará um contêiner chamado pc-identidade, expondo a porta 8000 do contêiner para a porta 8000 do seu host.
 ```
 
 Se precisar acessar o shell do contêiner para depuração ou outras operações:
@@ -255,3 +255,21 @@ sonar-scanner
 ```
 
 Isso irá enviar os dados da sua aplicação para análise no SonarQube.
+
+## 🗄️ Subindo e Parando o MongoDB com Docker Compose
+
+Para iniciar o banco de dados MongoDB utilizando Docker Compose, execute:
+
+```bash
+make docker-compose-mongo-up
+```
+
+Isso irá subir o serviço MongoDB definido em `devtools/docker/docker-compose-mongo.yml`.
+
+Para parar e remover o serviço do MongoDB, execute:
+
+```bash
+make docker-compose-mongo-down
+```
+
+Esses comandos garantem que o banco de dados MongoDB estará disponível para a aplicação durante o desenvolvimento e podem ser usados sempre que precisar iniciar ou parar o banco.

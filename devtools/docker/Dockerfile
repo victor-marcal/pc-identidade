@@ -40,6 +40,6 @@ RUN python -m compileall app
 CMD [ "uvicorn", "app.api_main:app", "--host", "0.0.0.0", "--port", "8000" ]
 
 # Montagem
-# docker build -f ./devtools/docker/Dockerfile -t pc/preco .
+# docker build -f ./devtools/docker/Dockerfile -t pc/identidade .
 # Execução
-# docker run --rm -p 8000:8000 pc/preco
+# docker run --rm -p 8000:8000 pc/identidade
