@@ -1,31 +1,29 @@
 from typing import Optional
 from uuid import UUID
 
-from app.common.exceptions import NotFoundException
+from app.integrations.database.mongo_client import MongoClient
 
 from ..models import Seller
 from .base import AsyncMemoryRepository
 
 
-class SellerRepository(AsyncMemoryRepository[Seller, UUID]):
+class SellerRepository(AsyncMemoryRepository[Seller]):
 
-    def __init__(self):
-        super().__init__(model_class=Seller)
+    COLLECTION_NAME = "sellers"
+
+    def __init__(self,client: "MongoClient"):
+        super().__init__(client, collection_name=self.COLLECTION_NAME,model_class=Seller)
 
     async def find_by_nome_fantasia(self, nome_fantasia: str) -> Optional[Seller]:
         """
         Busca um Seller pelo nome_fantasia.
         """
-        result = next((s for s in self.memory if s.nome_fantasia == nome_fantasia), None)
-        return result
+        return await self.find_by_id({"nome_fantasia": nome_fantasia})
 
     async def delete_by_id(self, seller_id: str) -> bool:
-        initial_len = len(self.memory)
-        self.memory = [seller for seller in self.memory if seller.seller_id != seller_id]
-        return len(self.memory) < initial_len  # True se removeu algo, False se não
+        return await self.delete({"seller_id": seller_id})
 
     async def find_by_cnpj(self, cnpj: str) -> Optional[Seller]:
-        result = next((s for s in self.memory if s.cnpj == cnpj), None)
-        return result
+        return await self.find_by_id({"cnpj": cnpj})
 
 __all__ = ["SellerRepository"]

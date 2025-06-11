@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
-ID = TypeVar("ID")
+Q = TypeVar("Q")
 
 
-class AsyncCrudRepository(ABC, Generic[T, ID]):
+class AsyncCrudRepository(ABC, Generic[T]):
     """
     Interface genérica para operações de repositório CRUD.
     """
@@ -17,25 +17,25 @@ class AsyncCrudRepository(ABC, Generic[T, ID]):
         """
 
     @abstractmethod
-    async def find_by_id(self, entity_id: ID) -> T | None:
+    async def find_by_id(self,  seller_id: str) -> T | None:
         """
         Busca uma entidade pelo seu identificador único.
         """
 
     @abstractmethod
-    async def find(self, filters: dict, limit: int, offset: int, sort: dict | None = None) -> list[T]:
+    async def find(self, filters: Q , limit: int = 20, offset: int = 0, sort: dict | None = None) -> list[T]:
         """
         Busca entidades no repositório, utilizando filtros e paginação.
         """
 
     @abstractmethod
-    async def update(self, entity_id: ID, entity: Any) -> T:
+    async def update(self, seller_id: str, entity: T) -> T:
         """
         Atualiza uma entidade existente no repositório.
         """
 
     @abstractmethod
-    async def delete_by_id(self, entity_id: ID) -> None:
+    async def delete_by_id(self, entity_id: str) -> bool:
         """
         Remove uma entidade pelo seu identificador único.
         """

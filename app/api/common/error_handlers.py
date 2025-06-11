@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -6,19 +7,25 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from pydantic_core import ValidationError
 
-from app.common.error_codes import ErrorCodes
+from app.common.app_error_codes import ErrorCodes, ErrorInfo
+from app.common.error_schema import ErrorDetail, ErrorResponse
 from app.common.exceptions import ApplicationException
 
-from .schemas.response import ErrorDetail, get_error_response
+
+def get_error_response(error: ErrorInfo, details: list[ErrorDetail] | None = None) -> ErrorResponse:
+    return ErrorResponse(slug=error.slug, message=error.message, details=details)
 
 
 async def _get_request_body(request: Request) -> dict | None:
+    request_body = None
     try:
-        return json.loads(await request.body())
+        request_body = await request.body()
+        request_output = json.loads(await request.body())
     except Exception as ex:
-        # XXX Informar que deu erro
-        print(":-( ", ex)
-    return None
+        print("⚠ Falha ao decodificar o corpo da requsicao", ex)
+        # XXX Revisar este aqui
+        request_output = str(request_body) if request_body is not None else None
+    return request_output
 
 
 async def _get_request_info(request: Request) -> dict:
@@ -40,20 +47,29 @@ def add_error_handlers(app: FastAPI):
             content=response.model_dump(mode="json", exclude_none=True, exclude_unset=True),
         )
 
-    @app.exception_handler(RequestValidationError)
-    async def request_validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+    @ app.exception_handler(ValidationError)
+    async def request_pydantic_validation_error_handler(_: Request, exc: ValidationError) -> JSONResponse:
         errors = exc.errors()
         details: list[ErrorDetail] = []
+        VALID_LOCATIONS = {"query", "path", "body", "header"}
+
         for error in errors:
+            ctx = error.get("ctx", {})
+
+            if isinstance(ctx.get("error", {}), ValueError):  # pragma: no cover
+                ctx["error"] = str(ctx["error"])
+
+            # Força o valor para 'body' caso não seja válido
+            raw_location = error["loc"][0] if error["loc"] else "body"
+            location = raw_location if raw_location in VALID_LOCATIONS else "body"
 
             details.append(
                 ErrorDetail(
-                    **{
-                        "message": error["msg"],
-                        "location": error["loc"][0],
-                        "slug": error["type"],
-                        "field": ", ".join(map(str, error["loc"][1:])),
-                    }
+                    message=error["msg"],
+                    location=location,
+                    slug=error["type"],
+                    field=", ".join(map(str, error["loc"][1:])) if len(error["loc"]) > 1 else "",
+                    ctx=ctx,
                 )
             )
 
@@ -62,7 +78,7 @@ def add_error_handlers(app: FastAPI):
         return JSONResponse(
             status_code=ErrorCodes.UNPROCESSABLE_ENTITY.http_code,
             content=response.model_dump(mode="json", exclude_none=True, exclude_unset=True),
-        )
+            )
 
     @app.exception_handler(ValidationError)
     async def request_pydantic_validation_error_handler(_: Request, exc: ValidationError) -> JSONResponse:
@@ -80,9 +96,9 @@ def add_error_handlers(app: FastAPI):
                 ErrorDetail(
                     **{
                         "message": error["msg"],
-                        "location": error["loc"][0] if error["loc"] else "body",
+                        "location": "body",
                         "slug": error["type"],
-                        "field": ", ".join(map(str, error["loc"][1:])) if error["loc"] else "",
+                        "field": (", ".join(map(str, error["loc"][1:])) if error["loc"] else ""),
                         "ctx": ctx,
                     }
                 )
@@ -98,7 +114,10 @@ def add_error_handlers(app: FastAPI):
     @app.exception_handler(Exception)
     async def default_validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         response = get_error_response(ErrorCodes.SERVER_ERROR.value)
-        # XXX Informar que deu erro
+        # XXX
+        print("🪲 Falha nao capturada", exc)
+        traceback.print_exc()
+
         return JSONResponse(
             status_code=ErrorCodes.SERVER_ERROR.http_code,
             content=response.model_dump(mode="json", exclude_none=True, exclude_unset=True),
