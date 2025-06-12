@@ -81,10 +81,7 @@ async def get_by_id_or_cnpj(
 )
 @inject
 async def create(seller: SellerCreate, seller_service: "SellerService" = Depends(Provide[Container.seller_service]),):
-    seller_data = seller.dict(exclude={"seller_id"})
-    seller_data["seller_id"] = uuid.uuid4()
-    seller_obj = Seller(**seller_data)
-    return await seller_service.create(seller_obj)
+    return await seller_service.create(seller)
 
 
 @router.patch(

@@ -28,15 +28,12 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
 
     async def create(self, entity: T) -> T:
         entity_dict = entity.model_dump(by_alias=True)
-        entity_dict["seller_id"] = str(entity.seller_id)
         entity_dict["created_at"] = utcnow()
         entity_dict["updated_at"] = utcnow()
         await self.collection.insert_one(entity_dict)
         return self.model_class(**entity_dict)
 
-    async def find_by_id(self, seller_id: str | UUID) -> T | None:
-        if isinstance(seller_id, UUID):
-            seller_id = str(seller_id)
+    async def find_by_id(self, seller_id: str) -> T | None:
         result = await self.collection.find_one({"seller_id": seller_id})
         if result is not None:
             result = self.model_class(**result)

@@ -3,6 +3,6 @@ from . import PersistableEntity
 
 
 class Seller(PersistableEntity):
-    seller_id: UUID
+    seller_id: str
     nome_fantasia: str
     cnpj: str

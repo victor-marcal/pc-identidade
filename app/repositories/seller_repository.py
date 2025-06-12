@@ -17,7 +17,7 @@ class SellerRepository(AsyncMemoryRepository[Seller]):
     async def find_by_nome_fantasia(self, nome_fantasia: str) -> Optional[Seller]:
         return await self.collection.find_one({"nome_fantasia": nome_fantasia})
 
-    async def delete_by_id(self, seller_id: UUID) -> bool:
+    async def delete_by_id(self, seller_id: str) -> bool:
         return await self.delete({"seller_id": str(seller_id)})
 
     async def find_by_cnpj(self, cnpj: str) -> Optional[Seller]:
