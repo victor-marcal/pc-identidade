@@ -15,15 +15,12 @@ class SellerRepository(AsyncMemoryRepository[Seller]):
         super().__init__(client, collection_name=self.COLLECTION_NAME,model_class=Seller)
 
     async def find_by_nome_fantasia(self, nome_fantasia: str) -> Optional[Seller]:
-        """
-        Busca um Seller pelo nome_fantasia.
-        """
-        return await self.find_by_id({"nome_fantasia": nome_fantasia})
+        return await self.collection.find_one({"nome_fantasia": nome_fantasia})
 
-    async def delete_by_id(self, seller_id: str) -> bool:
-        return await self.delete({"seller_id": seller_id})
+    async def delete_by_id(self, seller_id: UUID) -> bool:
+        return await self.delete({"seller_id": str(seller_id)})
 
     async def find_by_cnpj(self, cnpj: str) -> Optional[Seller]:
-        return await self.find_by_id({"cnpj": cnpj})
+        return await self.collection.find_one({"cnpj": cnpj})
 
 __all__ = ["SellerRepository"]

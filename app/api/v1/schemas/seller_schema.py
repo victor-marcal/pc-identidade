@@ -1,5 +1,6 @@
 import re
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
@@ -7,19 +8,8 @@ from app.api.common.schemas import SchemaType
 
 
 class SellerBase(SchemaType):
-    seller_id: str = Field(..., description="ID único, alfanumérico e lowercase")
     nome_fantasia: str = Field(..., description="Nome fantasia exclusivo no sistema")
     cnpj: str = Field(..., description="CNPJ com exatamente 14 dígitos numéricos, sem pontuação")
-
-    @validator('seller_id')
-    def validar_seller_id(cls, v):
-        if not v:
-            raise ValueError("O seller_id é obrigatório.")
-        if not re.fullmatch(r"^[a-z0-9]+$", v):
-            raise ValueError(
-                "O seller_id deve conter apenas letras minúsculas e números, sem espaços ou caracteres especiais."
-            )
-        return v
 
     @validator('nome_fantasia')
     def validar_nome_fantasia(cls, v):
