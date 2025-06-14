@@ -1,4 +1,4 @@
-from uuid import UUID
+
 from . import PersistableEntity
 
 
