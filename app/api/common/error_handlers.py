@@ -7,7 +7,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from pydantic_core import ValidationError
 
-from app.common.app_error_codes import ErrorCodes, ErrorInfo
+from app.common.error_codes import ErrorCodes, ErrorInfo
 from app.common.error_schema import ErrorDetail, ErrorResponse
 from app.common.exceptions import ApplicationException
 
