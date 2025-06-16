@@ -1,5 +1,12 @@
+from app.api.router import routes as router
+from app.api.api_application import create_app
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from fastapi import APIRouter, FastAPI
+from app.settings import ApiSettings, api_settings
+from app.container import Container
+from dependency_injector.wiring import providers
+from fastapi.testclient import TestClient
 
 @pytest.fixture
 def mock_mongo_client():
@@ -39,3 +46,46 @@ def mock_mongo_client():
     }
 
     return client, collection
+
+
+@pytest.fixture
+def dummy_router():
+    router = APIRouter()
+
+    @router.get("/dummy")
+    async def dummy_route():
+        return {"message": "ok"}
+
+    return router
+
+
+@pytest.fixture
+def dummy_settings():
+    return ApiSettings(
+        app_name="TestApp",
+        openapi_path="/openapi.json",
+        version="0.1.0",
+        health_check_base_path="/health"
+    )
+
+@pytest.fixture
+def mock_seller_service():
+    return AsyncMock()
+
+
+@pytest.fixture
+def client(mock_seller_service):
+    from app.container import Container
+    from app.api.v1.routers import seller_router
+
+    app = FastAPI()
+
+    container = Container()
+    container.seller_service.override(providers.Object(mock_seller_service))
+
+    container.wire(modules=[seller_router])
+    app.container = container
+
+    app.include_router(seller_router.router, prefix="/seller/v1")
+
+    return TestClient(app)

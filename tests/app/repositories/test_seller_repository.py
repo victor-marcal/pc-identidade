@@ -4,23 +4,23 @@ from unittest import mock
 from app.repositories.seller_repository import SellerRepository
 from app.models.seller_model import Seller
 
-
+nome_fantasia = "Loja Legal"
 @pytest.mark.asyncio
 class TestSellerRepository:
     async def test_find_by_nome_fantasia(self, mock_mongo_client):
         client, collection = mock_mongo_client
         collection.find_one = mock.AsyncMock(return_value={
             "seller_id": "seller01",
-            "nome_fantasia": "Loja Legal",
+            "nome_fantasia": nome_fantasia,
             "cnpj": "12345678000199"
         })
 
         repo = SellerRepository(client)
-        result = await repo.find_by_nome_fantasia("Loja Legal")
+        result = await repo.find_by_nome_fantasia(nome_fantasia)
 
-        collection.find_one.assert_called_once_with({"nome_fantasia": "Loja Legal"})
+        collection.find_one.assert_called_once_with({"nome_fantasia": nome_fantasia})
         assert isinstance(result, Seller)
-        assert result.nome_fantasia == "Loja Legal"
+        assert result.nome_fantasia == nome_fantasia
 
     async def test_find_by_nome_fantasia_not_found(self, mock_mongo_client):
         client, collection = mock_mongo_client
