@@ -1,5 +1,10 @@
+from app.api.router import routes as router
+from app.api.api_application import create_app
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from fastapi import APIRouter, FastAPI
+from app.settings import ApiSettings, api_settings
+from app.container import Container
 
 @pytest.fixture
 def mock_mongo_client():
@@ -39,3 +44,25 @@ def mock_mongo_client():
     }
 
     return client, collection
+
+
+@pytest.fixture
+def dummy_router():
+    router = APIRouter()
+
+    @router.get("/dummy")
+    async def dummy_route():
+        return {"message": "ok"}
+
+    return router
+
+
+@pytest.fixture
+def dummy_settings():
+    return ApiSettings(
+        app_name="TestApp",
+        openapi_path="/openapi.json",
+        version="0.1.0",
+        health_check_base_path="/health"
+    )
+

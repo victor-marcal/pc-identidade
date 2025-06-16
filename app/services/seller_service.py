@@ -27,25 +27,6 @@ class SellerService(CrudService[Seller, str]):
 
         return await self.repository.create(data)
 
-    async def update(self, entity_id: str, data: SellerPatch) -> Seller:
-        current = await self.repository.find_by_id(entity_id)
-        if not current:
-            raise NotFoundException(message=f"Seller com ID '{entity_id}' não encontrado.")
-
-        if data.nome_fantasia is not None:
-            existing = await self.repository.find_by_nome_fantasia(data.nome_fantasia)
-            if existing and existing.seller_id != entity_id:
-                raise BadRequestException(message="O nome_fantasia informado já está cadastrado. Escolha outro.")
-            current.nome_fantasia = data.nome_fantasia
-
-        if data.cnpj is not None:
-            current.cnpj = data.cnpj
-
-        # Atualiza timestamp da modificação
-        current.updated_at = utcnow()
-
-        return await self.repository.update(entity_id, current)
-
     async def delete_by_id(self, entity_id) -> None:
         deleted = await self.repository.delete_by_id(entity_id)
         if not deleted:
@@ -78,13 +59,13 @@ class SellerService(CrudService[Seller, str]):
         if data.cnpj is not None:
             update_data["cnpj"] = data.cnpj
 
+        if not update_data:
+            return current 
+
         now = utcnow()
         update_data["updated_at"] = now
         update_data["updated_by"] = DEFAULT_USER
         update_data["audit_updated_at"] = now
-
-        if not update_data:
-            return current 
 
         return await self.repository.patch(entity_id, update_data)
 
