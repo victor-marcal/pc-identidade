@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-type ErrorLocation = Literal["query", "path", "body", "header"]
+ErrorLocation = Literal["query", "path", "body", "header"]
 
 
 class ErrorDetail(BaseModel):
