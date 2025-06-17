@@ -27,7 +27,7 @@ class TestAsyncMemoryRepository:
         client, collection = mock_mongo_client
         collection.find_one.return_value = {
             "seller_id": "seller01",
-            "nome_fantasia": "Loja Exemplo",
+            "nome_fantasia": "Loja Exemplo2 ",
             "cnpj": "12345678000199"
         }
 
@@ -40,7 +40,7 @@ class TestAsyncMemoryRepository:
         client, collection = mock_mongo_client
         doc = {
             "seller_id": "seller01",
-            "nome_fantasia": "Loja Exemplo",
+            "nome_fantasia": "Loja Exemplo3",
             "cnpj": "12345678000199"
         }
 
