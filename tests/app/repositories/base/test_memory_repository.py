@@ -58,22 +58,23 @@ class TestAsyncMemoryRepository:
         assert result[0].seller_id == "seller01"
 
     async def test_update(self, mock_mongo_client):
+        STORE_UPDATE = "Loja Atualizada"
         client, collection = mock_mongo_client
         collection.find_one_and_update.return_value = {
             "seller_id": "seller01",
-            "nome_fantasia": "Loja Atualizada",
+            "nome_fantasia": STORE_UPDATE,
             "cnpj": "12345678000199"
         }
 
         model = Seller(
             seller_id="seller01",
-            nome_fantasia="Loja Atualizada",
+            nome_fantasia=STORE_UPDATE,
             cnpj="12345678000199"
         )
         repo = AsyncMemoryRepository(client, "test_collection", Seller)
         result = await repo.update("seller01", model)
 
-        assert result.nome_fantasia == "Loja Atualizada"
+        assert result.nome_fantasia == STORE_UPDATE
 
     async def test_delete_by_id(self, mock_mongo_client):
         client, collection = mock_mongo_client
@@ -85,14 +86,15 @@ class TestAsyncMemoryRepository:
         assert result is True
 
     async def test_patch(self, mock_mongo_client):
+        STORE_PATCH = "Loja Patch"
         client, collection = mock_mongo_client
         collection.find_one_and_update.return_value = {
             "seller_id": "seller01",
-            "nome_fantasia": "Loja Patch",
+            "nome_fantasia": STORE_PATCH,
             "cnpj": "12345678000199"
         }
 
         repo = AsyncMemoryRepository(client, "test_collection", Seller)
-        result = await repo.patch("seller01", {"nome_fantasia": "Loja Patch"})
+        result = await repo.patch("seller01", {"nome_fantasia": STORE_PATCH})
 
-        assert result.nome_fantasia == "Loja Patch"
+        assert result.nome_fantasia == STORE_PATCH
