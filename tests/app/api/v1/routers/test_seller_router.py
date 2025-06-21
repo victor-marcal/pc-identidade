@@ -66,3 +66,16 @@ def test_delete_seller(client, mock_seller_service):
     response = client.delete("/seller/v1/sellers/1")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+# def test_get_by_id_or_cnpj_sem_parametros(client):
+#     response = client.get("/seller/v1/sellers/buscar")
+#     assert response.status_code == 422  
+
+# def test_get_by_id_or_cnpj_com_ambos_parametros(client):
+#     response = client.get("/seller/v1/sellers/buscar?seller_id=1&cnpj=12345678000100")
+#     assert response.status_code == 500  
+
+# def test_get_by_cnpj_somente(client, mock_seller_service):
+#     mock_seller_service.find_by_cnpj.return_value = Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")
+#     response = client.get("/seller/v1/sellers/buscar?cnpj=12345678000100")
+#     assert response.status_code == 200
