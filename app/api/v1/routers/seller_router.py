@@ -8,8 +8,11 @@ from app.container import Container
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
+from app.integrations.auth import get_current_user, TokenData, check_seller_permission
+
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
+
 
 if TYPE_CHECKING:
     from app.services import SellerService
@@ -90,6 +93,7 @@ async def create(seller: SellerCreate, seller_service: "SellerService" = Depends
     description="Atualizar um Seller pelo 'seller_id'",
     status_code=status.HTTP_200_OK,
     summary="Atualizar um Seller",
+    dependencies=[Depends(check_seller_permission)]
 )
 @inject
 async def update_by_id(
