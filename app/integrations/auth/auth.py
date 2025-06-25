@@ -1,15 +1,17 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, SecurityScopes
+from fastapi.security import OAuth2PasswordBearer
 import httpx
 from jose import jwt, jwk
 from jose.exceptions import JWTError
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
+from app.settings.app import settings
+
 # --- Configuração ---
-KEYCLOAK_URL = "http://pc-identidade-keycloak:8080"
-REALM_NAME = "marketplace"
-CLIENT_ID = "varejo"
+KEYCLOAK_URL = settings.KEYCLOAK_URL
+REALM_NAME = settings.KEYCLOAK_REALM_NAME
+CLIENT_ID = settings.KEYCLOAK_CLIENT_ID
 
 JWKS_URL = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
 

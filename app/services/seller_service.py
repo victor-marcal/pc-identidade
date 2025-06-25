@@ -5,6 +5,8 @@ from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
 
+from app.clients.keycloak_admin_client import KeycloakAdminClient
+
 from app.messages import (
     MSG_SELLER_ID_JA_CADASTRADO,
     MSG_NOME_FANTASIA_JA_CADASTRADO,
@@ -19,9 +21,10 @@ from .base import CrudService
 DEFAULT_USER = "system"
 
 class SellerService(CrudService[Seller, str]):
-    def __init__(self, repository: SellerRepository):
+    def __init__(self, repository: SellerRepository, keycloak_client: KeycloakAdminClient):
         super().__init__(repository)
         self.repository: SellerRepository = repository
+        self.keycloak_client: KeycloakAdminClient = keycloak_client
 
     async def create(self, data: Seller) -> Seller:
         # Verifica se seller_id já existe
@@ -32,7 +35,16 @@ class SellerService(CrudService[Seller, str]):
         if await self.repository.find_by_nome_fantasia(data.nome_fantasia):
             raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
+        # Tenta criar o usuário no Keycloak ANTES de criar no banco.
+        await self.keycloak_client.create_user(
+            username=data.seller_id,
+            email=f"{data.seller_id}@email.com",
+            password="senha123",  # Cenário de teste, já que a senha não é um parametro
+            seller_id=data.seller_id
+        )
+
         return await self.repository.create(data)
+
 
     async def delete_by_id(self, entity_id) -> None:
         deleted = await self.repository.delete_by_id(entity_id)

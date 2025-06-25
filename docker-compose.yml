@@ -1,38 +1,26 @@
-# docker-compose.yml
-
-# Definindo a versão do Compose para garantir compatibilidade com os recursos usados
 version: '3.8'
 
 services:
-  ######################################################
-  # <<< NOVO: SERVIÇO PARA SUA APLICAÇÃO FASTAPI >>>
-  ######################################################
   app:
-    # 'build' instrui o Compose a construir a imagem a partir de um Dockerfile.
-    # Isso substitui seu comando 'docker build' manual.
     build:
-      context: . # O contexto é o diretório raiz do seu projeto.
-      dockerfile: ./devtools/docker/Dockerfile # O caminho para o seu Dockerfile.
-    image: pc/identidade # <<< Opcional, mas boa prática: nomeia a imagem construída.
-    container_name: pc-identidade-app # <<< Define um nome fixo para o container.
+      context: .
+      dockerfile: ./devtools/docker/Dockerfile
+    image: pc/identidade
+    container_name: pc-identidade-app
     restart: unless-stopped
     ports:
-      - "8000:8000" # Mapeia a porta do container para o seu host.
-    env_file:
-      - .env # Carrega as variáveis de ambiente do seu arquivo .env.
+      - "8000:8000"
     networks:
-      - pc-net # <<< Conecta este serviço à nossa rede compartilhada.
+      - pc-net
+    env_file:
+      - .env
     depends_on:
-      # Garante que o banco e o Keycloak iniciem ANTES da sua aplicação.
       - mongodb
       - keycloak
 
-  ################################################
-  # SERVIÇO DO MONGODB (COM AJUSTES)
-  ################################################
   mongodb:
     image: mongo:8.0
-    container_name: pc-identidade-mongo # <<< ALTERADO: Nome fixo para comunicação fácil.
+    container_name: pc-identidade-mongo
     restart: always
     ports:
       - "27017:27017"
@@ -43,14 +31,11 @@ services:
     volumes:
       - mongo_data:/data/db
     networks:
-      - pc-net # <<< ALTERADO: Conecta à rede compartilhada.
+      - pc-net
 
-  ################################################
-  # SERVIÇO DO KEYCLOAK (COM AJUSTES)
-  ################################################
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.5
-    container_name: pc-identidade-keycloak # <<< ALTERADO: Nome fixo.
+    container_name: pc-identidade-keycloak
     ports:
       - "8080:8080"
       - "8443:8443"
@@ -58,11 +43,10 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
-      # <<< ALTERADO: usa o nome do serviço do banco de dados do Keycloak.
       KC_DB_URL: jdbc:postgresql://pc-identidade-keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: password
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: pc-identidade-keycloak
       KC_HTTP_ENABLED: 'true'
       KC_HEALTH_ENABLED: 'true'
       KC_METRICS_ENABLED: 'true'
@@ -76,15 +60,12 @@ services:
     command: [ "start-dev", "--import-realm" ]
     restart: unless-stopped
     networks:
-      - pc-net # <<< ALTERADO: Conecta à rede compartilhada.
+      - pc-net
 
-  ################################################
-  # SERVIÇO DO BANCO DO KEYCLOAK (COM AJUSTES)
-  ################################################
   keycloak-db:
     image: postgres:13
-    container_name: pc-identidade-keycloak-db # <<< ALTERADO: Nome fixo.
-    hostname: pc-identidade-keycloak-db # <<< ALTERADO: Garante o hostname interno.
+    container_name: pc-identidade-keycloak-db
+    hostname: pc-identidade-keycloak-db
     ports:
       - "5432:5432"
     environment:
@@ -93,15 +74,12 @@ services:
       POSTGRES_PASSWORD: password
     restart: unless-stopped
     networks:
-      - pc-net # <<< ALTERADO: Conecta à rede compartilhada.
+      - pc-net
 
 
-######################################################
-# <<< NOVO: DEFINIÇÃO DA REDE COMPARTILHADA >>>
-######################################################
 networks:
   pc-net:
-    driver: bridge # O driver padrão para redes locais.
+    driver: bridge
 
 volumes:
   mongo_data:

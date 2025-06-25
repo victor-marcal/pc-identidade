@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, HTTPException
 
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
 from app.container import Container
@@ -58,19 +58,31 @@ async def get_by_id_or_cnpj(
     seller_id: Optional[str] = Query(None, description="ID do Seller"),
     cnpj: Optional[str] = Query(None, description="CNPJ do Seller"),
     seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Retorna o seller correspondente ao seller_id ou cnpj.
     Pelo menos um dos parâmetros deve ser informado.
+    O usuário precisa ter permissão para o seller solicitado.
     """
     if not seller_id and not cnpj:
         raise ValueError("Informe seller_id ou cnpj para buscar o seller.")
     if seller_id and cnpj:
         raise ValueError("Informe apenas um dos parâmetros: seller_id ou cnpj.")
+
+    seller: Optional[Seller] = None
     if seller_id:
-        return await seller_service.find_by_id(seller_id)
+        seller = await seller_service.find_by_id(seller_id)
     else:
-        return await seller_service.find_by_cnpj(cnpj)
+        seller = await seller_service.find_by_cnpj(cnpj)
+
+    if not seller or seller.seller_id not in current_user.sellers:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Seller não encontrado ou acesso não permitido."
+        )
+
+    return seller
 
 
 @router.post(
@@ -115,6 +127,7 @@ async def update_by_id(
     description="Remove um Seller pelo 'seller_id'",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remover um Seller",
+    dependencies=[Depends(check_seller_permission)]
 )
 @inject
 async def delete_by_id(
@@ -134,6 +147,7 @@ async def delete_by_id(
     description="Substitui completamente um Seller",
     status_code=status.HTTP_200_OK,
     summary="Atualizar Seller (completo)",
+    dependencies=[Depends(check_seller_permission)]
 )
 @inject
 async def replace_by_id(

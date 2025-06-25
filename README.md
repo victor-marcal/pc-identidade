@@ -63,10 +63,17 @@ pip install -r requirements.txt
 Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
 
 ```env
+# Variáveis de Ambiente
 ENV=dev
-APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
 
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
 MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
 ```
 
 ### Windows 🖥️
@@ -96,17 +103,24 @@ pip install -r requirements.txt
 Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
 
 ```env
+# Variáveis de Ambiente
 ENV=dev
-APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
 
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
 MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
 ```
 
 ## 🐳 Instalação do Docker 
 
 Para instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/), siga o manual disponível no site oficial.
 
-## ▶️ Execução usando Docker 
+## ▶️ Executando o Projeto com Docker (Método Recomendado)
 
 ### Linux 🐧
 
@@ -146,45 +160,62 @@ Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) 
 
 #### 🚀 Passo a passo
 
-1. Criar uma rede Docker compartilhada
+1. Clonar o Repositório
 
-Essa rede permitirá que os containers se comuniquem:
+Abra seu terminal e clone o projeto:
 
-```bash
-docker network create pc-net
-```
-Você só precisa fazer isso uma vez.
-
-2. Subir o MongoDB e KeyCloak
-
-```bash
-docker compose -f docker-compose.yml up -d
-```
-Depois, conecte o container do Mongo e KeyCloak à rede:
-```bash
-docker network connect pc-net pc-identidade-mongo
-docker network connect pc-net pc-identidade-keycloak-1
-docker network connect pc-net pc-identidade-keycloak-db-1
+```sh
+git clone [https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git](https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git)
+cd pc-identidade
 ```
 
-3. Build da aplicação FastAPI
+2. Configurar Variáveis de Ambiente
 
-```bash
-docker build -f ./devtools/docker/Dockerfile -t pc/identidade .
+Crie um arquivo chamado .env na raiz do projeto. Este arquivo é crucial para a comunicação entre os contêineres. Copie e cole o seguinte conteúdo nele:
+
+```env
+# Variáveis de Ambiente
+ENV=dev
+
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
+MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
 ```
 
-4. Rodar a aplicação (com .env e rede)
+3. Subir os Contêineres
+
+Com o Docker em execução, use o seguinte comando para construir a imagem da sua aplicação e iniciar todos os serviços em segundo plano:
 
 ```bash
-docker run --rm -p 8000:8000 --name pc-identidade-app ^
-  --env-file .env ^
-  --network pc-net ^
-  pc/identidade
+docker-compose up --build -d
 ```
 
-Use ^ no PowerShell. No bash, use ` ou escreva tudo em uma linha.
+#### Comandos Úteis do Dia a Dia
 
-5. Testar se o Mongo está acessível
+Para ver os logs da aplicação em tempo real:
+
+```bash
+docker-compose logs -f app
+```
+
+Para parar todos os serviços:
+
+```bash
+docker-compose down
+```
+
+Para iniciar os serviços novamente (sem reconstruir):
+
+```bash
+docker-compose up -d
+```
+
+Para testar se o Mongo está acessível
 
 Em outro terminal, rode:
 
@@ -194,6 +225,12 @@ docker run --rm -it --network pc-net mongo mongosh "mongodb://admin:admin@pc-ide
 
 Você verá o prompt bd01> se tudo estiver OK.
 
+#### Acessando os Serviços
+
+- API da Aplicação (Swagger): http://localhost:8000/api/docs
+- Admin Console do Keycloak: http://localhost:8080
+  - **Usuário**: admin
+  - **Senha**: admin
 
 ## 🔍 Análise de Qualidade com SonarQube
 
@@ -210,8 +247,6 @@ Se em algum momento quiser parar o ambiente do SonarQube, execute:
 ```bash
 make docker-compose-sonar-down # Desligará o ambiente do SonarQube e removerá os contêineres
 ```
-
-## 🔍 Análise com SonarQube
 
 ### 1. Gere e exporte o token do SonarQube
 Após acessar o SonarQube:
@@ -277,24 +312,6 @@ Com os containers rodando e o token configurado, execute:
 ```
 SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
-
-## 🗄️ Subindo e Parando o MongoDB com Docker Compose
-
-Para iniciar o banco de dados MongoDB utilizando Docker Compose, execute:
-
-```bash
-make docker-compose-mongo-up
-```
-
-Isso irá subir o serviço MongoDB definido em `devtools/docker/docker-compose-mongo.yml`.
-
-Para parar e remover o serviço do MongoDB, execute:
-
-```bash
-make docker-compose-mongo-down
-```
-
-Esses comandos garantem que o banco de dados MongoDB estará disponível para a aplicação durante o desenvolvimento e podem ser usados sempre que precisar iniciar ou parar o banco.
 
 ## Contribuições e Atualizações
 O projeto está aberto a contribuições e atualizações da comunidade. O processo para contribuições é o seguinte:
