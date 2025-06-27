@@ -58,7 +58,6 @@ def test_api_application_missing_lines():
     
     # Mock das configurações com campos obrigatórios
     settings = ApiSettings(
-        settings = ApiSettings(
         KEYCLOAK_URL="http://localhost:8080",
         KEYCLOAK_REALM_NAME="marketplace",
         KEYCLOAK_CLIENT_ID="varejo",
@@ -66,7 +65,6 @@ def test_api_application_missing_lines():
         KEYCLOAK_ADMIN_USER="admin_marketplace",
         KEYCLOAK_ADMIN_PASSWORD="senha123",
         KEYCLOAK_ADMIN_CLIENT_ID="admin-cli",
-    )
     )
     
     # Testa configuração de middlewares
