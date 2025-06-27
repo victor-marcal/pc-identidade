@@ -1,9 +1,11 @@
 """
 Testes para melhorar cobertura do keycloak_admin_client.py
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
+import pytest
 from fastapi import HTTPException
 
 from app.clients.keycloak_admin_client import KeycloakAdminClient
@@ -30,12 +32,12 @@ async def test_get_admin_token_success(keycloak_client):
     mock_response = MagicMock()
     mock_response.json.return_value = {"access_token": "test_token"}
     mock_response.raise_for_status.return_value = None
-    
+
     with patch('httpx.AsyncClient') as mock_client:
         mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
-        
+
         token = await keycloak_client._get_admin_token()
-        
+
         assert token == "test_token"
         mock_response.raise_for_status.assert_called_once()
 
@@ -47,10 +49,10 @@ async def test_get_admin_token_http_error(keycloak_client):
     mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
         "Error", request=MagicMock(), response=MagicMock()
     )
-    
+
     with patch('httpx.AsyncClient') as mock_client:
         mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
-        
+
         with pytest.raises(httpx.HTTPStatusError):
             await keycloak_client._get_admin_token()
 
@@ -61,23 +63,20 @@ async def test_create_user_success(keycloak_client):
     # Mock the admin token call
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_get_token.return_value = "admin_token"
-        
+
         # Mock the user creation call
         mock_response = MagicMock()
         mock_response.status_code = 201
         mock_response.raise_for_status.return_value = None
-        
+
         with patch('httpx.AsyncClient') as mock_client:
             mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
-            
+
             # Should not raise any exception
             await keycloak_client.create_user(
-                username="test_user",
-                email="test@example.com", 
-                password="password123",
-                seller_id="seller_1"
+                username="test_user", email="test@example.com", password="password123", seller_id="seller_1"
             )
-            
+
             mock_get_token.assert_called_once()
             mock_response.raise_for_status.assert_called_once()
 
@@ -88,22 +87,19 @@ async def test_create_user_conflict_409(keycloak_client):
     # Mock the admin token call
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_get_token.return_value = "admin_token"
-        
+
         # Mock the user creation call with 409 status
         mock_response = MagicMock()
         mock_response.status_code = 409
-        
+
         with patch('httpx.AsyncClient') as mock_client:
             mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
-            
+
             with pytest.raises(BadRequestException) as exc_info:
                 await keycloak_client.create_user(
-                    username="existing_user",
-                    email="test@example.com",
-                    password="password123", 
-                    seller_id="seller_1"
+                    username="existing_user", email="test@example.com", password="password123", seller_id="seller_1"
                 )
-            
+
             assert "já existe no Keycloak" in str(exc_info.value.message)
 
 
@@ -113,30 +109,23 @@ async def test_create_user_http_status_error(keycloak_client):
     # Mock the admin token call
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_get_token.return_value = "admin_token"
-        
+
         # Mock the user creation call that raises HTTPStatusError
         mock_response = MagicMock()
         mock_response.status_code = 400
         mock_response.text = "Bad request error"
-        
-        http_error = httpx.HTTPStatusError(
-            "HTTP Error",
-            request=MagicMock(),
-            response=mock_response
-        )
-        
+
+        http_error = httpx.HTTPStatusError("HTTP Error", request=MagicMock(), response=mock_response)
+
         with patch('httpx.AsyncClient') as mock_client:
             mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
             mock_response.raise_for_status.side_effect = http_error
-            
+
             with pytest.raises(HTTPException) as exc_info:
                 await keycloak_client.create_user(
-                    username="test_user",
-                    email="test@example.com",
-                    password="password123",
-                    seller_id="seller_1"
+                    username="test_user", email="test@example.com", password="password123", seller_id="seller_1"
                 )
-            
+
             assert exc_info.value.status_code == 500
             assert "Erro ao criar usuário no Keycloak" in exc_info.value.detail
 
@@ -148,47 +137,37 @@ async def test_create_user_admin_token_error(keycloak_client):
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_response = MagicMock()
         mock_response.text = "Token acquisition failed"
-        mock_get_token.side_effect = httpx.HTTPStatusError(
-            "Token error",
-            request=MagicMock(),
-            response=mock_response
-        )
-        
+        mock_get_token.side_effect = httpx.HTTPStatusError("Token error", request=MagicMock(), response=mock_response)
+
         with pytest.raises(HTTPException) as exc_info:
             await keycloak_client.create_user(
-                username="test_user",
-                email="test@example.com",
-                password="password123",
-                seller_id="seller_1"
+                username="test_user", email="test@example.com", password="password123", seller_id="seller_1"
             )
-        
+
         assert exc_info.value.status_code == 500
         assert "Erro ao criar usuário no Keycloak" in exc_info.value.detail
 
 
-@pytest.mark.asyncio 
+@pytest.mark.asyncio
 async def test_create_user_payload_structure(keycloak_client):
     """Test create_user sends correct payload structure"""
     # Mock the admin token call
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_get_token.return_value = "admin_token"
-        
+
         # Mock the user creation call
         mock_response = MagicMock()
         mock_response.status_code = 201
         mock_response.raise_for_status.return_value = None
-        
+
         with patch('httpx.AsyncClient') as mock_client:
             mock_post = mock_client.return_value.__aenter__.return_value.post
             mock_post.return_value = mock_response
-            
+
             await keycloak_client.create_user(
-                username="test_user",
-                email="test@example.com",
-                password="password123",
-                seller_id="seller_1"
+                username="test_user", email="test@example.com", password="password123", seller_id="seller_1"
             )
-            
+
             # Verify the call was made with correct structure
             call_args = mock_post.call_args
             assert call_args[1]['json']['username'] == "test_user"

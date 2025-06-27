@@ -1,8 +1,9 @@
-from fastapi import status
+import pytest
+from fastapi import HTTPException, status
+
 from app.models.seller_model import Seller
 from app.paths import SELLER_BASE, SELLER_GET_BY_ID
-import pytest
-from fastapi import HTTPException
+
 
 def test_get_sellers(client, mock_seller_service):
     mock_seller_service.find.return_value = [Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")]
@@ -98,7 +99,7 @@ def test_get_by_id_or_cnpj_missing_both_params(client, mock_seller_service):
 
 def test_get_by_id_or_cnpj_both_params_provided(client, mock_seller_service):
     """Test GET by ID or CNPJ with both parameters - covers validation branch"""
-    # This should raise ValueError which gets converted to 500 by FastAPI  
+    # This should raise ValueError which gets converted to 500 by FastAPI
     try:
         response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1&cnpj=12345678000100")
         # If it doesn't raise, then the error handling is different
@@ -132,7 +133,7 @@ def test_get_by_id_access_denied(client, mock_seller_service):
     """Test GET by ID when user doesn't have permission - covers permission branch"""
     # Mock a seller that exists but user doesn't have access
     mock_seller_service.find_by_id.return_value = Seller(seller_id="999", nome_fantasia="Teste", cnpj="12345678000100")
-    
+
     response = client.get(f"{SELLER_GET_BY_ID}?seller_id=999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -145,9 +146,9 @@ def test_get_by_id_or_cnpj_exception_handling(client, mock_seller_service):
     # Since the try/catch only catches specific permission errors,
     # other exceptions will be handled by FastAPI's default error handler
     mock_seller_service.find_by_id.side_effect = HTTPException(status_code=500, detail="Database error")
-    
+
     response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1")
-    
+
     # Should return the HTTPException status
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -156,9 +157,9 @@ def test_get_by_id_or_cnpj_permission_exception(client, mock_seller_service):
     """Test permission exception handling in get_by_id_or_cnpj - covers permission exception branch"""
     # Mock service to raise an exception with permission text
     mock_seller_service.find_by_id.side_effect = Exception("usuário não tem permissão para acessar")
-    
+
     response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1")
-    
+
     # Should convert to 404 with specific message
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
@@ -167,8 +168,10 @@ def test_get_by_id_or_cnpj_permission_exception(client, mock_seller_service):
 def test_get_by_cnpj_access_denied_after_found(client, mock_seller_service):
     """Test CNPJ access denied after seller is found - covers CNPJ permission branch"""
     # Mock a seller that exists but user doesn't have access (seller_id not in user.sellers)
-    mock_seller_service.find_by_cnpj.return_value = Seller(seller_id="999", nome_fantasia="Teste", cnpj="12345678000100")
-    
+    mock_seller_service.find_by_cnpj.return_value = Seller(
+        seller_id="999", nome_fantasia="Teste", cnpj="12345678000100"
+    )
+
     response = client.get(f"{SELLER_GET_BY_ID}?cnpj=12345678000100")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND

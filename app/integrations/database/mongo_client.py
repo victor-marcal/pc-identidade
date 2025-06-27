@@ -41,7 +41,6 @@ class MongoClient:
         except Exception:
             ...
 
-
     def get_database(self, db_name: str) -> MongoDB:
         """
         Retorna uma instância do banco de dados especificado com os codecs corretos.
@@ -53,7 +52,6 @@ class MongoClient:
         # Acessa o banco de dados pelo nome e aplica os codecs
         database = self.motor_client.get_database(db_name, codec_options=codec_options)
         return MongoDB(database)
-
 
     def __getitem__(self, name: str) -> MongoDB:
         return self.get_database(name)

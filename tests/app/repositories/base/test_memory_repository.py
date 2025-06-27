@@ -1,19 +1,17 @@
-import pytest
 from unittest import mock
 from uuid import UUID
 
-from app.repositories.base.memory_repository import AsyncMemoryRepository
+import pytest
+
 from app.models.seller_model import Seller
+from app.repositories.base.memory_repository import AsyncMemoryRepository
+
 
 @pytest.mark.asyncio
 class TestAsyncMemoryRepository:
     async def test_create(self, mock_mongo_client):
         client, collection = mock_mongo_client
-        model = Seller(
-            seller_id="seller01",
-            nome_fantasia="Loja Exemplo",
-            cnpj="12345678000199"
-        )
+        model = Seller(seller_id="seller01", nome_fantasia="Loja Exemplo", cnpj="12345678000199")
         collection.insert_one.return_value = mock.MagicMock()
 
         repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
@@ -27,7 +25,7 @@ class TestAsyncMemoryRepository:
         collection.find_one.return_value = {
             "seller_id": "seller01",
             "nome_fantasia": "Loja Exemplo2 ",
-            "cnpj": "12345678000199"
+            "cnpj": "12345678000199",
         }
 
         repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
@@ -37,11 +35,7 @@ class TestAsyncMemoryRepository:
 
     async def test_find(self, mock_mongo_client):
         client, collection = mock_mongo_client
-        doc = {
-            "seller_id": "seller01",
-            "nome_fantasia": "Loja Exemplo3",
-            "cnpj": "12345678000199"
-        }
+        doc = {"seller_id": "seller01", "nome_fantasia": "Loja Exemplo3", "cnpj": "12345678000199"}
 
         async def cursor_simulator():
             yield doc
@@ -62,14 +56,10 @@ class TestAsyncMemoryRepository:
         collection.find_one_and_update.return_value = {
             "seller_id": "seller01",
             "nome_fantasia": STORE_UPDATE,
-            "cnpj": "12345678000199"
+            "cnpj": "12345678000199",
         }
 
-        model = Seller(
-            seller_id="seller01",
-            nome_fantasia=STORE_UPDATE,
-            cnpj="12345678000199"
-        )
+        model = Seller(seller_id="seller01", nome_fantasia=STORE_UPDATE, cnpj="12345678000199")
         repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.update("seller01", model)
 
@@ -90,11 +80,10 @@ class TestAsyncMemoryRepository:
         collection.find_one_and_update.return_value = {
             "seller_id": "seller01",
             "nome_fantasia": STORE_PATCH,
-            "cnpj": "12345678000199"
+            "cnpj": "12345678000199",
         }
 
         repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.patch("seller01", {"nome_fantasia": STORE_PATCH})
 
         assert result.nome_fantasia == STORE_PATCH
-

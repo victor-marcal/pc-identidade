@@ -1,11 +1,14 @@
-from app.common.datetime import utcnow
+from unittest.mock import ANY, AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, ANY
-from app.services.seller_service import SellerService
-from app.models.seller_model import Seller
-from app.models.seller_patch_model import SellerPatch
+
+from app.common.datetime import utcnow
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.common.exceptions.not_found_exception import NotFoundException
+from app.models.seller_model import Seller
+from app.models.seller_patch_model import SellerPatch
+from app.services.seller_service import SellerService
+
 
 @pytest.fixture
 def mock_repository():
@@ -19,6 +22,7 @@ def mock_repository():
     repo.patch = AsyncMock()
     return repo
 
+
 @pytest.fixture
 def mock_keycloak_client():
     client = MagicMock()
@@ -26,6 +30,7 @@ def mock_keycloak_client():
     client.update_user = AsyncMock()
     client.delete_user = AsyncMock()
     return client
+
 
 @pytest.fixture
 def seller_data():
@@ -41,9 +46,11 @@ def seller_data():
         audit_updated_at=None,
     )
 
+
 @pytest.fixture
 def patch_data():
     return SellerPatch(nome_fantasia="Nova Loja", cnpj="98765432109876")
+
 
 @pytest.mark.asyncio
 async def test_create_success(mock_repository, mock_keycloak_client, seller_data):
@@ -56,6 +63,7 @@ async def test_create_success(mock_repository, mock_keycloak_client, seller_data
 
     assert result == seller_data
 
+
 @pytest.mark.asyncio
 async def test_create_raises_if_id_exists(mock_repository, mock_keycloak_client, seller_data):
     mock_repository.find_by_id.return_value = seller_data
@@ -63,6 +71,7 @@ async def test_create_raises_if_id_exists(mock_repository, mock_keycloak_client,
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(BadRequestException):
         await service.create(seller_data)
+
 
 @pytest.mark.asyncio
 async def test_create_raises_if_nome_fantasia_exists(mock_repository, mock_keycloak_client, seller_data):
@@ -72,6 +81,7 @@ async def test_create_raises_if_nome_fantasia_exists(mock_repository, mock_keycl
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(BadRequestException):
         await service.create(seller_data)
+
 
 @pytest.mark.asyncio
 async def test_update_patch_success(mock_repository, mock_keycloak_client, seller_data, patch_data):
@@ -83,6 +93,7 @@ async def test_update_patch_success(mock_repository, mock_keycloak_client, selle
     result = await service.update("001", patch_data)
 
     assert result == seller_data
+
 
 @pytest.mark.asyncio
 async def test_update_patch_empty(mock_repository, mock_keycloak_client, seller_data):
@@ -98,6 +109,7 @@ async def test_update_patch_empty(mock_repository, mock_keycloak_client, seller_
     # Verifica que o resultado é o mesmo objeto
     assert result is seller_data
 
+
 @pytest.mark.asyncio
 async def test_update_patch_nome_fantasia_exists(mock_repository, mock_keycloak_client, seller_data, patch_data):
     existing = Seller(**{**seller_data.model_dump(), "seller_id": "002"})
@@ -108,6 +120,7 @@ async def test_update_patch_nome_fantasia_exists(mock_repository, mock_keycloak_
     with pytest.raises(BadRequestException):
         await service.update("001", patch_data)
 
+
 @pytest.mark.asyncio
 async def test_update_patch_not_found(mock_repository, mock_keycloak_client, patch_data):
     mock_repository.find_by_id.return_value = None
@@ -116,12 +129,14 @@ async def test_update_patch_not_found(mock_repository, mock_keycloak_client, pat
     with pytest.raises(NotFoundException):
         await service.update("001", patch_data)
 
+
 @pytest.mark.asyncio
 async def test_delete_success(mock_repository, mock_keycloak_client):
     mock_repository.delete_by_id.return_value = True
 
     service = SellerService(mock_repository, mock_keycloak_client)
     assert await service.delete_by_id("001") is True
+
 
 @pytest.mark.asyncio
 async def test_delete_not_found(mock_repository, mock_keycloak_client):
@@ -130,6 +145,7 @@ async def test_delete_not_found(mock_repository, mock_keycloak_client):
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(NotFoundException):
         await service.delete_by_id("001")
+
 
 @pytest.mark.asyncio
 async def test_find_by_id_success(mock_repository, mock_keycloak_client, seller_data):
@@ -140,6 +156,7 @@ async def test_find_by_id_success(mock_repository, mock_keycloak_client, seller_
 
     assert result == seller_data
 
+
 @pytest.mark.asyncio
 async def test_find_by_id_not_found(mock_repository, mock_keycloak_client):
     mock_repository.find_by_id.return_value = None
@@ -147,6 +164,7 @@ async def test_find_by_id_not_found(mock_repository, mock_keycloak_client):
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(NotFoundException):
         await service.find_by_id("001")
+
 
 @pytest.mark.asyncio
 async def test_find_by_cnpj_success(mock_repository, mock_keycloak_client, seller_data):
@@ -157,6 +175,7 @@ async def test_find_by_cnpj_success(mock_repository, mock_keycloak_client, selle
 
     assert result == seller_data
 
+
 @pytest.mark.asyncio
 async def test_find_by_cnpj_not_found(mock_repository, mock_keycloak_client):
     mock_repository.find_by_cnpj.return_value = None
@@ -164,6 +183,7 @@ async def test_find_by_cnpj_not_found(mock_repository, mock_keycloak_client):
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(NotFoundException):
         await service.find_by_cnpj("12345678901234")
+
 
 @pytest.mark.asyncio
 async def test_replace_success(mock_repository, mock_keycloak_client, seller_data):
@@ -176,14 +196,18 @@ async def test_replace_success(mock_repository, mock_keycloak_client, seller_dat
 
     assert result == seller_data
 
+
 @pytest.mark.asyncio
 async def test_replace_conflict_nome_fantasia(mock_repository, mock_keycloak_client, seller_data):
     mock_repository.find_by_id.return_value = seller_data
-    mock_repository.find_by_nome_fantasia.return_value = Seller(**{**seller_data.model_dump(), "nome_fantasia": "Outro", "seller_id": "002"})
+    mock_repository.find_by_nome_fantasia.return_value = Seller(
+        **{**seller_data.model_dump(), "nome_fantasia": "Outro", "seller_id": "002"}
+    )
 
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(BadRequestException):
         await service.replace("001", Seller(**{**seller_data.model_dump(), "nome_fantasia": "Outro"}))
+
 
 @pytest.mark.asyncio
 async def test_replace_not_found(mock_repository, mock_keycloak_client, seller_data):
@@ -192,6 +216,7 @@ async def test_replace_not_found(mock_repository, mock_keycloak_client, seller_d
     service = SellerService(mock_repository, mock_keycloak_client)
     with pytest.raises(NotFoundException):
         await service.replace("001", seller_data)
+
 
 @pytest.mark.asyncio
 async def test_replace_with_same_existing_nome_fantasia(mock_repository, mock_keycloak_client, seller_data):

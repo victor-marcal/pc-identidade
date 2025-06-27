@@ -11,13 +11,7 @@ class SellerRepository(AsyncMemoryRepository[Seller]):
     COLLECTION_NAME = "sellers"
 
     def __init__(self, client: "MongoClient", db_name: str):
-        super().__init__(
-            client=client,
-            db_name=db_name,
-            collection_name=self.COLLECTION_NAME,
-            model_class=Seller
-        )
-
+        super().__init__(client=client, db_name=db_name, collection_name=self.COLLECTION_NAME, model_class=Seller)
 
     async def find_by_nome_fantasia(self, nome_fantasia: str) -> Optional[Seller]:
         result = await self.collection.find_one({"nome_fantasia": nome_fantasia})

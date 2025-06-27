@@ -1,5 +1,7 @@
-import pytest
 from enum import StrEnum
+
+import pytest
+
 from app.api.common.scope import Scope
 
 

@@ -1,24 +1,23 @@
+from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.common.datetime import utcnow
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.common.exceptions.not_found_exception import NotFoundException
+from app.messages import (
+    MSG_NOME_FANTASIA_JA_CADASTRADO,
+    MSG_SELLER_CNPJ_NAO_ENCONTRADO,
+    MSG_SELLER_ID_JA_CADASTRADO,
+    MSG_SELLER_NAO_ENCONTRADO,
+)
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
-
-from app.clients.keycloak_admin_client import KeycloakAdminClient
-
-from app.messages import (
-    MSG_SELLER_ID_JA_CADASTRADO,
-    MSG_NOME_FANTASIA_JA_CADASTRADO,
-    MSG_SELLER_NAO_ENCONTRADO,
-    MSG_SELLER_CNPJ_NAO_ENCONTRADO,
-)
 
 from ..models import Seller
 from ..repositories import SellerRepository
 from .base import CrudService
 
 DEFAULT_USER = "system"
+
 
 class SellerService(CrudService[Seller, str]):
     def __init__(self, repository: SellerRepository, keycloak_client: KeycloakAdminClient):
@@ -40,11 +39,10 @@ class SellerService(CrudService[Seller, str]):
             username=data.seller_id,
             email=f"{data.seller_id}@email.com",
             password="senha123",  # Cenário de teste, já que a senha não é um parametro
-            seller_id=data.seller_id
+            seller_id=data.seller_id,
         )
 
         return await self.repository.create(data)
-
 
     async def delete_by_id(self, entity_id) -> None:
         deleted = await self.repository.delete_by_id(entity_id)
@@ -57,7 +55,7 @@ class SellerService(CrudService[Seller, str]):
         if not seller:
             raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=seller_id))
         return seller
-    
+
     async def find_by_cnpj(self, cnpj: str) -> Seller:
         seller = await self.repository.find_by_cnpj(cnpj)
         if not seller:
@@ -79,7 +77,7 @@ class SellerService(CrudService[Seller, str]):
             update_data["cnpj"] = data.cnpj
 
         if not update_data:
-            return current 
+            return current
 
         now = utcnow()
         update_data["updated_at"] = now

@@ -1,13 +1,11 @@
 from pydantic import Field, MongoDsn
 from pydantic_settings import SettingsConfigDict
+
 from .base import BaseSettings
 
 
 class AppSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        extra="ignore",
-        case_sensitive=False 
-    )
+    model_config = SettingsConfigDict(extra="ignore", case_sensitive=False)
     version: str = "0.0.2"
     app_version: str = Field("0.0.1", description="Versão da aplicação")
     app_name: str = Field(default="PC Identidade", title="Nome da aplicação")

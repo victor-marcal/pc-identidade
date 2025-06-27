@@ -13,7 +13,6 @@ from app.api.common.injector import get_seller_id_from_path
 from app.common.exceptions import ForbiddenException, UnauthorizedException
 from app.container import Container
 from app.integrations.auth.keycloak_adapter import OAuthException
-
 from app.models.base import UserModel
 
 if TYPE_CHECKING:

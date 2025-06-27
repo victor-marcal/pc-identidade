@@ -1,13 +1,15 @@
 """
 Test health check exceptions following SOLID principles and clean code practices.
 """
+
 import pytest
+
 from app.services.health_check.exceptions import (
     HealthCheckException,
     InvalidConfigurationException,
-    ServiceWarning,
+    ServiceReturnedUnexpectedResult,
     ServiceUnavailable,
-    ServiceReturnedUnexpectedResult
+    ServiceWarning,
 )
 
 
@@ -18,7 +20,7 @@ class TestHealthCheckException:
         """Test HealthCheckException initialization"""
         message = "Test error"
         exception = HealthCheckException(message)
-        
+
         assert exception.message == message
         assert exception.message_type == "unknown error"
 
@@ -26,15 +28,15 @@ class TestHealthCheckException:
         """Test HealthCheckException string representation"""
         message = "Test error"
         exception = HealthCheckException(message)
-        
+
         result = str(exception)
-        
+
         assert result == "unknown error: Test error"
 
     def test_health_check_exception_inheritance(self):
         """Test HealthCheckException inherits from Exception"""
         exception = HealthCheckException("test")
-        
+
         assert isinstance(exception, Exception)
 
 
@@ -45,7 +47,7 @@ class TestInvalidConfigurationException:
         """Test InvalidConfigurationException initialization"""
         message = "Invalid config"
         exception = InvalidConfigurationException(message)
-        
+
         assert exception.message == message
         assert exception.message_type == "unexpected configuration"
 
@@ -53,15 +55,15 @@ class TestInvalidConfigurationException:
         """Test InvalidConfigurationException string representation"""
         message = "Invalid config"
         exception = InvalidConfigurationException(message)
-        
+
         result = str(exception)
-        
+
         assert result == "unexpected configuration: Invalid config"
 
     def test_invalid_configuration_exception_inheritance(self):
         """Test InvalidConfigurationException inherits from HealthCheckException"""
         exception = InvalidConfigurationException("test")
-        
+
         assert isinstance(exception, HealthCheckException)
 
 
@@ -72,7 +74,7 @@ class TestServiceWarning:
         """Test ServiceWarning initialization"""
         message = "Service warning"
         exception = ServiceWarning(message)
-        
+
         assert exception.message == message
         assert exception.message_type == "warning"
 
@@ -80,15 +82,15 @@ class TestServiceWarning:
         """Test ServiceWarning string representation"""
         message = "Service warning"
         exception = ServiceWarning(message)
-        
+
         result = str(exception)
-        
+
         assert result == "warning: Service warning"
 
     def test_service_warning_inheritance(self):
         """Test ServiceWarning inherits from HealthCheckException"""
         exception = ServiceWarning("test")
-        
+
         assert isinstance(exception, HealthCheckException)
 
 
@@ -99,7 +101,7 @@ class TestServiceUnavailable:
         """Test ServiceUnavailable initialization"""
         message = "Service down"
         exception = ServiceUnavailable(message)
-        
+
         assert exception.message == message
         assert exception.message_type == "unavailable"
 
@@ -107,15 +109,15 @@ class TestServiceUnavailable:
         """Test ServiceUnavailable string representation"""
         message = "Service down"
         exception = ServiceUnavailable(message)
-        
+
         result = str(exception)
-        
+
         assert result == "unavailable: Service down"
 
     def test_service_unavailable_inheritance(self):
         """Test ServiceUnavailable inherits from HealthCheckException"""
         exception = ServiceUnavailable("test")
-        
+
         assert isinstance(exception, HealthCheckException)
 
 
@@ -126,7 +128,7 @@ class TestServiceReturnedUnexpectedResult:
         """Test ServiceReturnedUnexpectedResult initialization"""
         message = "Unexpected response"
         exception = ServiceReturnedUnexpectedResult(message)
-        
+
         assert exception.message == message
         assert exception.message_type == "unexpected result"
 
@@ -134,15 +136,15 @@ class TestServiceReturnedUnexpectedResult:
         """Test ServiceReturnedUnexpectedResult string representation"""
         message = "Unexpected response"
         exception = ServiceReturnedUnexpectedResult(message)
-        
+
         result = str(exception)
-        
+
         assert result == "unexpected result: Unexpected response"
 
     def test_service_returned_unexpected_result_inheritance(self):
         """Test ServiceReturnedUnexpectedResult inherits from HealthCheckException"""
         exception = ServiceReturnedUnexpectedResult("test")
-        
+
         assert isinstance(exception, HealthCheckException)
 
 
@@ -152,21 +154,21 @@ class TestModuleExports:
     def test_module_all_exports(self):
         """Test that all expected classes are exported in __all__"""
         from app.services.health_check import exceptions
-        
+
         expected_exports = [
             "HealthCheckException",
-            "ServiceWarning", 
+            "ServiceWarning",
             "ServiceUnavailable",
-            "ServiceReturnedUnexpectedResult"
+            "ServiceReturnedUnexpectedResult",
         ]
-        
+
         assert hasattr(exceptions, '__all__')
         assert all(export in exceptions.__all__ for export in expected_exports)
 
     def test_all_classes_accessible(self):
         """Test that all classes are accessible through the module"""
         from app.services.health_check import exceptions
-        
+
         # Test direct access to classes
         assert hasattr(exceptions, 'HealthCheckException')
         assert hasattr(exceptions, 'InvalidConfigurationException')

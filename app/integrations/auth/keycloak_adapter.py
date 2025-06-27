@@ -5,15 +5,15 @@ import jwt
 
 
 class OAuthException(Exception):
-    """ Exceção geral de autenticação """
+    """Exceção geral de autenticação"""
 
 
 class TokenExpiredException(OAuthException):
-    """ Token expirou """
+    """Token expirou"""
 
 
 class InvalidTokenException(OAuthException):
-    """ Token inválido """
+    """Token inválido"""
 
 
 class KeycloakAdapter:

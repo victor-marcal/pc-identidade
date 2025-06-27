@@ -1,13 +1,12 @@
 from dependency_injector import containers, providers
 
-from app.settings.app import settings as settings_instance, AppSettings
-
-
-from app.integrations.database.mongo_client import MongoClient
-from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 from app.clients.keycloak_admin_client import KeycloakAdminClient
+from app.integrations.auth.keycloak_adapter import KeycloakAdapter
+from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
 from app.services import HealthCheckService, SellerService
+from app.settings.app import AppSettings
+from app.settings.app import settings as settings_instance
 
 
 class Container(containers.DeclarativeContainer):
@@ -39,9 +38,7 @@ class Container(containers.DeclarativeContainer):
 
     # Serviços
     health_check_service = providers.Singleton(
-        HealthCheckService,
-        checkers=config.health_check_checkers,
-        settings=settings
+        HealthCheckService, checkers=config.health_check_checkers, settings=settings
     )
 
     seller_service = providers.Singleton(

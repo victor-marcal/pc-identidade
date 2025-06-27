@@ -1,15 +1,17 @@
 import httpx
 from fastapi import HTTPException, status
 
-from app.settings.app import settings
 from app.common.exceptions.bad_request_exception import BadRequestException
+from app.settings.app import settings
 
 
 class KeycloakAdminClient:
     def __init__(self):
         self.settings = settings
         self.base_url = f"{self.settings.KEYCLOAK_URL}/admin/realms/{self.settings.KEYCLOAK_REALM_NAME}"
-        self.token_url = f"{self.settings.KEYCLOAK_URL}/realms/{self.settings.KEYCLOAK_REALM_NAME}/protocol/openid-connect/token"
+        self.token_url = (
+            f"{self.settings.KEYCLOAK_URL}/realms/{self.settings.KEYCLOAK_REALM_NAME}/protocol/openid-connect/token"
+        )
 
     async def _get_admin_token(self) -> str:
         """
@@ -44,7 +46,7 @@ class KeycloakAdminClient:
                 "credentials": [{"type": "password", "value": password, "temporary": False}],
                 "attributes": {"sellers": [seller_id]},
                 "realmRoles": ["offline_access", "uma_authorization"],
-                "requiredActions": []
+                "requiredActions": [],
             }
 
             users_url = f"{self.base_url}/users"
@@ -61,5 +63,5 @@ class KeycloakAdminClient:
             # Captura erros da API do Keycloak e os relança como exceções da aplicação
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}"
+                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}",
             )

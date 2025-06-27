@@ -1,23 +1,20 @@
 from typing import TYPE_CHECKING, Optional
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Query, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.api.common.auth_handler import do_auth
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
 from app.container import Container
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
-from app.api.common.auth_handler import do_auth
-
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
 
-
 if TYPE_CHECKING:
-    from app.services import SellerService
     from app.api.common.auth_handler import UserAuthInfo
-    from app.models.seller_model import Seller
+    from app.services import SellerService
 
 
 router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])
@@ -30,7 +27,7 @@ async def _find_seller_by_id_with_access_check(seller_id: str, user_info: "UserA
     """Busca seller por ID com validação de acesso"""
     if seller_id not in user_info.sellers:
         raise HTTPException(status_code=404, detail=SELLER_NOT_FOUND_OR_ACCESS_DENIED)
-    
+
     seller = await seller_service.find_by_id(seller_id)
     if not seller:
         raise HTTPException(status_code=404, detail="Seller não encontrado")
@@ -42,10 +39,10 @@ async def _find_seller_by_cnpj_with_access_check(cnpj: str, user_info: "UserAuth
     seller = await seller_service.find_by_cnpj(cnpj)
     if not seller:
         raise HTTPException(status_code=404, detail="Seller não encontrado")
-    
+
     if seller.seller_id not in user_info.sellers:
         raise HTTPException(status_code=404, detail=SELLER_NOT_FOUND_OR_ACCESS_DENIED)
-    
+
     return seller
 
 
@@ -95,10 +92,10 @@ async def get_by_id_or_cnpj(
     """
     if not seller_id and not cnpj:
         raise HTTPException(status_code=400, detail="seller_id ou cnpj deve ser fornecido")
-    
+
     if seller_id and cnpj:
         raise HTTPException(status_code=400, detail="Apenas seller_id ou cnpj deve ser fornecido, não ambos")
-    
+
     try:
         if seller_id:
             return await _find_seller_by_id_with_access_check(seller_id, auth_info, seller_service)
@@ -117,7 +114,7 @@ async def get_by_id_or_cnpj(
     description="Buscar um Seller pelo seu 'seller_id'. Requer autorização.",
     status_code=status.HTTP_200_OK,
     summary="Buscar Seller por ID",
-    dependencies=[Depends(do_auth)]  # Protegida pelo novo handler
+    dependencies=[Depends(do_auth)],  # Protegida pelo novo handler
 )
 @inject
 async def get_by_id(
@@ -131,7 +128,6 @@ async def get_by_id(
     return await seller_service.find_by_id(seller_id)
 
 
-
 @router.post(
     "",
     response_model=SellerResponse,
@@ -141,7 +137,10 @@ async def get_by_id(
     summary="Criar um novo Seller",
 )
 @inject
-async def create(seller: SellerCreate, seller_service: "SellerService" = Depends(Provide[Container.seller_service]),):
+async def create(
+    seller: SellerCreate,
+    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+):
     return await seller_service.create(seller)
 
 
@@ -152,7 +151,7 @@ async def create(seller: SellerCreate, seller_service: "SellerService" = Depends
     description="Atualizar um Seller pelo 'seller_id'",
     status_code=status.HTTP_200_OK,
     summary="Atualizar um Seller",
-    dependencies=[Depends(do_auth)]
+    dependencies=[Depends(do_auth)],
 )
 @inject
 async def update_by_id(
@@ -174,7 +173,7 @@ async def update_by_id(
     description="Remove um Seller pelo 'seller_id'",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remover um Seller",
-    dependencies=[Depends(do_auth)]
+    dependencies=[Depends(do_auth)],
 )
 @inject
 async def delete_by_id(
@@ -194,7 +193,7 @@ async def delete_by_id(
     description="Substitui completamente um Seller",
     status_code=status.HTTP_200_OK,
     summary="Atualizar Seller (completo)",
-    dependencies=[Depends(do_auth)]
+    dependencies=[Depends(do_auth)],
 )
 @inject
 async def replace_by_id(

@@ -19,6 +19,7 @@ def test_worker_module_all_attribute():
     """Test worker module __all__ attribute coverage"""
     try:
         import app.worker
+
         # This should fail during import, but we can test __all__ exists
         assert hasattr(app.worker, '__all__')
         expected_all = ["WorkerDefinition", "WorkerFactory", "WorkerInfo"]
@@ -26,9 +27,9 @@ def test_worker_module_all_attribute():
     except ImportError:
         # Expected when worker_factory module doesn't exist
         # But we can still import the module to test the __all__ attribute
-        import sys
         import importlib.util
-        
+        import sys
+
         # Import the module source to test __all__ definition
         spec = importlib.util.find_spec("app.worker")
         if spec and spec.origin:

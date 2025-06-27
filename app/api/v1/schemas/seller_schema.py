@@ -1,20 +1,20 @@
 import re
 from typing import Optional
-from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
 from app.api.common.schemas import SchemaType
 from app.messages import (
-    DESC_SELLER_ID,
-    DESC_NOME_FANTASIA,
     DESC_CNPJ,
-    MSG_SELLER_ID_OBRIGATORIO,
-    MSG_SELLER_ID_FORMATO,
-    MSG_NOME_FANTASIA_CURTO,
+    DESC_NOME_FANTASIA,
+    DESC_SELLER_ID,
     MSG_CNPJ_FORMATO,
     MSG_CNPJ_FORMATO_REPLACE,
+    MSG_NOME_FANTASIA_CURTO,
+    MSG_SELLER_ID_FORMATO,
+    MSG_SELLER_ID_OBRIGATORIO,
 )
+
 
 class SellerBase(SchemaType):
     seller_id: str = Field(..., description=DESC_SELLER_ID)
@@ -28,7 +28,7 @@ class SellerBase(SchemaType):
         if not re.fullmatch(r"^[a-z0-9]+$", v):
             raise ValueError(MSG_SELLER_ID_FORMATO)
         return v
-    
+
     @field_validator('nome_fantasia')
     def validar_nome_fantasia(cls, v):
         if not v or len(v.strip()) < 3:
