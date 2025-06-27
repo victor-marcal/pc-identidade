@@ -76,3 +76,34 @@ class TestSellerPatchValidation:
         
         assert patch_data.nome_fantasia is None
         assert patch_data.cnpj is None
+
+    def test_seller_patch_nome_fantasia_none_validation(self):
+        """Test that nome_fantasia can be None - covers None branch"""
+        seller_patch = SellerPatch(nome_fantasia=None, cnpj="12345678000100")
+        assert seller_patch.nome_fantasia is None
+
+    def test_seller_patch_cnpj_none_validation(self):
+        """Test that cnpj can be None - covers None branch"""
+        seller_patch = SellerPatch(nome_fantasia="Teste", cnpj=None)
+        assert seller_patch.cnpj is None
+
+    def test_seller_patch_nome_fantasia_whitespace_only(self):
+        """Test nome_fantasia with only whitespace - covers strip() branch"""
+        with pytest.raises(ValidationError) as exc_info:
+            SellerPatch(nome_fantasia="  ", cnpj="12345678000100")
+        
+        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(exc_info.value)
+
+    def test_seller_patch_cnpj_non_digit_characters(self):
+        """Test CNPJ with non-digit characters - covers isdigit() False branch"""
+        with pytest.raises(ValidationError) as exc_info:
+            SellerPatch(nome_fantasia="Teste", cnpj="12345678000a00")
+        
+        assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)
+
+    def test_seller_patch_cnpj_wrong_length(self):
+        """Test CNPJ with wrong length - covers len() != 14 branch"""
+        with pytest.raises(ValidationError) as exc_info:
+            SellerPatch(nome_fantasia="Teste", cnpj="123456780001")  # 12 digits
+        
+        assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)

@@ -1,4 +1,4 @@
-import pytest
+from typing import Optional
 from typing import Optional
 from pydantic import BaseModel, Field
 from app.models.query_model import QueryModel, _query_mapper
@@ -239,3 +239,69 @@ def test_to_query_dict_with_default_values():
         "priority": {"$gte": 1},
         "category": "important"
     }
+
+
+def test_query_model_empty_exclude_none():
+    """Test QueryModel with empty values - covers empty branch"""
+    model = QueryModel()
+    result = model.model_dump(exclude_none=True)
+    
+    assert result == {}
+
+
+def test_query_model_with_none_values():
+    """Test QueryModel filtering None values - covers None filtering branch"""
+    
+    class TestQuery(QueryModel):
+        field1: Optional[str] = None
+        field2: Optional[str] = None
+        field3: str = "value3"
+    
+    model = TestQuery(field1=None, field2=None, field3="value3")
+    result = model.model_dump(exclude_none=True)
+    
+    # Should filter out None values
+    expected = {"field3": "value3"}
+    assert result == expected
+
+
+def test_query_model_to_query_dict_empty():
+    """Test to_query_dict with empty values - covers empty filtering branch"""
+    model = QueryModel()
+    result = model.to_query_dict()
+    
+    assert result == {}
+
+
+def test_query_model_to_query_dict_mixed_operators():
+    """Test to_query_dict with mixed operators - covers multiple filter branches"""
+    
+    class TestQuery(QueryModel):
+        age__ge: Optional[int] = None
+        age__lt: Optional[int] = None
+        name: Optional[str] = None
+        valid_field: str = "test"
+    
+    model = TestQuery(age__ge=18, age__lt=65, name=None, valid_field="test")
+    result = model.to_query_dict()
+    
+    # Check that both age operators are combined correctly
+    assert "age" in result
+    assert result["age"]["$gte"] == 18
+    assert result["age"]["$lt"] == 65
+    assert result["valid_field"] == "test"
+    # Name should not be in result due to exclude_none
+
+
+def test_query_model_to_query_dict_no_operators():
+    """Test to_query_dict without operators - covers non-operator branch"""
+    
+    class TestQuery(QueryModel):
+        simple_field: str = "value"
+        another_field: int = 42
+    
+    model = TestQuery(simple_field="value", another_field=42)
+    result = model.to_query_dict()
+    
+    expected = {"simple_field": "value", "another_field": 42}
+    assert result == expected
