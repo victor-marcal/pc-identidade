@@ -4,6 +4,15 @@ import pytest
 
 from app.integrations.database.mongo_client import MongoClient, MongoDB, SetCodec
 
+# Dicionário com constantes para evitar duplicação
+TEST_MONGO_DATA = {
+    "url": "mongodb://localhost:27017/test",
+    "db_name": "test_db",
+    "collection_name": "test_collection",
+    "database_name": "test_database",
+    "error_message": "Connection error"
+}
+
 
 def test_set_codec_properties():
     """Test SetCodec class properties - follows Single Responsibility Principle"""
@@ -49,10 +58,10 @@ def test_mongo_db_getitem():
 
     mongo_db = MongoDB(mock_db)
 
-    result = mongo_db["test_collection"]
+    result = mongo_db[TEST_MONGO_DATA["collection_name"]]
 
     assert result == mock_collection
-    mock_db.__getitem__.assert_called_once_with("test_collection")
+    mock_db.__getitem__.assert_called_once_with(TEST_MONGO_DATA["collection_name"])
 
 
 @patch('app.integrations.database.mongo_client.AsyncIOMotorClient')
@@ -60,7 +69,7 @@ def test_mongo_client_init(mock_async_client):
     """Test MongoClient initialization - follows Dependency Inversion Principle"""
     from pydantic import MongoDsn
 
-    mongo_url = MongoDsn("mongodb://localhost:27017/test")
+    mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
     mock_instance = MagicMock()
     mock_async_client.return_value = mock_instance
 
@@ -79,7 +88,7 @@ def test_mongo_client_close():
         mock_instance = MagicMock()
         mock_async_client.return_value = mock_instance
 
-        mongo_url = MongoDsn("mongodb://localhost:27017/test")
+        mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
         client = MongoClient(mongo_url)
 
         client.close()
@@ -95,11 +104,11 @@ def test_mongo_client_del_with_exception():
         mock_instance = MagicMock()
         mock_async_client.return_value = mock_instance
 
-        mongo_url = MongoDsn("mongodb://localhost:27017/test")
+        mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
         client = MongoClient(mongo_url)
 
         # Test __del__ with exception handling - should not raise
-        mock_instance.close.side_effect = Exception("Connection error")
+        mock_instance.close.side_effect = Exception(TEST_MONGO_DATA["error_message"])
 
         try:
             del client  # This should not raise an exception
@@ -117,10 +126,10 @@ def test_mongo_client_get_database(mock_async_client):
     mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
 
-    mongo_url = MongoDsn("mongodb://localhost:27017/test")
+    mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
     client = MongoClient(mongo_url)
 
-    result = client.get_database("test_db")
+    result = client.get_database(TEST_MONGO_DATA["db_name"])
 
     assert isinstance(result, MongoDB)
     assert result.db == mock_db
@@ -138,10 +147,10 @@ def test_mongo_client_getitem(mock_async_client):
     mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
 
-    mongo_url = MongoDsn("mongodb://localhost:27017/test")
+    mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
     client = MongoClient(mongo_url)
 
-    result = client["test_database"]
+    result = client[TEST_MONGO_DATA["database_name"]]
 
     assert isinstance(result, MongoDB)
     assert result.db == mock_db
@@ -161,11 +170,11 @@ def test_mongo_client_database_collection_access(mock_async_client):
     mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
 
-    mongo_url = MongoDsn("mongodb://localhost:27017/test")
+    mongo_url = MongoDsn(TEST_MONGO_DATA["url"])
     client = MongoClient(mongo_url)
 
     # Test getting database and collection via []
-    database = client["test_database"]
-    collection = database["test_collection"]
+    database = client[TEST_MONGO_DATA["database_name"]]
+    collection = database[TEST_MONGO_DATA["collection_name"]]
 
     assert collection == mock_collection

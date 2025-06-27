@@ -10,6 +10,18 @@ from app.api.router import routes as router
 from app.container import Container
 from app.settings import ApiSettings, api_settings
 
+# Constantes para testes
+TEST_CONSTANTS = {
+    "app_name": "TestApp",
+    "openapi_path": "/openapi.json", 
+    "version": "0.1.0",
+    "health_check_base_path": "/health",
+    "test_user_id": "test-user-id",
+    "test_server": "test-server",
+    "test_trace_id": "test-trace-id",
+    "test_sellers": "1,2,3"
+}
+
 
 @pytest.fixture
 def mock_mongo_client():
@@ -65,7 +77,10 @@ def dummy_router():
 @pytest.fixture
 def dummy_settings():
     return ApiSettings(
-        app_name="TestApp", openapi_path="/openapi.json", version="0.1.0", health_check_base_path="/health"
+        app_name=TEST_CONSTANTS["app_name"], 
+        openapi_path=TEST_CONSTANTS["openapi_path"], 
+        version=TEST_CONSTANTS["version"], 
+        health_check_base_path=TEST_CONSTANTS["health_check_base_path"]
     )
 
 
@@ -91,7 +106,7 @@ def client(mock_seller_service):
     # Mock KeycloakAdapter para evitar conexões HTTP reais
     mock_keycloak_adapter = MagicMock()
     mock_keycloak_adapter.validate_token = AsyncMock(
-        return_value={"sub": "test-user-id", "iss": "test-server", "sellers": "1,2,3"}
+        return_value={"sub": TEST_CONSTANTS["test_user_id"], "iss": TEST_CONSTANTS["test_server"], "sellers": TEST_CONSTANTS["test_sellers"]}
     )
     container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
 
@@ -101,8 +116,8 @@ def client(mock_seller_service):
     # Override auth dependency for tests
     def mock_do_auth():
         return UserAuthInfo(
-            user=UserModel(name="test-user-id", server="test-server"),
-            trace_id="test-trace-id",
+            user=UserModel(name=TEST_CONSTANTS["test_user_id"], server=TEST_CONSTANTS["test_server"]),
+            trace_id=TEST_CONSTANTS["test_trace_id"],
             sellers=["1", "2", "3"],  # Mock seller permissions
         )
 
