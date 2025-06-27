@@ -1,2 +1,10 @@
 ENV=dev
 APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
+
+# Configurações do Keycloak
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=pc-identidade-client
+KEYCLOAK_ADMIN_USER=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+KEYCLOAK_ADMIN_CLIENT_ID=admin-cli

@@ -7,7 +7,7 @@ from app.common.error_codes import ErrorCodes
 VALID_LOCATIONS = {"query", "path", "body", "header"}
 
 def extract_error_detail(error):
-    ctx = error.get("ctx", {})
+    ctx = error.get("ctx", {}) or {}  # Handle None ctx
     if isinstance(ctx.get("error", {}), ValueError):
         ctx["error"] = str(ctx["error"])
     raw_location = error["loc"][0] if error["loc"] else "body"

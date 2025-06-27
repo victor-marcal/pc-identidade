@@ -77,6 +77,7 @@ def mock_seller_service():
 def client(mock_seller_service):
     from app.container import Container
     from app.api.v1.routers import seller_router
+    from app.integrations.auth import get_current_user, TokenData
 
     app = FastAPI()
 
@@ -85,6 +86,17 @@ def client(mock_seller_service):
 
     container.wire(modules=[seller_router])
     app.container = container
+
+    # Override auth dependency for tests
+    def mock_get_current_user():
+        return TokenData(
+            sub="test-user-id",
+            preferred_username="test-user",
+            sellers=["1", "2", "3"],  # Mock seller permissions
+            exp=9999999999  # Far future timestamp
+        )
+    
+    app.dependency_overrides[get_current_user] = mock_get_current_user
 
     app.include_router(seller_router.router, prefix="/seller/v1")
 

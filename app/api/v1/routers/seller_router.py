@@ -66,6 +66,7 @@ async def get_by_id(
     return await seller_service.find_by_id(seller_id)
 
 
+
 @router.post(
     "",
     response_model=SellerResponse,
@@ -98,7 +99,7 @@ async def update_by_id(
     Atualiza os dados do seller. Pode alterar nome_fantasia e/ou cnpj.
     """
     # Converte apenas os campos que foram enviados na requisição
-    patch_data = SellerPatch(**seller.dict(exclude_unset=True))
+    patch_data = SellerPatch(**seller.model_dump(exclude_unset=True))
     return await seller_service.update(seller_id, patch_data)
 
 
