@@ -58,13 +58,15 @@ def test_api_application_missing_lines():
     
     # Mock das configurações com campos obrigatórios
     settings = ApiSettings(
-        app_db_url_mongo="mongodb://localhost:27017/test",
+        settings = ApiSettings(
         KEYCLOAK_URL="http://localhost:8080",
-        KEYCLOAK_REALM_NAME="test",
-        KEYCLOAK_CLIENT_ID="test",
-        KEYCLOAK_ADMIN_USER="admin",
-        KEYCLOAK_ADMIN_PASSWORD="admin",
-        KEYCLOAK_ADMIN_CLIENT_ID="admin-cli"
+        KEYCLOAK_REALM_NAME="marketplace",
+        KEYCLOAK_CLIENT_ID="varejo",
+        KEYCLOAK_WELL_KNOWN_URL="http://localhost:8080/realms/marketplace/.well-known/openid-configuration",
+        KEYCLOAK_ADMIN_USER="admin_marketplace",
+        KEYCLOAK_ADMIN_PASSWORD="senha123",
+        KEYCLOAK_ADMIN_CLIENT_ID="admin-cli",
+    )
     )
     
     # Testa configuração de middlewares
