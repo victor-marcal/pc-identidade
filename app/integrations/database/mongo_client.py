@@ -41,16 +41,19 @@ class MongoClient:
         except Exception:
             ...
 
-    def get_default_database(self) -> MongoDB:
+
+    def get_database(self, db_name: str) -> MongoDB:
+        """
+        Retorna uma instância do banco de dados especificado com os codecs corretos.
+        """
         type_registry = TypeRegistry([SetCodec()])
         codec_options: CodecOptions = CodecOptions(
             type_registry=type_registry, uuid_representation=UuidRepresentation.STANDARD, tz_aware=True
         )
-        return MongoDB(self.motor_client.get_default_database(codec_options=codec_options))
+        # Acessa o banco de dados pelo nome e aplica os codecs
+        database = self.motor_client.get_database(db_name, codec_options=codec_options)
+        return MongoDB(database)
+
 
     def __getitem__(self, name: str) -> MongoDB:
-        return MongoDB(self.motor_client[name])
-
-    def get_collection(self, name: str) -> AgnosticCollection:
-        collection = self.get_default_database()[name]
-        return collection
+        return self.get_database(name)

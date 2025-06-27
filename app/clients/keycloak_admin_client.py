@@ -37,10 +37,13 @@ class KeycloakAdminClient:
             user_payload = {
                 "username": username,
                 "email": email,
+                "firstName": username,
+                "lastName": username,
                 "enabled": True,
                 "emailVerified": True,
                 "credentials": [{"type": "password", "value": password, "temporary": False}],
                 "attributes": {"sellers": [seller_id]},
+                "realmRoles": ["offline_access", "uma_authorization"],
                 "requiredActions": []
             }
 

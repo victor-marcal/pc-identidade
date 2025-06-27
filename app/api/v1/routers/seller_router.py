@@ -8,7 +8,7 @@ from app.container import Container
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
-from app.integrations.auth import get_current_user, TokenData, check_seller_permission
+from app.api.common.auth_handler import do_auth
 
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
@@ -46,43 +46,24 @@ async def get(
 
 
 @router.get(
-    "/buscar",
+    "/{seller_id}",
     response_model=SellerResponse,
-    name="Retorna Sellers por ID ou CNPJ",
-    description="Buscar um Seller pelo seu 'seller_id' ou 'cnpj'",
+    name="Buscar Seller por ID",
+    description="Buscar um Seller pelo seu 'seller_id'. Requer autorização.",
     status_code=status.HTTP_200_OK,
-    summary="Buscar Seller por ID ou CNPJ",
+    summary="Buscar Seller por ID",
+    dependencies=[Depends(do_auth)]  # Protegida pelo novo handler
 )
 @inject
-async def get_by_id_or_cnpj(
-    seller_id: Optional[str] = Query(None, description="ID do Seller"),
-    cnpj: Optional[str] = Query(None, description="CNPJ do Seller"),
+async def get_by_id(
+    seller_id: str,
     seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
-    current_user: TokenData = Depends(get_current_user),
 ):
     """
-    Retorna o seller correspondente ao seller_id ou cnpj.
-    Pelo menos um dos parâmetros deve ser informado.
-    O usuário precisa ter permissão para o seller solicitado.
+    Retorna os dados de um seller específico.
+    O usuário autenticado precisa ter permissão para o seller_id informado.
     """
-    if not seller_id and not cnpj:
-        raise ValueError("Informe seller_id ou cnpj para buscar o seller.")
-    if seller_id and cnpj:
-        raise ValueError("Informe apenas um dos parâmetros: seller_id ou cnpj.")
-
-    seller: Optional[Seller] = None
-    if seller_id:
-        seller = await seller_service.find_by_id(seller_id)
-    else:
-        seller = await seller_service.find_by_cnpj(cnpj)
-
-    if not seller or seller.seller_id not in current_user.sellers:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Seller não encontrado ou acesso não permitido."
-        )
-
-    return seller
+    return await seller_service.find_by_id(seller_id)
 
 
 @router.post(
@@ -105,7 +86,7 @@ async def create(seller: SellerCreate, seller_service: "SellerService" = Depends
     description="Atualizar um Seller pelo 'seller_id'",
     status_code=status.HTTP_200_OK,
     summary="Atualizar um Seller",
-    dependencies=[Depends(check_seller_permission)]
+    dependencies=[Depends(do_auth)]
 )
 @inject
 async def update_by_id(
@@ -127,7 +108,7 @@ async def update_by_id(
     description="Remove um Seller pelo 'seller_id'",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remover um Seller",
-    dependencies=[Depends(check_seller_permission)]
+    dependencies=[Depends(do_auth)]
 )
 @inject
 async def delete_by_id(
@@ -147,7 +128,7 @@ async def delete_by_id(
     description="Substitui completamente um Seller",
     status_code=status.HTTP_200_OK,
     summary="Atualizar Seller (completo)",
-    dependencies=[Depends(check_seller_permission)]
+    dependencies=[Depends(do_auth)]
 )
 @inject
 async def replace_by_id(

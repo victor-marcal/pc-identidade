@@ -15,17 +15,20 @@ Q = TypeVar("Q", bound=QueryModel)
 
 DEFAULT_USER = "system"
 
+
 class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
 
-    def __init__(self, client: MongoClient, collection_name: str, model_class: Type[T]):
+    def __init__(self, client: MongoClient, db_name: str, collection_name: str, model_class: Type[T]):
         """
         Repositório genérico para MongoDB.
 
         :param client: Instância do MongoClient.
+        :param db_name: Nome do banco de dados a ser utilizado.
         :param collection_name: Nome da coleção.
         :param model_class: Classe do modelo (usada para criar instâncias de saída).
         """
-        self.collection = client.get_default_database()[collection_name]
+        database = client.get_database(db_name)
+        self.collection = database[collection_name]
         self.model_class = model_class
 
     async def create(self, entity: T) -> T:
