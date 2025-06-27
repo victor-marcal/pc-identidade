@@ -313,6 +313,44 @@ Com os containers rodando e o token configurado, execute:
 SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
 
+## 📄 Sistema de Migrations para MongoDB
+
+O projeto utiliza um sistema de migrations para gerenciar mudanças no esquema do banco de dados MongoDB de forma organizada e versionada.
+
+### 🚀 Como criar uma nova migration
+
+Você pode criar uma nova migration de duas formas:
+
+**Opção 1 - Usando o comando original da biblioteca:**
+```bash
+mongodb-migrate-create --description "adicionar campo status na collection users"
+```
+
+**Opção 2 - Usando o comando do Makefile (recomendado):**
+```bash
+make migration-create NOME="adicionar campo status na collection users"
+```
+
+Ambos os comandos criarão um arquivo de migration na pasta `migrations/` com timestamp e descrição.
+
+### ▶️ Como executar as migrations
+
+Para aplicar todas as migrations pendentes, você pode usar:
+
+**Opção 1 - Usando o comando do Makefile (recomendado):**
+```bash
+make migration-run
+```
+
+**Opção 2 - Executando diretamente o script:**
+```bash
+python3.12 run_migrations.py
+```
+
+### 🔧 Configuração
+
+As migrations utilizam a mesma configuração de banco definida nas variáveis de ambiente do projeto (`APP_DB_URL_MONGO`).
+
 ## Contribuições e Atualizações
 O projeto está aberto a contribuições e atualizações da comunidade. O processo para contribuições é o seguinte:
 
