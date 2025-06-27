@@ -350,14 +350,3 @@ python3.12 run_migrations.py
 ### 🔧 Configuração
 
 As migrations utilizam a mesma configuração de banco definida nas variáveis de ambiente do projeto (`APP_DB_URL_MONGO`).
-
-## Contribuições e Atualizações
-O projeto está aberto a contribuições e atualizações da comunidade. O processo para contribuições é o seguinte:
-
-* **Pull Requests**: Contribuições devem ser submetidas como pull requests.
-* **Code Review**: Cada pull request passará por um code review detalhado pela equipe. Isso garante que o código esteja alinhado com os padrões de qualidade e funcionamento do projeto.
-* **Incorporação de Mudanças**: Após a aprovação no code review, as mudanças serão integradas ao código principal.
-
-## 📖 Recursos úteis
-
-- [Conventional Commits](https://www.conventionalcommits.org)
