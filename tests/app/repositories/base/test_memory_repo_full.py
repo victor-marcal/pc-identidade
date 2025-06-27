@@ -237,17 +237,12 @@ async def test_find_with_empty_result(mock_mongo_client):
     """Test find method with empty result"""
     mock_client, mock_collection = mock_mongo_client
 
-    # Mock the cursor chain - Important: Use MagicMock, not AsyncMock
     mock_cursor = MagicMock()
     mock_cursor.skip.return_value = mock_cursor
     mock_cursor.limit.return_value = mock_cursor
-
-    # Mock async iteration with no documents
-    async def mock_async_iter(self):
-        return
-        yield  # This will never execute
-
-    mock_cursor.__aiter__ = mock_async_iter
+    
+    # Mock async iterator para retornar lista vazia
+    mock_cursor.__aiter__.return_value = iter([])
     mock_collection.find.return_value = mock_cursor
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)

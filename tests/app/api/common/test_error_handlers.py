@@ -7,28 +7,38 @@ from pydantic import ValidationError
 
 from app.api.common.error_handlers import add_error_handlers, extract_error_detail, extract_error_detail_body
 
+DEFAULT_MENSAGE = {
+    "msgfield": "field required",
+    "error": "test error",
+    "msgValidation": "validation error",
+    "msgTest": "test message",
+}
+
+DEFAULT_PAGINATION= {
+    "request_path": "/test",
+}
 
 def test_extract_error_detail():
     """Test extract_error_detail function"""
     error = {
-        "msg": "field required",
+        "msg": DEFAULT_MENSAGE["msgfield"],
         "type": "missing",
         "loc": ["query", "field_name"],
-        "ctx": {"error": ValueError("test error")},
+        "ctx": {"error": ValueError(DEFAULT_MENSAGE["error"])},
     }
 
     result = extract_error_detail(error)
 
-    assert result.message == "field required"
+    assert result.message == DEFAULT_MENSAGE["msgfield"]
     assert result.location == "query"
     assert result.slug == "missing"
     assert result.field == "field_name"
-    assert result.ctx["error"] == "test error"
+    assert result.ctx["error"] == DEFAULT_MENSAGE["error"]
 
 
 def test_extract_error_detail_body_location():
     """Test extract_error_detail with body location"""
-    error = {"msg": "validation error", "type": "value_error", "loc": ["body", "field1", "subfield"], "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": ["body", "field1", "subfield"], "ctx": {}}
 
     result = extract_error_detail(error)
 
@@ -38,7 +48,7 @@ def test_extract_error_detail_body_location():
 
 def test_extract_error_detail_invalid_location():
     """Test extract_error_detail with invalid location defaults to body"""
-    error = {"msg": "validation error", "type": "value_error", "loc": ["invalid_location", "field_name"], "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": ["invalid_location", "field_name"], "ctx": {}}
 
     result = extract_error_detail(error)
 
@@ -48,7 +58,7 @@ def test_extract_error_detail_invalid_location():
 
 def test_extract_error_detail_empty_loc():
     """Test extract_error_detail with empty location"""
-    error = {"msg": "validation error", "type": "value_error", "loc": [], "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": [], "ctx": {}}
 
     result = extract_error_detail(error)
 
@@ -59,15 +69,15 @@ def test_extract_error_detail_empty_loc():
 def test_extract_error_detail_body():
     """Test extract_error_detail_body function"""
     error = {
-        "msg": "field required",
+        "msg": DEFAULT_MENSAGE["msgfield"],
         "type": "missing",
         "loc": ["field_name", "subfield"],
-        "ctx": {"error": "test error"},
+        "ctx": {"error": DEFAULT_MENSAGE["error"]},
     }
 
     result = extract_error_detail_body(error)
 
-    assert result.message == "field required"
+    assert result.message == DEFAULT_MENSAGE["msgfield"]
     assert result.location == "body"
     assert result.slug == "missing"
     assert result.field == "subfield"  # extract_error_detail_body skips first element for field
@@ -92,7 +102,7 @@ def test_extract_error_detail_body_with_value_error():
 
 def test_extract_error_detail_body_empty_loc():
     """Test extract_error_detail_body with empty location"""
-    error = {"msg": "validation error", "type": "value_error", "loc": [], "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": [], "ctx": {}}
 
     result = extract_error_detail_body(error)
 
@@ -110,7 +120,7 @@ def test_http_exception_handler():
         raise HTTPException(status_code=400, detail="Bad Request")
 
     client = TestClient(app)
-    response = client.get("/test")
+    response = client.get(DEFAULT_PAGINATION["request_path"])
 
     assert response.status_code == 400
     # The handler returns a structured error response
@@ -126,10 +136,9 @@ def test_validation_error_handler():
         return data
 
     client = TestClient(app)
-    response = client.post("/test", json="invalid")
+    response = client.post(DEFAULT_PAGINATION["request_path"], json="invalid")
 
     assert response.status_code == 422
-    # Should return structured validation error
 
 
 def test_add_error_handlers():
@@ -148,37 +157,37 @@ def test_add_error_handlers():
 def test_extract_error_detail_with_valueerror_ctx():
     """Test extract_error_detail with ValueError in ctx - covers isinstance branch"""
     error = {
-        "msg": "Test message",
+        "msg": DEFAULT_MENSAGE["msgTest"],
         "loc": ["query", "param"],
         "type": "value_error",
-        "ctx": {"error": ValueError("Test error")},
+        "ctx": {"error": ValueError(DEFAULT_MENSAGE["error"])},
     }
 
     result = extract_error_detail(error)
 
-    assert result.message == "Test message"
+    assert result.message == DEFAULT_MENSAGE["msgTest"]
     assert result.location == "query"
     assert result.slug == "value_error"
     assert result.field == "param"
-    assert result.ctx["error"] == "Test error"  # ValueError converted to string
+    assert result.ctx["error"] == DEFAULT_MENSAGE["error"]  # ValueError converted to string
 
 
 def test_extract_error_detail_with_non_valueerror_ctx():
     """Test extract_error_detail with non-ValueError in ctx - covers else branch"""
-    error = {"msg": "Test message", "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "string error"}}
+    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "string error"}}
 
     result = extract_error_detail(error)
 
-    assert result.message == "Test message"
+    assert result.message == DEFAULT_MENSAGE["msgTest"]
     assert result.location == "query"
     assert result.slug == "value_error"
     assert result.field == "param"
-    assert result.ctx["error"] == "string error"  # String remains as string
+    assert result.ctx["error"] == "string error"  
 
 
 def test_extract_error_detail_empty_location():
     """Test extract_error_detail with empty location - covers empty loc branch"""
-    error = {"msg": "Test message", "loc": [], "type": "value_error", "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": [], "type": "value_error", "ctx": {}}
 
     result = extract_error_detail(error)
 
@@ -188,7 +197,7 @@ def test_extract_error_detail_empty_location():
 
 def test_extract_error_detail_invalid_location():
     """Test extract_error_detail with invalid location - covers invalid location branch"""
-    error = {"msg": "Test message", "loc": ["invalid_location", "param"], "type": "value_error", "ctx": {}}
+    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": ["invalid_location", "param"], "type": "value_error", "ctx": {}}
 
     result = extract_error_detail(error)
 
@@ -199,7 +208,7 @@ def test_extract_error_detail_invalid_location():
 def test_extract_error_detail_body_with_valueerror():
     """Test extract_error_detail_body with ValueError in ctx - covers isinstance branch"""
     error = {
-        "msg": "Test message",
+        "msg": DEFAULT_MENSAGE["msgTest"],
         "loc": ["query", "param"],
         "type": "value_error",
         "ctx": {"error": ValueError("Body error")},
@@ -207,7 +216,7 @@ def test_extract_error_detail_body_with_valueerror():
 
     result = extract_error_detail_body(error)
 
-    assert result.message == "Test message"
+    assert result.message == DEFAULT_MENSAGE["msgTest"]
     assert result.location == "body"  # Always body in this function
     assert result.slug == "value_error"
     assert result.ctx["error"] == "Body error"  # ValueError converted to string
@@ -215,11 +224,11 @@ def test_extract_error_detail_body_with_valueerror():
 
 def test_extract_error_detail_body_without_valueerror():
     """Test extract_error_detail_body without ValueError in ctx - covers else branch"""
-    error = {"msg": "Test message", "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "regular error"}}
+    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "regular error"}}
 
     result = extract_error_detail_body(error)
 
-    assert result.message == "Test message"
+    assert result.message == DEFAULT_MENSAGE["msgTest"]
     assert result.location == "body"
     assert result.slug == "value_error"
     assert result.ctx["error"] == "regular error"  # String remains as string
@@ -247,7 +256,7 @@ async def test_application_error_handler_with_headers():
         exc.headers = {"X-Custom-Header": "test-value"}
         raise exc
 
-    response = client.get("/test")
+    response = client.get(DEFAULT_PAGINATION["request_path"])
     assert response.status_code == 422
 
 

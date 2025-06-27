@@ -4,43 +4,54 @@ from fastapi import HTTPException, status
 from app.models.seller_model import Seller
 from app.paths import SELLER_BASE, SELLER_GET_BY_ID
 
+# Constantes para evitar repetição nos testes
+TEST_MESSAGES = {
+    "SELLER_NOT_FOUND_OR_ACCESS_DENIED": "Seller não encontrado ou acesso não permitido",
+    "SELLER_NOT_FOUND": "Seller não encontrado"
+}
+
+TEST_SELLER_DATA = {
+    "seller_id": "1",
+    "nome_fantasia": "Teste", 
+    "cnpj": "12345678000100"
+}
+
 
 def test_get_sellers(client, mock_seller_service):
-    mock_seller_service.find.return_value = [Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")]
+    mock_seller_service.find.return_value = [Seller(**TEST_SELLER_DATA)]
 
     response = client.get(SELLER_BASE)
 
     assert response.status_code == status.HTTP_200_OK
     assert "results" in response.json()
-    assert response.json()["results"][0]["seller_id"] == "1"
+    assert response.json()["results"][0]["seller_id"] == TEST_SELLER_DATA["seller_id"]
 
 
 def test_get_by_id(client, mock_seller_service):
-    mock_seller_service.find_by_id.return_value = Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")
+    mock_seller_service.find_by_id.return_value = Seller(**TEST_SELLER_DATA)
 
-    response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1")
+    response = client.get(f"{SELLER_GET_BY_ID}?seller_id={TEST_SELLER_DATA['seller_id']}")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["seller_id"] == "1"
+    assert response.json()["seller_id"] == TEST_SELLER_DATA["seller_id"]
 
 
 def test_get_by_cnpj(client, mock_seller_service):
-    mock_seller_service.find_by_cnpj.return_value = Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")
+    mock_seller_service.find_by_cnpj.return_value = Seller(**TEST_SELLER_DATA)
 
-    response = client.get(f"{SELLER_GET_BY_ID}?cnpj=12345678000100")
+    response = client.get(f"{SELLER_GET_BY_ID}?cnpj={TEST_SELLER_DATA['cnpj']}")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["cnpj"] == "12345678000100"
+    assert response.json()["cnpj"] == TEST_SELLER_DATA["cnpj"]
 
 
 def test_create_seller(client, mock_seller_service):
-    seller_data = {"seller_id": "1", "nome_fantasia": "Teste", "cnpj": "12345678000100"}
-    mock_seller_service.create.return_value = Seller(**seller_data)
+    mock_seller_service.create.return_value = Seller(**TEST_SELLER_DATA)
 
-    response = client.post(SELLER_BASE, json=seller_data)
+    response = client.post(SELLER_BASE, json=TEST_SELLER_DATA)
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert response.json()["seller_id"] == "1"
+    assert response.json()["seller_id"] == TEST_SELLER_DATA["seller_id"]
 
 
 def test_update_seller(client, mock_seller_service):
@@ -116,7 +127,7 @@ def test_get_by_id_seller_not_found(client, mock_seller_service):
     response = client.get(f"{SELLER_GET_BY_ID}?seller_id=999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert "Seller não encontrado" in response.json()["detail"]
+    assert TEST_MESSAGES["SELLER_NOT_FOUND"] in response.json()["detail"]
 
 
 def test_get_by_cnpj_seller_not_found(client, mock_seller_service):
@@ -126,7 +137,7 @@ def test_get_by_cnpj_seller_not_found(client, mock_seller_service):
     response = client.get(f"{SELLER_GET_BY_ID}?cnpj=99999999000199")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert "Seller não encontrado" in response.json()["detail"]
+    assert TEST_MESSAGES["SELLER_NOT_FOUND"] in response.json()["detail"]
 
 
 def test_get_by_id_access_denied(client, mock_seller_service):
@@ -137,7 +148,7 @@ def test_get_by_id_access_denied(client, mock_seller_service):
     response = client.get(f"{SELLER_GET_BY_ID}?seller_id=999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+    assert TEST_MESSAGES["SELLER_NOT_FOUND_OR_ACCESS_DENIED"] in response.json()["detail"]
 
 
 def test_get_by_id_or_cnpj_exception_handling(client, mock_seller_service):
@@ -162,7 +173,7 @@ def test_get_by_id_or_cnpj_permission_exception(client, mock_seller_service):
 
     # Should convert to 404 with specific message
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+    assert TEST_MESSAGES["SELLER_NOT_FOUND_OR_ACCESS_DENIED"] in response.json()["detail"]
 
 
 def test_get_by_cnpj_access_denied_after_found(client, mock_seller_service):
@@ -175,7 +186,7 @@ def test_get_by_cnpj_access_denied_after_found(client, mock_seller_service):
     response = client.get(f"{SELLER_GET_BY_ID}?cnpj=12345678000100")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+    assert TEST_MESSAGES["SELLER_NOT_FOUND_OR_ACCESS_DENIED"] in response.json()["detail"]
 
 
 def test_get_sellers_without_cnpj_filter(client, mock_seller_service):
