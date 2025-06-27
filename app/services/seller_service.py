@@ -1,3 +1,4 @@
+import os
 from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.common.datetime import utcnow
 from app.common.exceptions.bad_request_exception import BadRequestException
@@ -38,7 +39,7 @@ class SellerService(CrudService[Seller, str]):
         await self.keycloak_client.create_user(
             username=data.seller_id,
             email=f"{data.seller_id}@email.com",
-            password="senha123",  # Cenário de teste, já que a senha não é um parametro
+            password=os.getenv("KEYCLOAK_DEFAULT_PASSWORD", "temp123"),  # Senha configurável via env
             seller_id=data.seller_id,
         )
 

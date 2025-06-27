@@ -2,6 +2,7 @@
 Testes para melhorar cobertura de módulos diversos
 """
 
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -61,15 +62,15 @@ def test_api_application_missing_lines():
 
     app = FastAPI()
 
-    # Mock das configurações com campos obrigatórios
+    # Configurações usando variáveis de ambiente do .env
     settings = ApiSettings(
-        KEYCLOAK_URL="http://localhost:8080",
-        KEYCLOAK_REALM_NAME="marketplace",
-        KEYCLOAK_CLIENT_ID="varejo",
-        KEYCLOAK_WELL_KNOWN_URL="http://localhost:8080/realms/marketplace/.well-known/openid-configuration",
-        KEYCLOAK_ADMIN_USER="admin_marketplace",
-        KEYCLOAK_ADMIN_PASSWORD="senha123",
-        KEYCLOAK_ADMIN_CLIENT_ID="admin-cli",
+        KEYCLOAK_URL=os.getenv("KEYCLOAK_URL"),
+        KEYCLOAK_REALM_NAME=os.getenv("KEYCLOAK_REALM_NAME"),
+        KEYCLOAK_CLIENT_ID=os.getenv("KEYCLOAK_CLIENT_ID"),
+        KEYCLOAK_WELL_KNOWN_URL=os.getenv("KEYCLOAK_WELL_KNOWN_URL"),
+        KEYCLOAK_ADMIN_USER=os.getenv("KEYCLOAK_ADMIN_USER"),
+        KEYCLOAK_ADMIN_PASSWORD=os.getenv("KEYCLOAK_ADMIN_PASSWORD"),
+        KEYCLOAK_ADMIN_CLIENT_ID=os.getenv("KEYCLOAK_ADMIN_CLIENT_ID"),
     )
 
     # Testa configuração de middlewares
