@@ -79,7 +79,7 @@ async def get_by_id_or_cnpj(
     if not seller or seller.seller_id not in current_user.sellers:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Seller não encontrado ou acesso não permitido."
+            detail="Seller não encontrado ou acesso não permitido."
         )
 
     return seller
@@ -117,7 +117,7 @@ async def update_by_id(
     Atualiza os dados do seller. Pode alterar nome_fantasia e/ou cnpj.
     """
     # Converte apenas os campos que foram enviados na requisição
-    patch_data = SellerPatch(**seller.dict(exclude_unset=True))
+    patch_data = SellerPatch(**seller.model_dump(exclude_unset=True))
     return await seller_service.update(seller_id, patch_data)
 
 

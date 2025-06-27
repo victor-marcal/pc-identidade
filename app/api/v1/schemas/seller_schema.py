@@ -2,7 +2,7 @@ import re
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.api.common.schemas import SchemaType
 from app.messages import (
@@ -21,7 +21,7 @@ class SellerBase(SchemaType):
     nome_fantasia: str = Field(..., description=DESC_NOME_FANTASIA)
     cnpj: str = Field(..., description=DESC_CNPJ)
 
-    @validator('seller_id')
+    @field_validator('seller_id')
     def validar_seller_id(cls, v):
         if not v:
             raise ValueError(MSG_SELLER_ID_OBRIGATORIO)
@@ -29,13 +29,13 @@ class SellerBase(SchemaType):
             raise ValueError(MSG_SELLER_ID_FORMATO)
         return v
     
-    @validator('nome_fantasia')
+    @field_validator('nome_fantasia')
     def validar_nome_fantasia(cls, v):
         if not v or len(v.strip()) < 3:
             raise ValueError(MSG_NOME_FANTASIA_CURTO)
         return v
 
-    @validator('cnpj')
+    @field_validator('cnpj')
     def validar_cnpj(cls, v):
         if not v or not v.isdigit() or len(v) != 14:
             raise ValueError(MSG_CNPJ_FORMATO)
@@ -50,13 +50,13 @@ class SellerUpdate(SchemaType):
     nome_fantasia: Optional[str] = Field(None, description=DESC_NOME_FANTASIA)
     cnpj: Optional[str] = Field(None, description=DESC_CNPJ)
 
-    @validator('nome_fantasia')
+    @field_validator('nome_fantasia')
     def validar_nome_fantasia(cls, v):
         if v is not None and len(v.strip()) < 3:
             raise ValueError(MSG_NOME_FANTASIA_CURTO)
         return v
 
-    @validator('cnpj')
+    @field_validator('cnpj')
     def validar_cnpj(cls, v):
         if v is not None and (not v.isdigit() or len(v) != 14):
             raise ValueError(MSG_CNPJ_FORMATO)
@@ -67,13 +67,13 @@ class SellerReplace(SchemaType):
     nome_fantasia: str = Field(..., description=DESC_NOME_FANTASIA)
     cnpj: str = Field(..., description=DESC_CNPJ)
 
-    @validator("nome_fantasia")
+    @field_validator("nome_fantasia")
     def validar_nome_fantasia(cls, v):
         if not v or len(v.strip()) < 3:
             raise ValueError(MSG_NOME_FANTASIA_CURTO)
         return v
 
-    @validator("cnpj")
+    @field_validator("cnpj")
     def validar_cnpj(cls, v):
         if not v.isdigit() or len(v) != 14:
             raise ValueError(MSG_CNPJ_FORMATO_REPLACE)
