@@ -15,7 +15,7 @@ def mock_mongo_client():
     mock_database = MagicMock()
     mock_collection = MagicMock()  # Changed from AsyncMock to MagicMock
     
-    mock_client.get_default_database.return_value = mock_database
+    mock_client.get_database.return_value = mock_database
     mock_database.__getitem__.return_value = mock_collection
     
     return mock_client, mock_collection
@@ -28,7 +28,7 @@ async def test_create_with_all_defaults(mock_mongo_client):
     mock_collection.insert_one = AsyncMock(return_value=None)
     
     seller = Seller(seller_id="1", nome_fantasia="Test", cnpj="12345678000100")
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     
     with patch('app.repositories.base.memory_repository.utcnow') as mock_utcnow:
         mock_utcnow.return_value = "2023-01-01T00:00:00Z"
@@ -48,7 +48,7 @@ async def test_find_by_id_found(mock_mongo_client):
         "cnpj": "12345678000100"
     })
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find_by_id("1")
     
     assert result is not None
@@ -61,7 +61,7 @@ async def test_find_by_id_not_found(mock_mongo_client):
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one = AsyncMock(return_value=None)
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find_by_id("999")
     
     assert result is None
@@ -85,7 +85,7 @@ async def test_find_with_sort(mock_mongo_client):
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor  # This should return the cursor, not a coroutine
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find({}, sort={"nome_fantasia": 1})
     
     assert len(result) == 1
@@ -109,7 +109,7 @@ async def test_find_without_sort(mock_mongo_client):
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find({})
     
     assert len(result) == 1
@@ -127,7 +127,7 @@ async def test_update_found(mock_mongo_client):
         "cnpj": "12345678000100"
     })
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     seller = Seller(seller_id="1", nome_fantasia="Updated", cnpj="12345678000100")
     result = await repo.update("1", seller)
     
@@ -141,7 +141,7 @@ async def test_update_not_found(mock_mongo_client):
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one_and_update = AsyncMock(return_value=None)
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     seller = Seller(seller_id="999", nome_fantasia="Test", cnpj="12345678000100")
     result = await repo.update("999", seller)
     
@@ -157,7 +157,7 @@ async def test_delete_by_id_success(mock_mongo_client):
     mock_result.deleted_count = 1
     mock_collection.delete_one = AsyncMock(return_value=mock_result)
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.delete_by_id("1")
     
     assert result is True
@@ -172,7 +172,7 @@ async def test_delete_by_id_not_found(mock_mongo_client):
     mock_result.deleted_count = 0
     mock_collection.delete_one = AsyncMock(return_value=mock_result)
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.delete_by_id("999")
     
     assert result is False
@@ -188,7 +188,7 @@ async def test_patch_found(mock_mongo_client):
         "cnpj": "12345678000100"
     })
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.patch("1", {"nome_fantasia": "Patched"})
     
     assert result is not None
@@ -201,7 +201,7 @@ async def test_patch_not_found(mock_mongo_client):
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one_and_update = AsyncMock(return_value=None)
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.patch("999", {"nome_fantasia": "Test"})
     
     assert result is None
@@ -226,7 +226,7 @@ async def test_find_with_multiple_documents(mock_mongo_client):
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find({})
     
     assert len(result) == 3
@@ -253,7 +253,7 @@ async def test_find_with_empty_result(mock_mongo_client):
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor
     
-    repo = AsyncMemoryRepository(mock_client, "sellers", Seller)
+    repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
     result = await repo.find({})
     
     assert len(result) == 0

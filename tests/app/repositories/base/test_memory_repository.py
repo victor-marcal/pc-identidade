@@ -16,7 +16,7 @@ class TestAsyncMemoryRepository:
         )
         collection.insert_one.return_value = mock.MagicMock()
 
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.create(model)
 
         collection.insert_one.assert_called_once()
@@ -30,7 +30,7 @@ class TestAsyncMemoryRepository:
             "cnpj": "12345678000199"
         }
 
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.find_by_id("seller01")
 
         assert result.seller_id == "seller01"
@@ -50,7 +50,7 @@ class TestAsyncMemoryRepository:
         collection.find.return_value.skip.return_value = collection.find.return_value
         collection.find.return_value.limit.return_value = cursor_simulator()
 
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.find({"seller_id": "seller01"})
 
         assert len(result) == 1
@@ -70,7 +70,7 @@ class TestAsyncMemoryRepository:
             nome_fantasia=STORE_UPDATE,
             cnpj="12345678000199"
         )
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.update("seller01", model)
 
         assert result.nome_fantasia == STORE_UPDATE
@@ -79,7 +79,7 @@ class TestAsyncMemoryRepository:
         client, collection = mock_mongo_client
         collection.delete_one.return_value = mock.MagicMock(deleted_count=1)
 
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.delete_by_id("seller01")
 
         assert result is True
@@ -93,7 +93,7 @@ class TestAsyncMemoryRepository:
             "cnpj": "12345678000199"
         }
 
-        repo = AsyncMemoryRepository(client, "test_collection", Seller)
+        repo = AsyncMemoryRepository(client, "test_db", "test_collection", Seller)
         result = await repo.patch("seller01", {"nome_fantasia": STORE_PATCH})
 
         assert result.nome_fantasia == STORE_PATCH

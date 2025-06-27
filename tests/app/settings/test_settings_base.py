@@ -71,12 +71,15 @@ def test_env_file_prod():
 
 def test_base_settings_default_values():
     """Test BaseSettings default values"""
-    # When ENV=test, the environment should be TEST
-    settings = BaseSettings()
+    # Mock the environment variable to ensure test behavior
+    import os
+    from unittest.mock import patch
     
-    # In test environment, env should be TEST
-    assert settings.env == EnvironmentEnum.TEST
-    assert isinstance(settings.env_file, str)
+    with patch.dict(os.environ, {'ENV': 'test'}):
+        settings = BaseSettings()
+        # In test environment, env should be TEST
+        assert settings.env == EnvironmentEnum.TEST
+        assert isinstance(settings.env_file, str)
 
 
 def test_base_settings_env_override():

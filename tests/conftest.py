@@ -39,11 +39,10 @@ def mock_mongo_client():
 
     collection.find.return_value = AsyncCursor([])
 
-    # Corrigido aqui: adiciona a chave 'sellers' ao dicionário
-    client.get_default_database.return_value = {
-        "test_collection": collection,
-        "sellers": collection,
-    }
+    # Corrigido aqui: mock do database com get_database
+    mock_database = MagicMock()
+    mock_database.__getitem__ = lambda self, name: collection
+    client.get_database.return_value = mock_database
 
     return client, collection
 
@@ -77,26 +76,39 @@ def mock_seller_service():
 def client(mock_seller_service):
     from app.container import Container
     from app.api.v1.routers import seller_router
-    from app.integrations.auth import get_current_user, TokenData
+    from app.api.common.auth_handler import do_auth, UserAuthInfo
+    from app.models.base import UserModel
+    from unittest.mock import MagicMock
 
     app = FastAPI()
 
     container = Container()
     container.seller_service.override(providers.Object(mock_seller_service))
 
+    # Mock KeycloakAdapter para evitar conexões HTTP reais
+    mock_keycloak_adapter = MagicMock()
+    mock_keycloak_adapter.validate_token = AsyncMock(return_value={
+        "sub": "test-user-id",
+        "iss": "test-server",
+        "sellers": "1,2,3"
+    })
+    container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
+
     container.wire(modules=[seller_router])
     app.container = container
 
     # Override auth dependency for tests
-    def mock_get_current_user():
-        return TokenData(
-            sub="test-user-id",
-            preferred_username="test-user",
-            sellers=["1", "2", "3"],  # Mock seller permissions
-            exp=9999999999  # Far future timestamp
+    def mock_do_auth():
+        return UserAuthInfo(
+            user=UserModel(
+                name="test-user-id",
+                server="test-server"
+            ),
+            trace_id="test-trace-id",
+            sellers=["1", "2", "3"]  # Mock seller permissions
         )
     
-    app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[do_auth] = mock_do_auth
 
     app.include_router(seller_router.router, prefix="/seller/v1")
 

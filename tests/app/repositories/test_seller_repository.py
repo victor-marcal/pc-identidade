@@ -15,7 +15,7 @@ class TestSellerRepository:
             "cnpj": "12345678000199"
         })
 
-        repo = SellerRepository(client)
+        repo = SellerRepository(client, "test_db")
         result = await repo.find_by_nome_fantasia(nome_fantasia)
 
         collection.find_one.assert_called_once_with({"nome_fantasia": nome_fantasia})
@@ -26,7 +26,7 @@ class TestSellerRepository:
         client, collection = mock_mongo_client
         collection.find_one = mock.AsyncMock(return_value=None)
 
-        repo = SellerRepository(client)
+        repo = SellerRepository(client, "test_db")
         result = await repo.find_by_nome_fantasia("Loja Inexistente")
 
         assert result is None
@@ -39,7 +39,7 @@ class TestSellerRepository:
             "cnpj": "99887766554433"
         })
 
-        repo = SellerRepository(client)
+        repo = SellerRepository(client, "test_db")
         result = await repo.find_by_cnpj("99887766554433")
 
         collection.find_one.assert_called_once_with({"cnpj": "99887766554433"})
@@ -50,7 +50,7 @@ class TestSellerRepository:
         client, collection = mock_mongo_client
         collection.find_one = mock.AsyncMock(return_value=None)
 
-        repo = SellerRepository(client)
+        repo = SellerRepository(client, "test_db")
         result = await repo.find_by_cnpj("00000000000000")
 
         assert result is None

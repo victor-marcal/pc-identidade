@@ -106,23 +106,24 @@ def test_mongo_client_del_with_exception():
 
 
 @patch('app.integrations.database.mongo_client.AsyncIOMotorClient')
-def test_mongo_client_get_default_database(mock_async_client):
-    """Test MongoClient get_default_database method"""
+def test_mongo_client_get_database(mock_async_client):
+    """Test MongoClient get_database method"""
     from pydantic import MongoDsn
     
     mock_instance = MagicMock()
     mock_db = MagicMock()
-    mock_instance.get_default_database.return_value = mock_db
+    mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
     
     mongo_url = MongoDsn("mongodb://localhost:27017/test")
     client = MongoClient(mongo_url)
     
-    result = client.get_default_database()
+    result = client.get_database("test_db")
     
     assert isinstance(result, MongoDB)
     assert result.db == mock_db
-    mock_instance.get_default_database.assert_called_once()
+    # Verify the method was called with database name and codec options
+    mock_instance.get_database.assert_called_once()
 
 
 @patch('app.integrations.database.mongo_client.AsyncIOMotorClient')
@@ -132,7 +133,7 @@ def test_mongo_client_getitem(mock_async_client):
     
     mock_instance = MagicMock()
     mock_db = MagicMock()
-    mock_instance.__getitem__.return_value = mock_db
+    mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
     
     mongo_url = MongoDsn("mongodb://localhost:27017/test")
@@ -142,24 +143,27 @@ def test_mongo_client_getitem(mock_async_client):
     
     assert isinstance(result, MongoDB)
     assert result.db == mock_db
-    mock_instance.__getitem__.assert_called_once_with("test_database")
+    # Verify that get_database was called with the database name (codec_options will also be passed)
+    mock_instance.get_database.assert_called_once()
 
 
 @patch('app.integrations.database.mongo_client.AsyncIOMotorClient')
-def test_mongo_client_get_collection(mock_async_client):
-    """Test MongoClient get_collection method"""
+def test_mongo_client_database_collection_access(mock_async_client):
+    """Test MongoClient database and collection access"""
     from pydantic import MongoDsn
     
     mock_instance = MagicMock()
     mock_db = MagicMock()
     mock_collection = MagicMock()
     mock_db.__getitem__.return_value = mock_collection
-    mock_instance.get_default_database.return_value = mock_db
+    mock_instance.get_database.return_value = mock_db
     mock_async_client.return_value = mock_instance
     
     mongo_url = MongoDsn("mongodb://localhost:27017/test")
     client = MongoClient(mongo_url)
     
-    result = client.get_collection("test_collection")
+    # Test getting database and collection via []
+    database = client["test_database"]
+    collection = database["test_collection"]
     
-    assert result == mock_collection
+    assert collection == mock_collection

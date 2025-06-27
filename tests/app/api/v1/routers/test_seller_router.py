@@ -137,3 +137,53 @@ def test_get_by_id_access_denied(client, mock_seller_service):
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+
+
+def test_get_by_id_or_cnpj_exception_handling(client, mock_seller_service):
+    """Test exception handling in get_by_id_or_cnpj - covers exception branch"""
+    # Mock service to raise a exception that should propagate
+    # Since the try/catch only catches specific permission errors,
+    # other exceptions will be handled by FastAPI's default error handler
+    mock_seller_service.find_by_id.side_effect = HTTPException(status_code=500, detail="Database error")
+    
+    response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1")
+    
+    # Should return the HTTPException status
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+def test_get_by_id_or_cnpj_permission_exception(client, mock_seller_service):
+    """Test permission exception handling in get_by_id_or_cnpj - covers permission exception branch"""
+    # Mock service to raise an exception with permission text
+    mock_seller_service.find_by_id.side_effect = Exception("usuário não tem permissão para acessar")
+    
+    response = client.get(f"{SELLER_GET_BY_ID}?seller_id=1")
+    
+    # Should convert to 404 with specific message
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+
+
+def test_get_by_cnpj_access_denied_after_found(client, mock_seller_service):
+    """Test CNPJ access denied after seller is found - covers CNPJ permission branch"""
+    # Mock a seller that exists but user doesn't have access (seller_id not in user.sellers)
+    mock_seller_service.find_by_cnpj.return_value = Seller(seller_id="999", nome_fantasia="Teste", cnpj="12345678000100")
+    
+    response = client.get(f"{SELLER_GET_BY_ID}?cnpj=12345678000100")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert "Seller não encontrado ou acesso não permitido" in response.json()["detail"]
+
+
+def test_get_sellers_without_cnpj_filter(client, mock_seller_service):
+    """Test GET sellers without CNPJ filter - covers the else branch"""
+    mock_seller_service.find.return_value = [Seller(seller_id="1", nome_fantasia="Teste", cnpj="12345678000100")]
+
+    response = client.get(SELLER_BASE)
+
+    assert response.status_code == status.HTTP_200_OK
+    # Verify that the service was called without filters (empty dict)
+    mock_seller_service.find.assert_called_once()
+    call_kwargs = mock_seller_service.find.call_args[1]
+    assert "filters" in call_kwargs
+    assert call_kwargs["filters"] == {}  # Empty filters when no cnpj
