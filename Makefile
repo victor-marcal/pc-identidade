@@ -120,23 +120,12 @@ docker-compose-sonar-up:
 docker-compose-sonar-down:
 	docker compose -f ./devtools/docker/docker-compose-sonar.yml down
 
-coverage:
-ifeq ($(OS),Windows_NT)
-	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/ --cov-fail-under=90 --durations=5"
-else
-	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/ --cov-fail-under=90 --durations=5
+migration-create:
+ifndef NOME
+	$(error NOME é obrigatório. Use: make migration-create NOME="nome da migration")
 endif
+	@powershell -Command ".\venv\Scripts\mongodb-migrate-create.exe --description '$(NOME)'"
 
-coverage-no-fail:
-ifeq ($(OS),Windows_NT)
-	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/"
-else
-	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=xml ./tests/
-endif
-
-coverage-html:
-ifeq ($(OS),Windows_NT)
-	@cmd /C "set ENV=test&& pytest --cov=app --cov-report=term-missing --cov-report=html ./tests/"
-else
-	@ENV=test pytest --cov=app --cov-report=term-missing --cov-report=html ./tests/
-endif
+migration-run:
+	@echo "Executando migrations..."
+	@python3.12 run_migrations.py

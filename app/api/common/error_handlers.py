@@ -1,13 +1,16 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from .schemas.response import ErrorDetail, get_error_response
+
 from app.common.error_codes import ErrorCodes
+
+from .schemas.response import ErrorDetail, get_error_response
 
 VALID_LOCATIONS = {"query", "path", "body", "header"}
 
+
 def extract_error_detail(error):
-    ctx = error.get("ctx", {})
+    ctx = error.get("ctx", {}) or {}  # Handle None ctx
     if isinstance(ctx.get("error", {}), ValueError):
         ctx["error"] = str(ctx["error"])
     raw_location = error["loc"][0] if error["loc"] else "body"
@@ -20,6 +23,7 @@ def extract_error_detail(error):
         ctx=ctx,
     )
 
+
 def extract_error_detail_body(error):
     ctx = error.get("ctx", {})
     if isinstance(ctx.get("error", {}), ValueError):
@@ -31,6 +35,7 @@ def extract_error_detail_body(error):
         field=", ".join(map(str, error["loc"][1:])) if error["loc"] else "",
         ctx=ctx,
     )
+
 
 def add_error_handlers(app: FastAPI):
     @app.exception_handler(HTTPException)

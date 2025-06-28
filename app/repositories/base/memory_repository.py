@@ -1,11 +1,11 @@
 from typing import Any, Generic, List, Optional, Type, TypeVar
 from uuid import UUID
 
-from app.integrations.database.mongo_client import MongoClient
-from app.models.query_model import QueryModel
 from pydantic import BaseModel
 
 from app.common.datetime import utcnow
+from app.integrations.database.mongo_client import MongoClient
+from app.models.query_model import QueryModel
 
 from .async_crud_repository import AsyncCrudRepository
 
@@ -15,17 +15,20 @@ Q = TypeVar("Q", bound=QueryModel)
 
 DEFAULT_USER = "system"
 
+
 class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
 
-    def __init__(self, client: MongoClient, collection_name: str, model_class: Type[T]):
+    def __init__(self, client: MongoClient, db_name: str, collection_name: str, model_class: Type[T]):
         """
         Repositório genérico para MongoDB.
 
         :param client: Instância do MongoClient.
+        :param db_name: Nome do banco de dados a ser utilizado.
         :param collection_name: Nome da coleção.
         :param model_class: Classe do modelo (usada para criar instâncias de saída).
         """
-        self.collection = client.get_default_database()[collection_name]
+        database = client.get_database(db_name)
+        self.collection = database[collection_name]
         self.model_class = model_class
 
     async def create(self, entity: T) -> T:
@@ -61,24 +64,20 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
         # PUT: substitui todos os campos (menos _id)
         entity_dict = entity.model_dump(by_alias=True, exclude={"identity"})
         result = await self.collection.find_one_and_update(
-            {"seller_id": str(seller_id)},
-            {"$set": entity_dict},
-            return_document=True
+            {"seller_id": str(seller_id)}, {"$set": entity_dict}, return_document=True
         )
         if result:
             return self.model_class(**result)
         return None
-    
+
     async def delete_by_id(self, seller_id: str) -> bool:
         result = await self.collection.delete_one({"seller_id": str(seller_id)})
         return result.deleted_count > 0
-    
+
     async def patch(self, seller_id: str, update_fields: dict) -> Optional[T]:
         # PATCH: atualiza só os campos enviados
         result = await self.collection.find_one_and_update(
-            {"seller_id": str(seller_id)},
-            {"$set": update_fields},
-            return_document=True
+            {"seller_id": str(seller_id)}, {"$set": update_fields}, return_document=True
         )
         if result:
             return self.model_class(**result)

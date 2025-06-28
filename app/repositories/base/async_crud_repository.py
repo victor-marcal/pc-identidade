@@ -17,13 +17,13 @@ class AsyncCrudRepository(ABC, Generic[T]):
         """
 
     @abstractmethod
-    async def find_by_id(self,  seller_id: str) -> T | None:
+    async def find_by_id(self, seller_id: str) -> T | None:
         """
         Busca uma entidade pelo seu identificador único.
         """
 
     @abstractmethod
-    async def find(self, filters: Q , limit: int = 20, offset: int = 0, sort: dict | None = None) -> list[T]:
+    async def find(self, filters: Q, limit: int = 20, offset: int = 0, sort: dict | None = None) -> list[T]:
         """
         Busca entidades no repositório, utilizando filtros e paginação.
         """

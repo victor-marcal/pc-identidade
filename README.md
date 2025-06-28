@@ -63,18 +63,18 @@ pip install -r requirements.txt
 Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
 
 ```env
+# Variáveis de Ambiente
 ENV=dev
+
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
+MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
 ```
-
-Rode o servidor FastAPI com Uvicorn
-
-```sh
-uvicorn app.api_main:app --reload
-```
-
-A aplicação estará disponível em: 📍 http://127.0.0.1:8000
-
-🩺 Verifique o status em: http://127.0.0.1:8000/api/health
 
 ### Windows 🖥️
 
@@ -103,62 +103,26 @@ pip install -r requirements.txt
 Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
 
 ```env
+# Variáveis de Ambiente
 ENV=dev
+
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
+MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
 ```
 
-#### 5. Rode o servidor
+## 🐳 Instalação do Docker 
 
-```powershell
-uvicorn app.api_main:app --reload
-```
+Para instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/), siga o manual disponível no site oficial.
 
-A aplicação estará disponível em: 📍 http://127.0.0.1:8000
+## ▶️ Executando o Projeto com Docker (Método Recomendado)
 
-🩺 Verifique o status em: http://127.0.0.1:8000/api/health
-
-## Contribuições e Atualizações
-O projeto está aberto a contribuições e atualizações da comunidade. O processo para contribuições é o seguinte:
-
-* **Pull Requests**: Contribuições devem ser submetidas como pull requests.
-* **Code Review**: Cada pull request passará por um code review detalhado pela equipe. Isso garante que o código esteja alinhado com os padrões de qualidade e funcionamento do projeto.
-* **Incorporação de Mudanças**: Após a aprovação no code review, as mudanças serão integradas ao código principal.
-
-## 📖 Recursos úteis
-
-- [Conventional Commits](https://www.conventionalcommits.org)
-
-### 🐳 Para instalar o Docker 
-
-Instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/)
-
-## ▶️ Execução
-
-Após configuração do ambiente local, caso desejar executar o projeto localmente, configure o arquive de env:
-
-```bash
-make load-test-env
-```
-
-Use o comando para subir a api:
-
-```bash
-make run-dev
-```
-
-Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) ou em [localhost:8000/redoc](http://0.0.0.0:8000/redoc)
-
-## 📦 Pré-requisitos (ambiente Python)
-
-Antes de rodar os testes, executar a aplicação localmente ou realizar a análise de qualidade com o SonarQube, certifique-se de:
-
-```bash
-make build-venv
-make requirements-dev
-```
-
-Esses comandos criam o ambiente virtual e instalam as dependências necessárias para o funcionamento do projeto.
-
-## 🐳 Docker
+### Linux 🐧
 
 Para construir a imagem Docker da aplicação, execute:
 
@@ -178,6 +142,96 @@ Se precisar acessar o shell do contêiner para depuração ou outras operações
 make docker-shell # Isso abrirá uma sessão bash interativa dentro do contêiner.
 ```
 
+Use o comando para subir a api:
+
+```bash
+make run-dev
+```
+
+Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) ou em [localhost:8000/redoc](http://0.0.0.0:8000/redoc)
+
+### Windows 🖥️
+
+#### 📦 Estrutura
+
+- **MongoDB** e **KeyCloak** rodam via `docker-compose.yml`
+- **Aplicação FastAPI** roda com `Dockerfile` próprio
+- **Ambos são containers separados**, que precisam se comunicar via **rede Docker**
+
+#### 🚀 Passo a passo
+
+1. Clonar o Repositório
+
+Abra seu terminal e clone o projeto:
+
+```sh
+git clone [https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git](https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git)
+cd pc-identidade
+```
+
+2. Configurar Variáveis de Ambiente
+
+Crie um arquivo chamado .env na raiz do projeto. Este arquivo é crucial para a comunicação entre os contêineres. Copie e cole o seguinte conteúdo nele:
+
+```env
+# Variáveis de Ambiente
+ENV=dev
+
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
+MONGO_DB=pc_identidade
+
+# Keycloak
+KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+KEYCLOAK_REALM_NAME=marketplace
+KEYCLOAK_CLIENT_ID=varejo
+```
+
+3. Subir os Contêineres
+
+Com o Docker em execução, use o seguinte comando para construir a imagem da sua aplicação e iniciar todos os serviços em segundo plano:
+
+```bash
+docker-compose up --build -d
+```
+
+#### Comandos Úteis do Dia a Dia
+
+Para ver os logs da aplicação em tempo real:
+
+```bash
+docker-compose logs -f app
+```
+
+Para parar todos os serviços:
+
+```bash
+docker-compose down
+```
+
+Para iniciar os serviços novamente (sem reconstruir):
+
+```bash
+docker-compose up -d
+```
+
+Para testar se o Mongo está acessível
+
+Em outro terminal, rode:
+
+```bash
+docker run --rm -it --network pc-net mongo mongosh "mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin"
+```
+
+Você verá o prompt bd01> se tudo estiver OK.
+
+#### Acessando os Serviços
+
+- API da Aplicação (Swagger): http://localhost:8000/api/docs
+- Admin Console do Keycloak: http://localhost:8080
+  - **Usuário**: admin
+  - **Senha**: admin
+
 ## 🔍 Análise de Qualidade com SonarQube
 
 Para subir o ambiente do SonarQube com Docker Compose, execute:
@@ -194,8 +248,6 @@ Se em algum momento quiser parar o ambiente do SonarQube, execute:
 make docker-compose-sonar-down # Desligará o ambiente do SonarQube e removerá os contêineres
 ```
 
-## 🔍 Análise com SonarQuve
-
 ### 1. Gere e exporte o token do SonarQube
 Após acessar o SonarQube:
 
@@ -211,23 +263,11 @@ export SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
 
 ### Windows 🖥️
-caso esteja no windows deverar setar o token e host_url dessa forma:
-```
-$env:SONAR_HOST_URL = "http://localhost:9000"
-$env:SONAR_TOKEN = "seu-token"
-```
 
-### 2. Execute o Sonar Scanner
-Com os containers rodando e o token configurado, execute:
+1. Baixar o Sonar Scanner
 
-```
-SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
-```
-### Windows 🖥️
-caso esteja no windows e melhor:
+🔗 Link oficial
 
- 1. Baixar o Sonar Scanner
-🔗 Link oficial:
 Acesse: https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/scanners/sonarscanner/
 
 Clique em Download the SonarScanner.
@@ -236,14 +276,16 @@ Baixe o arquivo .zip para Windows (ex: sonar-scanner-cli-5.x.x-windows.zip).
 
 Extraia para um local como: C:\sonar-scanner\
 
-✅ 2. Configurar Variáveis de Ambiente
+2. Configurar Variáveis de Ambiente ✅ 
+
 🔧 Adicionar ao PATH:
+
 Abra o menu Iniciar e digite "variáveis de ambiente".
 
 Clique em "Editar variáveis de ambiente do sistema".
 
 Em Variáveis de Sistema, clique em Path > Editar > Novo e adicione:
-exemplo de caminho:
+
 ```
 C:\sonar-scanner\bin
 ```
@@ -256,20 +298,55 @@ sonar-scanner
 
 Isso irá enviar os dados da sua aplicação para análise no SonarQube.
 
-## 🗄️ Subindo e Parando o MongoDB com Docker Compose
 
-Para iniciar o banco de dados MongoDB utilizando Docker Compose, execute:
-
-```bash
-make docker-compose-mongo-up
+No windows é necessário configurar o token e host_url:
+```
+$env:SONAR_HOST_URL = "http://localhost:9000"
+$env:SONAR_TOKEN = "seu-token"
 ```
 
-Isso irá subir o serviço MongoDB definido em `devtools/docker/docker-compose-mongo.yml`.
+3. Execute o Sonar Scanner
 
-Para parar e remover o serviço do MongoDB, execute:
+Com os containers rodando e o token configurado, execute:
 
-```bash
-make docker-compose-mongo-down
+```
+SONAR_HOST_URL=http://localhost:9000 pysonar-scanner
 ```
 
-Esses comandos garantem que o banco de dados MongoDB estará disponível para a aplicação durante o desenvolvimento e podem ser usados sempre que precisar iniciar ou parar o banco.
+## 📄 Sistema de Migrations para MongoDB
+
+O projeto utiliza um sistema de migrations para gerenciar mudanças no esquema do banco de dados MongoDB de forma organizada e versionada.
+
+### 🚀 Como criar uma nova migration
+
+Você pode criar uma nova migration de duas formas:
+
+**Opção 1 - Usando o comando original da biblioteca:**
+```bash
+mongodb-migrate-create --description "adicionar campo status na collection users"
+```
+
+**Opção 2 - Usando o comando do Makefile (recomendado):**
+```bash
+make migration-create NOME="adicionar campo status na collection users"
+```
+
+Ambos os comandos criarão um arquivo de migration na pasta `migrations/` com timestamp e descrição.
+
+### ▶️ Como executar as migrations
+
+Para aplicar todas as migrations pendentes, você pode usar:
+
+**Opção 1 - Usando o comando do Makefile (recomendado):**
+```bash
+make migration-run
+```
+
+**Opção 2 - Executando diretamente o script:**
+```bash
+python3.12 run_migrations.py
+```
+
+### 🔧 Configuração
+
+As migrations utilizam a mesma configuração de banco definida nas variáveis de ambiente do projeto (`APP_DB_URL_MONGO`).

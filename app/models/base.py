@@ -11,6 +11,11 @@ class UuidModel(BaseModel):
     pass
 
 
+class UserModel(BaseModel):
+    name: str | None
+    server: str | None
+
+
 class AuditModel(BaseModel):
     created_at: datetime | None = Field(default_factory=utcnow, description="Data e hora da criação")
     updated_at: datetime | None = Field(None, description="Data e hora da atualização")

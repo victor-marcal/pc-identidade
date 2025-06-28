@@ -1,12 +1,27 @@
-from app.api.router import routes as router
-from app.api.api_application import create_app
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from fastapi import APIRouter, FastAPI
-from app.settings import ApiSettings, api_settings
-from app.container import Container
+
+import pytest
 from dependency_injector.wiring import providers
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
+
+from app.api.api_application import create_app
+from app.api.router import routes as router
+from app.container import Container
+from app.settings import ApiSettings, api_settings
+
+# Constantes para testes
+TEST_CONSTANTS = {
+    "app_name": "TestApp",
+    "openapi_path": "/openapi.json", 
+    "version": "0.1.0",
+    "health_check_base_path": "/health",
+    "test_user_id": "test-user-id",
+    "test_server": "test-server",
+    "test_trace_id": "test-trace-id",
+    "test_sellers": "1,2,3"
+}
+
 
 @pytest.fixture
 def mock_mongo_client():
@@ -35,15 +50,15 @@ def mock_mongo_client():
             async def gen():
                 for doc in self.docs:
                     yield doc
+
             return gen()
 
     collection.find.return_value = AsyncCursor([])
 
-    # Corrigido aqui: adiciona a chave 'sellers' ao dicionário
-    client.get_default_database.return_value = {
-        "test_collection": collection,
-        "sellers": collection,
-    }
+    # Corrigido aqui: mock do database com get_database
+    mock_database = MagicMock()
+    mock_database.__getitem__ = lambda self, name: collection
+    client.get_database.return_value = mock_database
 
     return client, collection
 
@@ -62,11 +77,12 @@ def dummy_router():
 @pytest.fixture
 def dummy_settings():
     return ApiSettings(
-        app_name="TestApp",
-        openapi_path="/openapi.json",
-        version="0.1.0",
-        health_check_base_path="/health"
+        app_name=TEST_CONSTANTS["app_name"], 
+        openapi_path=TEST_CONSTANTS["openapi_path"], 
+        version=TEST_CONSTANTS["version"], 
+        health_check_base_path=TEST_CONSTANTS["health_check_base_path"]
     )
+
 
 @pytest.fixture
 def mock_seller_service():
@@ -75,16 +91,37 @@ def mock_seller_service():
 
 @pytest.fixture
 def client(mock_seller_service):
-    from app.container import Container
+    from unittest.mock import MagicMock
+
+    from app.api.common.auth_handler import UserAuthInfo, do_auth
     from app.api.v1.routers import seller_router
+    from app.container import Container
+    from app.models.base import UserModel
 
     app = FastAPI()
 
     container = Container()
     container.seller_service.override(providers.Object(mock_seller_service))
 
+    # Mock KeycloakAdapter para evitar conexões HTTP reais
+    mock_keycloak_adapter = MagicMock()
+    mock_keycloak_adapter.validate_token = AsyncMock(
+        return_value={"sub": TEST_CONSTANTS["test_user_id"], "iss": TEST_CONSTANTS["test_server"], "sellers": TEST_CONSTANTS["test_sellers"]}
+    )
+    container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
+
     container.wire(modules=[seller_router])
     app.container = container
+
+    # Override auth dependency for tests
+    def mock_do_auth():
+        return UserAuthInfo(
+            user=UserModel(name=TEST_CONSTANTS["test_user_id"], server=TEST_CONSTANTS["test_server"]),
+            trace_id=TEST_CONSTANTS["test_trace_id"],
+            sellers=["1", "2", "3"],  # Mock seller permissions
+        )
+
+    app.dependency_overrides[do_auth] = mock_do_auth
 
     app.include_router(seller_router.router, prefix="/seller/v1")
 

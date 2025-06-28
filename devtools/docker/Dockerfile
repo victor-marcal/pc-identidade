@@ -28,6 +28,18 @@ ENV ENV=dev
 WORKDIR /pc-identidade
 COPY --from=constructor /pc-identidade/venv /pc-identidade/venv
 
+# Copia arquivo de variáveis de ambiente
+COPY devtools/dotenv.dev /pc-identidade/.env
+
+# Configurações de ambiente para Docker
+ENV APP_DB_URL_MONGO=mongodb://host.docker.internal:27017/bd01?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
+ENV KEYCLOAK_URL=http://host.docker.internal:8080
+ENV KEYCLOAK_REALM_NAME=marketplace
+ENV KEYCLOAK_CLIENT_ID=pc-identidade-client
+ENV KEYCLOAK_ADMIN_USER=admin
+ENV KEYCLOAK_ADMIN_PASSWORD=admin
+ENV KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+
 # Verifica se o ambiente virtual foi criado corretamente
 RUN /pc-identidade/venv/bin/python --version
 

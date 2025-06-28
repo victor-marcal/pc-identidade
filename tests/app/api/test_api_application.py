@@ -1,8 +1,8 @@
-
 from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.api_application import create_app
+
 
 def test_create_app_structure(dummy_settings, dummy_router):
     app = create_app(dummy_settings, dummy_router)
