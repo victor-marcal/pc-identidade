@@ -28,7 +28,7 @@ class KeycloakAdminClient:
             response.raise_for_status()
             return response.json()["access_token"]
 
-    async def create_user(self, username: str, email: str, password: str, seller_id: str):
+    async def create_user(self, username: str, email: str, password: str, seller_id: str) -> str:
         """
         Cria um novo usuário no Keycloak.
         """
@@ -53,15 +53,27 @@ class KeycloakAdminClient:
             async with httpx.AsyncClient() as client:
                 response = await client.post(users_url, headers=headers, json=user_payload)
 
-                # Erro caso o usuário já exista
                 if response.status_code == 409:
                     raise BadRequestException(message=f"Usuário '{username}' já existe no Keycloak.")
 
                 response.raise_for_status()
 
+                if response.status_code == 201:
+                    location_header = response.headers.get("Location")
+                    if not location_header:
+                        raise Exception("Keycloak não retornou a localização do novo usuário.")
+
+                    # Extrai o ID do usuário (sub) da URL
+                    new_user_id = location_header.split("/")[-1]
+
+                    # Constrói o identificador (iss+sub)
+                    issuer = f"{self.settings.KEYCLOAK_URL}/realms/{self.settings.KEYCLOAK_REALM_NAME}"
+                    return f"{issuer}:{new_user_id}"
+
+                raise Exception("Resposta inesperada do Keycloak ao criar usuário.")
+
         except httpx.HTTPStatusError as e:
-            # Captura erros da API do Keycloak e os relança como exceções da aplicação
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}",
+                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}"
             )

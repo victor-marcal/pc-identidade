@@ -11,12 +11,17 @@ from pydantic import BaseModel
 
 from app.api.common.injector import get_seller_id_from_path
 from app.common.exceptions import ForbiddenException, UnauthorizedException
-from app.container import Container
-from app.integrations.auth.keycloak_adapter import OAuthException
+
+from app.integrations.auth.keycloak_adapter import (
+    InvalidTokenException,
+    OAuthException,
+    TokenExpiredException,
+)
 from app.models.base import UserModel
 
 if TYPE_CHECKING:
     from app.integrations.auth.keycloak_adapter import KeycloakAdapter
+    from app.container import Container
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -37,12 +42,16 @@ async def do_auth(
     request: Request,
     token: Annotated[str, Depends(oauth2_scheme)],
     seller_id: str = Depends(get_seller_id_from_path),
-    openid_adapter: "KeycloakAdapter" = Depends(Provide[Container.keycloak_adapter]),
+    openid_adapter: "KeycloakAdapter" = Depends(Provide["keycloak_adapter"]),
 ) -> UserAuthInfo:
     try:
         info_token = await openid_adapter.validate_token(token)
+    except TokenExpiredException as exception:
+        raise UnauthorizedException(message="Seu token de acesso expirou.") from exception
+    except InvalidTokenException as exception:
+        raise UnauthorizedException(message="Seu token de acesso é inválido.") from exception
     except OAuthException as exception:
-        raise UnauthorizedException from exception
+        raise UnauthorizedException(message="Falha na autenticação.") from exception
 
     user_info = UserAuthInfo(
         user=UserModel(

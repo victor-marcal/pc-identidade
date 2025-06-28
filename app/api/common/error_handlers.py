@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from app.common.error_codes import ErrorCodes
+from app.common.exceptions import ApplicationException
 
 from .schemas.response import ErrorDetail, get_error_response
 
@@ -38,13 +39,16 @@ def extract_error_detail_body(error):
 
 
 def add_error_handlers(app: FastAPI):
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(_, exc: HTTPException):
-        response = get_error_response(ErrorCodes.SERVER_ERROR.value)
+    @app.exception_handler(ApplicationException)
+    async def http_exception_handler(request: Request, exc: ApplicationException):
+        """
+        Captura nossas exceções de negócio (NotFound, Forbidden, etc.)
+        e as formata usando a propriedade 'error_response' da exceção.
+        """
         return JSONResponse(
             status_code=exc.status_code,
-            headers=exc.headers,
-            content=response.model_dump(mode="json", exclude_none=True, exclude_unset=True),
+            content=exc.error_response.model_dump(exclude_none=True),
+            headers=getattr(exc, 'headers', None),
         )
 
     @app.exception_handler(ValidationError)
