@@ -91,9 +91,8 @@ def mock_seller_service():
 
 @pytest.fixture
 def client(mock_seller_service):
-    from unittest.mock import MagicMock
-
-    from app.api.common.auth_handler import UserAuthInfo, do_auth
+    from fastapi import Request
+    from app.api.common.auth_handler import UserAuthInfo, do_auth, get_current_user
     from app.api.v1.routers import seller_router
     from app.container import Container
     from app.models.base import UserModel
@@ -103,25 +102,26 @@ def client(mock_seller_service):
     container = Container()
     container.seller_service.override(providers.Object(mock_seller_service))
 
-    # Mock KeycloakAdapter para evitar conexões HTTP reais
     mock_keycloak_adapter = MagicMock()
     mock_keycloak_adapter.validate_token = AsyncMock(
-        return_value={"sub": TEST_CONSTANTS["test_user_id"], "iss": TEST_CONSTANTS["test_server"], "sellers": TEST_CONSTANTS["test_sellers"]}
+        return_value={"sub": TEST_CONSTANTS["test_user_id"], "iss": TEST_CONSTANTS["test_server"],
+                      "sellers": TEST_CONSTANTS["test_sellers"]}
     )
     container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
 
     container.wire(modules=[seller_router])
-    app.container = container
 
-    # Override auth dependency for tests
-    def mock_do_auth():
-        return UserAuthInfo(
-            user=UserModel(name=TEST_CONSTANTS["test_user_id"], server=TEST_CONSTANTS["test_server"]),
-            trace_id=TEST_CONSTANTS["test_trace_id"],
-            sellers=["1", "2", "3"],  # Mock seller permissions
-        )
+    fake_user = UserAuthInfo(
+        user=UserModel(name=TEST_CONSTANTS["test_user_id"], server=TEST_CONSTANTS["test_server"]),
+        trace_id=TEST_CONSTANTS["test_trace_id"],
+        sellers=["1", "2", "3"],
+    )
 
-    app.dependency_overrides[do_auth] = mock_do_auth
+    def mock_do_auth_with_state(request: Request) -> UserAuthInfo:
+        request.state.user = fake_user
+        return fake_user
+
+    app.dependency_overrides[do_auth] = mock_do_auth_with_state
 
     app.include_router(seller_router.router, prefix="/seller/v1")
 

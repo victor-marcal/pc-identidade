@@ -5,16 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.common.auth_handler import do_auth
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
-from app.container import Container
+
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
+from app.api.common.auth_handler import get_current_user
 
 if TYPE_CHECKING:
-    from app.api.common.auth_handler import UserAuthInfo
+    from app.api.common.auth_handler import UserAuthInfo, do_auth
     from app.services import SellerService
+    from app.container import Container
 
 
 router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])
@@ -58,7 +60,7 @@ async def _find_seller_by_cnpj_with_access_check(cnpj: str, user_info: "UserAuth
 async def get(
     paginator: Paginator = Depends(get_request_pagination),
     cnpj: Optional[str] = Query(None),
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
 ):
     """
     Retorna todos os sellers cadastrados no sistema
@@ -82,7 +84,7 @@ async def get(
 async def get_by_id_or_cnpj(
     seller_id: Optional[str] = Query(None),
     cnpj: Optional[str] = Query(None),
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
     auth_info: "UserAuthInfo" = Depends(do_auth),
 ):
     """
@@ -119,7 +121,7 @@ async def get_by_id_or_cnpj(
 @inject
 async def get_by_id(
     seller_id: str,
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
 ):
     """
     Retorna os dados de um seller específico.
@@ -139,7 +141,7 @@ async def get_by_id(
 @inject
 async def create(
     seller: SellerCreate,
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
 ):
     return await seller_service.create(seller)
 
@@ -157,14 +159,15 @@ async def create(
 async def update_by_id(
     seller_id: str,
     seller: SellerUpdate,
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
+    auth_info: "UserAuthInfo" = Depends(get_current_user),
 ):
     """
     Atualiza os dados do seller. Pode alterar nome_fantasia e/ou cnpj.
     """
     # Converte apenas os campos que foram enviados na requisição
     patch_data = SellerPatch(**seller.model_dump(exclude_unset=True))
-    return await seller_service.update(seller_id, patch_data)
+    return await seller_service.update(seller_id, patch_data, auth_info=auth_info)
 
 
 @router.delete(
@@ -178,7 +181,7 @@ async def update_by_id(
 @inject
 async def delete_by_id(
     seller_id: str,
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
 ):
     """
     Remove permanentemente o seller do sistema.
@@ -199,7 +202,8 @@ async def delete_by_id(
 async def replace_by_id(
     seller_id: str,
     seller_data: SellerReplace,
-    seller_service: "SellerService" = Depends(Provide[Container.seller_service]),
+    seller_service: "SellerService" = Depends(Provide["seller_service"]),
+    auth_info: "UserAuthInfo" = Depends(get_current_user),
 ):
     seller = Seller(seller_id=seller_id, nome_fantasia=seller_data.nome_fantasia, cnpj=seller_data.cnpj)
-    return await seller_service.replace(seller_id, seller)
+    return await seller_service.replace(seller_id, seller, auth_info=auth_info)

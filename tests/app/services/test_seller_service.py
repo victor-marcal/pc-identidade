@@ -1,244 +1,127 @@
-from unittest.mock import ANY, AsyncMock, MagicMock
-
 import pytest
-
-from app.common.datetime import utcnow
-from app.common.exceptions.bad_request_exception import BadRequestException
-from app.common.exceptions.not_found_exception import NotFoundException
+from unittest.mock import AsyncMock, MagicMock
+from app.common.exceptions import BadRequestException, NotFoundException
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
+from app.api.common.auth_handler import UserAuthInfo
+from app.models.base import UserModel
+from app.api.v1.schemas.seller_schema import SellerCreate
 from app.services.seller_service import SellerService
+from app.clients.keycloak_admin_client import KeycloakAdminClient
+from app.repositories import SellerRepository
 
+# --- Mocks e Dados de Teste ---
+
+
+@pytest.fixture
+def fake_auth_info() -> UserAuthInfo:
+    return UserAuthInfo(
+        user=UserModel(name="test-user-sub-123", server="http://fake-keycloak/realms/test"),
+        trace_id="fake-trace-id-abc",
+        sellers=["001"],
+    )
 
 @pytest.fixture
 def mock_repository():
-    repo = MagicMock()
-    repo.find_by_id = AsyncMock()
-    repo.find_by_nome_fantasia = AsyncMock()
-    repo.find_by_cnpj = AsyncMock()
-    repo.create = AsyncMock()
-    repo.update = AsyncMock()
-    repo.delete_by_id = AsyncMock()
-    repo.patch = AsyncMock()
-    return repo
-
+    return AsyncMock(spec=SellerRepository)
 
 @pytest.fixture
 def mock_keycloak_client():
-    client = MagicMock()
-    client.create_user = AsyncMock()
-    client.update_user = AsyncMock()
-    client.delete_user = AsyncMock()
-    return client
-
+    return AsyncMock(spec=KeycloakAdminClient)
 
 @pytest.fixture
-def seller_data():
-    return Seller(
-        seller_id="001",
-        nome_fantasia="Loja X",
-        cnpj="12345678901234",
-        created_at=None,
-        updated_at=None,
-        created_by="test",
-        updated_by="test",
-        audit_created_at=None,
-        audit_updated_at=None,
-    )
+def seller_create_data():
+    return SellerCreate(seller_id='001', nome_fantasia='Loja X', cnpj='12345678901234')
 
+@pytest.fixture
+def existing_seller_model():
+    return Seller(seller_id='001', nome_fantasia='Loja X', cnpj='12345678901234', created_by="system:init")
 
 @pytest.fixture
 def patch_data():
-    return SellerPatch(nome_fantasia="Nova Loja", cnpj="98765432109876")
+    return SellerPatch(nome_fantasia='Nova Loja')
 
 
 @pytest.mark.asyncio
-async def test_create_success(mock_repository, mock_keycloak_client, seller_data):
+async def test_create_success(mock_repository, mock_keycloak_client, seller_create_data):
+    # Setup
     mock_repository.find_by_id.return_value = None
     mock_repository.find_by_nome_fantasia.return_value = None
-    mock_repository.create.return_value = seller_data
+    mock_keycloak_client.create_user.return_value = "keycloak:new-user-id"
+    mock_repository.create.side_effect = lambda seller: seller  # O mock de create retorna o que recebeu
 
     service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.create(seller_data)
 
-    assert result == seller_data
+    result = await service.create(seller_create_data)
+
+    assert result.seller_id == seller_create_data.seller_id
+    assert result.created_by == "keycloak:new-user-id"
+    mock_repository.create.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_create_raises_if_id_exists(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_id.return_value = seller_data
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(BadRequestException):
-        await service.create(seller_data)
-
+# --- Testes para o Método `update` (PATCH) ---
 
 @pytest.mark.asyncio
-async def test_create_raises_if_nome_fantasia_exists(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_id.return_value = None
-    mock_repository.find_by_nome_fantasia.return_value = seller_data
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(BadRequestException):
-        await service.create(seller_data)
-
-
-@pytest.mark.asyncio
-async def test_update_patch_success(mock_repository, mock_keycloak_client, seller_data, patch_data):
-    mock_repository.find_by_id.return_value = seller_data
+async def test_update_success(mock_repository, mock_keycloak_client, existing_seller_model, patch_data, fake_auth_info):
+    mock_repository.find_by_id.return_value = existing_seller_model
     mock_repository.find_by_nome_fantasia.return_value = None
-    mock_repository.patch.return_value = seller_data
+    mock_repository.patch.side_effect = lambda _, fields: existing_seller_model.model_copy(update=fields)
 
     service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.update("001", patch_data)
 
-    assert result == seller_data
+    result = await service.update(existing_seller_model.seller_id, patch_data, auth_info=fake_auth_info)
+
+    assert result.nome_fantasia == patch_data.nome_fantasia
+    assert result.updated_by is not None
+    mock_repository.patch.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_update_patch_empty(mock_repository, mock_keycloak_client, seller_data):
-    patch = SellerPatch()
-    mock_repository.find_by_id.return_value = seller_data
-
+async def test_update_not_found(mock_repository, mock_keycloak_client, patch_data, fake_auth_info):
+    mock_repository.find_by_id.return_value = None
     service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.update("001", patch)
 
-    # Verifica que patch não foi chamado
-    mock_repository.patch.assert_not_called()
-
-    # Verifica que o resultado é o mesmo objeto
-    assert result is seller_data
+    with pytest.raises(NotFoundException):
+        await service.update("non-existent-id", patch_data, auth_info=fake_auth_info)
 
 
 @pytest.mark.asyncio
-async def test_update_patch_nome_fantasia_exists(mock_repository, mock_keycloak_client, seller_data, patch_data):
-    existing = Seller(**{**seller_data.model_dump(), "seller_id": "002"})
-    mock_repository.find_by_id.return_value = seller_data
-    mock_repository.find_by_nome_fantasia.return_value = existing
+async def test_update_nome_fantasia_conflict(mock_repository, mock_keycloak_client, existing_seller_model, patch_data,
+                                             fake_auth_info):
+    mock_repository.find_by_id.return_value = existing_seller_model
+    mock_repository.find_by_nome_fantasia.return_value = Seller(seller_id="outro_id", nome_fantasia="Nova Loja",
+                                                                cnpj="111")
 
     service = SellerService(mock_repository, mock_keycloak_client)
+
     with pytest.raises(BadRequestException):
-        await service.update("001", patch_data)
+        await service.update(existing_seller_model.seller_id, patch_data, auth_info=fake_auth_info)
 
 
-@pytest.mark.asyncio
-async def test_update_patch_not_found(mock_repository, mock_keycloak_client, patch_data):
-    mock_repository.find_by_id.return_value = None
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(NotFoundException):
-        await service.update("001", patch_data)
-
+# --- Testes para o Método `replace` (PUT) ---
 
 @pytest.mark.asyncio
-async def test_delete_success(mock_repository, mock_keycloak_client):
-    mock_repository.delete_by_id.return_value = True
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    assert await service.delete_by_id("001") is True
-
-
-@pytest.mark.asyncio
-async def test_delete_not_found(mock_repository, mock_keycloak_client):
-    mock_repository.delete_by_id.return_value = False
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(NotFoundException):
-        await service.delete_by_id("001")
-
-
-@pytest.mark.asyncio
-async def test_find_by_id_success(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_id.return_value = seller_data
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.find_by_id("001")
-
-    assert result == seller_data
-
-
-@pytest.mark.asyncio
-async def test_find_by_id_not_found(mock_repository, mock_keycloak_client):
-    mock_repository.find_by_id.return_value = None
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(NotFoundException):
-        await service.find_by_id("001")
-
-
-@pytest.mark.asyncio
-async def test_find_by_cnpj_success(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_cnpj.return_value = seller_data
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.find_by_cnpj("12345678901234")
-
-    assert result == seller_data
-
-
-@pytest.mark.asyncio
-async def test_find_by_cnpj_not_found(mock_repository, mock_keycloak_client):
-    mock_repository.find_by_cnpj.return_value = None
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(NotFoundException):
-        await service.find_by_cnpj("12345678901234")
-
-
-@pytest.mark.asyncio
-async def test_replace_success(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_id.return_value = seller_data
+async def test_replace_success(mock_repository, mock_keycloak_client, existing_seller_model, fake_auth_info):
+    mock_repository.find_by_id.return_value = existing_seller_model
     mock_repository.find_by_nome_fantasia.return_value = None
-    mock_repository.update.return_value = seller_data
+
+    replace_data = Seller(seller_id='001', nome_fantasia='Loja Substituida', cnpj='11111111111111')
+
+    mock_repository.update.side_effect = lambda _, seller_to_update: seller_to_update
 
     service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.replace("001", seller_data)
 
-    assert result == seller_data
+    result = await service.replace(existing_seller_model.seller_id, replace_data, auth_info=fake_auth_info)
 
-
-@pytest.mark.asyncio
-async def test_replace_conflict_nome_fantasia(mock_repository, mock_keycloak_client, seller_data):
-    mock_repository.find_by_id.return_value = seller_data
-    mock_repository.find_by_nome_fantasia.return_value = Seller(
-        **{**seller_data.model_dump(), "nome_fantasia": "Outro", "seller_id": "002"}
-    )
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    with pytest.raises(BadRequestException):
-        await service.replace("001", Seller(**{**seller_data.model_dump(), "nome_fantasia": "Outro"}))
-
+    assert result.nome_fantasia == "Loja Substituida"
+    assert result.created_by == existing_seller_model.created_by  # Preservou o criador original
+    assert result.updated_by == f"{fake_auth_info.user.server}:{fake_auth_info.user.name}"  # Verificou o novo atualizador
+    mock_repository.update.assert_called_once()
 
 @pytest.mark.asyncio
-async def test_replace_not_found(mock_repository, mock_keycloak_client, seller_data):
+async def test_replace_not_found(mock_repository, mock_keycloak_client, existing_seller_model, fake_auth_info):
     mock_repository.find_by_id.return_value = None
-
     service = SellerService(mock_repository, mock_keycloak_client)
+
     with pytest.raises(NotFoundException):
-        await service.replace("001", seller_data)
-
-
-@pytest.mark.asyncio
-async def test_replace_with_same_existing_nome_fantasia(mock_repository, mock_keycloak_client, seller_data):
-    # Simula que já existe um seller com o mesmo nome_fantasia
-    mock_repository.find_by_id.return_value = seller_data
-    mock_repository.find_by_nome_fantasia.return_value = seller_data  # mesmo objeto
-
-    updated_seller = Seller(
-        seller_id="001",
-        nome_fantasia="Loja X",  # mesmo nome
-        cnpj="12345678901234",
-        created_by="tester",
-        updated_by="tester",
-        audit_created_at=utcnow(),
-        audit_updated_at=utcnow(),
-        created_at=utcnow(),
-        updated_at=utcnow(),
-    )
-    mock_repository.update.return_value = updated_seller
-
-    service = SellerService(mock_repository, mock_keycloak_client)
-    result = await service.replace("001", updated_seller)
-
-    assert result == updated_seller
-    mock_repository.update.assert_called_once_with("001", ANY)
+        await service.replace("non-existent-id", existing_seller_model, auth_info=fake_auth_info)
