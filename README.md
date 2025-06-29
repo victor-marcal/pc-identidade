@@ -74,6 +74,12 @@ MONGO_DB=pc_identidade
 KEYCLOAK_URL=http://pc-identidade-keycloak:8080
 KEYCLOAK_REALM_NAME=marketplace
 KEYCLOAK_CLIENT_ID=varejo
+KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
+
+# Credenciais Admin do Keycloak (usadas para criar usuários)
+KEYCLOAK_ADMIN_USER=admin_marketplace
+KEYCLOAK_ADMIN_PASSWORD=senha123
+KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 ```
 
 ### Windows 🖥️
@@ -114,6 +120,12 @@ MONGO_DB=pc_identidade
 KEYCLOAK_URL=http://pc-identidade-keycloak:8080
 KEYCLOAK_REALM_NAME=marketplace
 KEYCLOAK_CLIENT_ID=varejo
+KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
+
+# Credenciais Admin do Keycloak (usadas para criar usuários)
+KEYCLOAK_ADMIN_USER=admin_marketplace
+KEYCLOAK_ADMIN_PASSWORD=senha123
+KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 ```
 
 ## 🐳 Instalação do Docker 
@@ -155,8 +167,6 @@ Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) 
 #### 📦 Estrutura
 
 - **MongoDB** e **KeyCloak** rodam via `docker-compose.yml`
-- **Aplicação FastAPI** roda com `Dockerfile` próprio
-- **Ambos são containers separados**, que precisam se comunicar via **rede Docker**
 
 #### 🚀 Passo a passo
 
@@ -171,7 +181,9 @@ cd pc-identidade
 
 2. Configurar Variáveis de Ambiente
 
-Crie um arquivo chamado .env na raiz do projeto. Este arquivo é crucial para a comunicação entre os contêineres. Copie e cole o seguinte conteúdo nele:
+Crie um arquivo chamado .env na raiz do projeto. 
+
+Este arquivo é crucial para a comunicação entre os contêineres. Copie e cole o seguinte conteúdo nele:
 
 ```env
 # Variáveis de Ambiente
@@ -185,14 +197,51 @@ MONGO_DB=pc_identidade
 KEYCLOAK_URL=http://pc-identidade-keycloak:8080
 KEYCLOAK_REALM_NAME=marketplace
 KEYCLOAK_CLIENT_ID=varejo
+KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
+
+# Credenciais Admin do Keycloak (usadas para criar usuários)
+KEYCLOAK_ADMIN_USER=admin_marketplace
+KEYCLOAK_ADMIN_PASSWORD=senha123
+KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 ```
 
-3. Subir os Contêineres
+3. Crie o ambiente virtual
+
+```powershell
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+Instale as dependências
+
+```powershell
+pip install -r requirements.txt
+```
+
+4. Subir os Contêineres
 
 Com o Docker em execução, use o seguinte comando para construir a imagem da sua aplicação e iniciar todos os serviços em segundo plano:
 
 ```bash
 docker-compose up --build -d
+```
+
+Aguarde de 1 a 2 minutos para que todos os serviços, especialmente o Keycloak, iniciem completamente.
+
+5. Configurando o Keycloak
+
+Rode o seguinte comando para finalizar a configuração do Keycloak.
+
+```bash
+python ./devtools/keycloak-config/setup_sellers_attribute.py
+```
+
+6. Executando a Aplicação
+
+Com todos os passos anteriores executados com sucesso, rode a aplicação localmente com o seguinte comando.
+
+```bash
+uvicorn app.api_main:app --reload --port 8000        
 ```
 
 #### Comandos Úteis do Dia a Dia
@@ -220,7 +269,7 @@ Para testar se o Mongo está acessível
 Em outro terminal, rode:
 
 ```bash
-docker run --rm -it --network pc-net mongo mongosh "mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin"
+docker run --rm -it mongo mongosh "mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin"
 ```
 
 Você verá o prompt bd01> se tudo estiver OK.
