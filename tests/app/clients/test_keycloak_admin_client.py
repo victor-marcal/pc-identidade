@@ -25,7 +25,7 @@ TEST_ADMIN_CLIENT_DATA = {
     "token_acquisition_failed": "Token acquisition failed",
     "user_exists_message": "já existe no Keycloak",
     "error_creating_user": "Erro ao criar usuário no Keycloak",
-    "token_error": "Token error"
+    "token_error": "Token error",
 }
 
 
@@ -91,10 +91,10 @@ async def test_create_user_success(keycloak_client):
 
             # Should not raise any exception
             await keycloak_client.create_user(
-                username=TEST_ADMIN_CLIENT_DATA["test_user"], 
-                email=TEST_ADMIN_CLIENT_DATA["test_email"], 
-                password=TEST_ADMIN_CLIENT_DATA["password"], 
-                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"]
+                username=TEST_ADMIN_CLIENT_DATA["test_user"],
+                email=TEST_ADMIN_CLIENT_DATA["test_email"],
+                password=TEST_ADMIN_CLIENT_DATA["password"],
+                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"],
             )
 
             mock_get_token.assert_called_once()
@@ -117,10 +117,10 @@ async def test_create_user_conflict_409(keycloak_client):
 
             with pytest.raises(BadRequestException) as exc_info:
                 await keycloak_client.create_user(
-                    username=TEST_ADMIN_CLIENT_DATA["existing_user"], 
-                    email=TEST_ADMIN_CLIENT_DATA["test_email"], 
-                    password=TEST_ADMIN_CLIENT_DATA["password"], 
-                    seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"]
+                    username=TEST_ADMIN_CLIENT_DATA["existing_user"],
+                    email=TEST_ADMIN_CLIENT_DATA["test_email"],
+                    password=TEST_ADMIN_CLIENT_DATA["password"],
+                    seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"],
                 )
 
             assert TEST_ADMIN_CLIENT_DATA["user_exists_message"] in str(exc_info.value.message)
@@ -146,10 +146,10 @@ async def test_create_user_http_status_error(keycloak_client):
 
             with pytest.raises(HTTPException) as exc_info:
                 await keycloak_client.create_user(
-                    username=TEST_ADMIN_CLIENT_DATA["test_user"], 
-                    email=TEST_ADMIN_CLIENT_DATA["test_email"], 
-                    password=TEST_ADMIN_CLIENT_DATA["password"], 
-                    seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"]
+                    username=TEST_ADMIN_CLIENT_DATA["test_user"],
+                    email=TEST_ADMIN_CLIENT_DATA["test_email"],
+                    password=TEST_ADMIN_CLIENT_DATA["password"],
+                    seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"],
                 )
 
             assert exc_info.value.status_code == 500
@@ -163,14 +163,16 @@ async def test_create_user_admin_token_error(keycloak_client):
     with patch.object(keycloak_client, '_get_admin_token') as mock_get_token:
         mock_response = MagicMock()
         mock_response.text = TEST_ADMIN_CLIENT_DATA["token_acquisition_failed"]
-        mock_get_token.side_effect = httpx.HTTPStatusError(TEST_ADMIN_CLIENT_DATA["token_error"], request=MagicMock(), response=mock_response)
+        mock_get_token.side_effect = httpx.HTTPStatusError(
+            TEST_ADMIN_CLIENT_DATA["token_error"], request=MagicMock(), response=mock_response
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             await keycloak_client.create_user(
-                username=TEST_ADMIN_CLIENT_DATA["test_user"], 
-                email=TEST_ADMIN_CLIENT_DATA["test_email"], 
-                password=TEST_ADMIN_CLIENT_DATA["password"], 
-                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"]
+                username=TEST_ADMIN_CLIENT_DATA["test_user"],
+                email=TEST_ADMIN_CLIENT_DATA["test_email"],
+                password=TEST_ADMIN_CLIENT_DATA["password"],
+                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"],
             )
 
         assert exc_info.value.status_code == 500
@@ -194,10 +196,10 @@ async def test_create_user_payload_structure(keycloak_client):
             mock_post.return_value = mock_response
 
             await keycloak_client.create_user(
-                username=TEST_ADMIN_CLIENT_DATA["test_user"], 
-                email=TEST_ADMIN_CLIENT_DATA["test_email"], 
-                password=TEST_ADMIN_CLIENT_DATA["password"], 
-                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"]
+                username=TEST_ADMIN_CLIENT_DATA["test_user"],
+                email=TEST_ADMIN_CLIENT_DATA["test_email"],
+                password=TEST_ADMIN_CLIENT_DATA["password"],
+                seller_id=TEST_ADMIN_CLIENT_DATA["seller_id"],
             )
 
             # Verify the call was made with correct structure

@@ -21,21 +21,26 @@ def fake_auth_info() -> UserAuthInfo:
         sellers=["001"],
     )
 
+
 @pytest.fixture
 def mock_repository():
     return AsyncMock(spec=SellerRepository)
+
 
 @pytest.fixture
 def mock_keycloak_client():
     return AsyncMock(spec=KeycloakAdminClient)
 
+
 @pytest.fixture
 def seller_create_data():
     return SellerCreate(seller_id='001', nome_fantasia='Loja X', cnpj='12345678901234')
 
+
 @pytest.fixture
 def existing_seller_model():
     return Seller(seller_id='001', nome_fantasia='Loja X', cnpj='12345678901234', created_by="system:init")
+
 
 @pytest.fixture
 def patch_data():
@@ -60,6 +65,7 @@ async def test_create_success(mock_repository, mock_keycloak_client, seller_crea
 
 
 # --- Testes para o Método `update` (PATCH) ---
+
 
 @pytest.mark.asyncio
 async def test_update_success(mock_repository, mock_keycloak_client, existing_seller_model, patch_data, fake_auth_info):
@@ -86,11 +92,13 @@ async def test_update_not_found(mock_repository, mock_keycloak_client, patch_dat
 
 
 @pytest.mark.asyncio
-async def test_update_nome_fantasia_conflict(mock_repository, mock_keycloak_client, existing_seller_model, patch_data,
-                                             fake_auth_info):
+async def test_update_nome_fantasia_conflict(
+    mock_repository, mock_keycloak_client, existing_seller_model, patch_data, fake_auth_info
+):
     mock_repository.find_by_id.return_value = existing_seller_model
-    mock_repository.find_by_nome_fantasia.return_value = Seller(seller_id="outro_id", nome_fantasia="Nova Loja",
-                                                                cnpj="111")
+    mock_repository.find_by_nome_fantasia.return_value = Seller(
+        seller_id="outro_id", nome_fantasia="Nova Loja", cnpj="111"
+    )
 
     service = SellerService(mock_repository, mock_keycloak_client)
 
@@ -99,6 +107,7 @@ async def test_update_nome_fantasia_conflict(mock_repository, mock_keycloak_clie
 
 
 # --- Testes para o Método `replace` (PUT) ---
+
 
 @pytest.mark.asyncio
 async def test_replace_success(mock_repository, mock_keycloak_client, existing_seller_model, fake_auth_info):
@@ -115,8 +124,11 @@ async def test_replace_success(mock_repository, mock_keycloak_client, existing_s
 
     assert result.nome_fantasia == "Loja Substituida"
     assert result.created_by == existing_seller_model.created_by  # Preservou o criador original
-    assert result.updated_by == f"{fake_auth_info.user.server}:{fake_auth_info.user.name}"  # Verificou o novo atualizador
+    assert (
+        result.updated_by == f"{fake_auth_info.user.server}:{fake_auth_info.user.name}"
+    )  # Verificou o novo atualizador
     mock_repository.update.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_replace_not_found(mock_repository, mock_keycloak_client, existing_seller_model, fake_auth_info):

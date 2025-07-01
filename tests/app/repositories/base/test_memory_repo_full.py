@@ -240,7 +240,7 @@ async def test_find_with_empty_result(mock_mongo_client):
     mock_cursor = MagicMock()
     mock_cursor.skip.return_value = mock_cursor
     mock_cursor.limit.return_value = mock_cursor
-    
+
     # Mock async iterator para retornar lista vazia
     mock_cursor.__aiter__.return_value = iter([])
     mock_collection.find.return_value = mock_cursor

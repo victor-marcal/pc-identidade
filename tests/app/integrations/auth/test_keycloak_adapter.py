@@ -35,7 +35,7 @@ TEST_KEYCLOAK_DATA = {
     "httpx_client": "httpx.Client",
     "jwt_pyjwk_client": "jwt.PyJWKClient",
     "jwt_get_unverified_header": "jwt.get_unverified_header",
-    "jwt_decode": "jwt.decode"
+    "jwt_decode": "jwt.decode",
 }
 
 

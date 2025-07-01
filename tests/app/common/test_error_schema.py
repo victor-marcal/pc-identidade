@@ -17,7 +17,7 @@ TEST_ERROR_DATA = {
     "query": "query",
     "path": "path",
     "header": "header",
-    "invalid_location": "invalid_location"
+    "invalid_location": "invalid_location",
 }
 
 
@@ -35,11 +35,11 @@ def test_error_detail_creation():
 def test_error_detail_with_all_fields():
     """Test ErrorDetail model creation with all fields"""
     error_detail = ErrorDetail(
-        message=TEST_ERROR_DATA["test_error_message"], 
-        location=TEST_ERROR_DATA["body"], 
-        slug=TEST_ERROR_DATA["test_error_slug"], 
-        field=TEST_ERROR_DATA["username"], 
-        ctx={"min_length": 3}
+        message=TEST_ERROR_DATA["test_error_message"],
+        location=TEST_ERROR_DATA["body"],
+        slug=TEST_ERROR_DATA["test_error_slug"],
+        field=TEST_ERROR_DATA["username"],
+        ctx={"min_length": 3},
     )
 
     assert error_detail.message == TEST_ERROR_DATA["test_error_message"]
@@ -57,7 +57,12 @@ def test_error_detail_invalid_location():
 
 def test_error_detail_valid_locations():
     """Test ErrorDetail with all valid locations"""
-    valid_locations = [TEST_ERROR_DATA["query"], TEST_ERROR_DATA["path"], TEST_ERROR_DATA["body"], TEST_ERROR_DATA["header"]]
+    valid_locations = [
+        TEST_ERROR_DATA["query"],
+        TEST_ERROR_DATA["path"],
+        TEST_ERROR_DATA["body"],
+        TEST_ERROR_DATA["header"],
+    ]
 
     for location in valid_locations:
         error_detail = ErrorDetail(message=TEST_ERROR_DATA["test_error"], location=location)  # type: ignore
@@ -66,7 +71,9 @@ def test_error_detail_valid_locations():
 
 def test_error_response_creation():
     """Test ErrorResponse model creation with required fields"""
-    error_response = ErrorResponse(slug=TEST_ERROR_DATA["test_error_slug"], message=TEST_ERROR_DATA["test_error_message"], details=None)
+    error_response = ErrorResponse(
+        slug=TEST_ERROR_DATA["test_error_slug"], message=TEST_ERROR_DATA["test_error_message"], details=None
+    )
 
     assert error_response.slug == TEST_ERROR_DATA["test_error_slug"]
     assert error_response.message == TEST_ERROR_DATA["test_error_message"]
@@ -76,7 +83,9 @@ def test_error_response_creation():
 def test_error_response_with_details():
     """Test ErrorResponse model creation with details"""
     error_detail = ErrorDetail(message=TEST_ERROR_DATA["detail_error_message"])
-    error_response = ErrorResponse(slug=TEST_ERROR_DATA["test_error_slug"], message=TEST_ERROR_DATA["test_error_message"], details=[error_detail])
+    error_response = ErrorResponse(
+        slug=TEST_ERROR_DATA["test_error_slug"], message=TEST_ERROR_DATA["test_error_message"], details=[error_detail]
+    )
 
     assert error_response.slug == TEST_ERROR_DATA["test_error_slug"]
     assert error_response.message == TEST_ERROR_DATA["test_error_message"]
@@ -92,8 +101,12 @@ def test_error_response_missing_required_fields():
 
 def test_error_response_json_serialization():
     """Test ErrorResponse JSON serialization"""
-    error_detail = ErrorDetail(message=TEST_ERROR_DATA["detail_error"], location=TEST_ERROR_DATA["body"], field=TEST_ERROR_DATA["username"])
-    error_response = ErrorResponse(slug=TEST_ERROR_DATA["validation_error"], message=TEST_ERROR_DATA["validation_failed"], details=[error_detail])
+    error_detail = ErrorDetail(
+        message=TEST_ERROR_DATA["detail_error"], location=TEST_ERROR_DATA["body"], field=TEST_ERROR_DATA["username"]
+    )
+    error_response = ErrorResponse(
+        slug=TEST_ERROR_DATA["validation_error"], message=TEST_ERROR_DATA["validation_failed"], details=[error_detail]
+    )
 
     json_data = error_response.model_dump()
 
@@ -108,7 +121,12 @@ def test_error_response_json_serialization():
 def test_error_location_type():
     """Test ErrorLocation type definition"""
     # Test that we can create ErrorDetail with valid locations
-    valid_locations = [TEST_ERROR_DATA["query"], TEST_ERROR_DATA["path"], TEST_ERROR_DATA["body"], TEST_ERROR_DATA["header"]]
+    valid_locations = [
+        TEST_ERROR_DATA["query"],
+        TEST_ERROR_DATA["path"],
+        TEST_ERROR_DATA["body"],
+        TEST_ERROR_DATA["header"],
+    ]
 
     for location in valid_locations:
         error_detail = ErrorDetail(message=TEST_ERROR_DATA["test_error"], location=location)  # type: ignore

@@ -75,5 +75,5 @@ class KeycloakAdminClient:
         except httpx.HTTPStatusError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}"
+                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}",
             )

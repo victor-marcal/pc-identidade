@@ -11,17 +11,12 @@ from pydantic import BaseModel
 
 from app.api.common.injector import get_seller_id_from_path
 from app.common.exceptions import ForbiddenException, UnauthorizedException
-
-from app.integrations.auth.keycloak_adapter import (
-    InvalidTokenException,
-    OAuthException,
-    TokenExpiredException,
-)
+from app.integrations.auth.keycloak_adapter import InvalidTokenException, OAuthException, TokenExpiredException
 from app.models.base import UserModel
 
 if TYPE_CHECKING:
-    from app.integrations.auth.keycloak_adapter import KeycloakAdapter
     from app.container import Container
+    from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

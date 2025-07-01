@@ -13,13 +13,13 @@ from app.settings import ApiSettings, api_settings
 # Constantes para testes
 TEST_CONSTANTS = {
     "app_name": "TestApp",
-    "openapi_path": "/openapi.json", 
+    "openapi_path": "/openapi.json",
     "version": "0.1.0",
     "health_check_base_path": "/health",
     "test_user_id": "test-user-id",
     "test_server": "test-server",
     "test_trace_id": "test-trace-id",
-    "test_sellers": "1,2,3"
+    "test_sellers": "1,2,3",
 }
 
 
@@ -77,10 +77,10 @@ def dummy_router():
 @pytest.fixture
 def dummy_settings():
     return ApiSettings(
-        app_name=TEST_CONSTANTS["app_name"], 
-        openapi_path=TEST_CONSTANTS["openapi_path"], 
-        version=TEST_CONSTANTS["version"], 
-        health_check_base_path=TEST_CONSTANTS["health_check_base_path"]
+        app_name=TEST_CONSTANTS["app_name"],
+        openapi_path=TEST_CONSTANTS["openapi_path"],
+        version=TEST_CONSTANTS["version"],
+        health_check_base_path=TEST_CONSTANTS["health_check_base_path"],
     )
 
 
@@ -104,8 +104,11 @@ def client(mock_seller_service):
 
     mock_keycloak_adapter = MagicMock()
     mock_keycloak_adapter.validate_token = AsyncMock(
-        return_value={"sub": TEST_CONSTANTS["test_user_id"], "iss": TEST_CONSTANTS["test_server"],
-                      "sellers": TEST_CONSTANTS["test_sellers"]}
+        return_value={
+            "sub": TEST_CONSTANTS["test_user_id"],
+            "iss": TEST_CONSTANTS["test_server"],
+            "sellers": TEST_CONSTANTS["test_sellers"],
+        }
     )
     container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
 

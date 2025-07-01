@@ -3,20 +3,18 @@ from typing import TYPE_CHECKING, Optional
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.common.auth_handler import do_auth
+from app.api.common.auth_handler import do_auth, get_current_user
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
-
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 from . import SELLER_PREFIX
-from app.api.common.auth_handler import get_current_user
 
 if TYPE_CHECKING:
     from app.api.common.auth_handler import UserAuthInfo, do_auth
-    from app.services import SellerService
     from app.container import Container
+    from app.services import SellerService
 
 
 router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])

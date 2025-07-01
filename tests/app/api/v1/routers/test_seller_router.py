@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
-from starlette.testclient import TestClient
+
 from starlette import status
+from starlette.testclient import TestClient
 
 from app.models.seller_model import Seller
 
@@ -16,6 +17,7 @@ def test_get_all_sellers(client: TestClient, mock_seller_service: AsyncMock):
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["results"][0]["seller_id"] == "1"
     mock_seller_service.find.assert_called_once()
+
 
 def test_create_seller(client: TestClient, mock_seller_service: AsyncMock):
     new_seller_data = {"seller_id": "2", "nome_fantasia": "Novo", "cnpj": "12345678000101"}
@@ -37,6 +39,7 @@ def test_update_seller(client: TestClient, mock_seller_service: AsyncMock):
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["nome_fantasia"] == "Atualizado"
     mock_seller_service.update.assert_called_once()
+
 
 def test_get_by_id_protected(client: TestClient, mock_seller_service: AsyncMock):
     seller = Seller(seller_id="luizalabs", nome_fantasia="Magalu", cnpj="12345678000100")

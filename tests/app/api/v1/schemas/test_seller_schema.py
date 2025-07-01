@@ -18,10 +18,14 @@ TEST_SELLER_SCHEMA_DATA = {
     "whitespace": "  ",
     "empty_string": "",
     "loja": "Loja",
-    "required_message": "O seller_id é obrigatório."
+    "required_message": "O seller_id é obrigatório.",
 }
 
-valid_data = {"seller_id": TEST_SELLER_SCHEMA_DATA["seller_id"], "nome_fantasia": TEST_SELLER_SCHEMA_DATA["loja_teste"], "cnpj": TEST_SELLER_SCHEMA_DATA["cnpj_valid"]}
+valid_data = {
+    "seller_id": TEST_SELLER_SCHEMA_DATA["seller_id"],
+    "nome_fantasia": TEST_SELLER_SCHEMA_DATA["loja_teste"],
+    "cnpj": TEST_SELLER_SCHEMA_DATA["cnpj_valid"],
+}
 
 
 def test_seller_create_valid():
@@ -72,5 +76,9 @@ def test_replace_invalid_cnpj_length():
 
 def test_seller_id_obrigatorio():
     with pytest.raises(ValidationError) as exc_info:
-        SellerCreate(seller_id=TEST_SELLER_SCHEMA_DATA["empty_string"], nome_fantasia=TEST_SELLER_SCHEMA_DATA["loja"], cnpj=TEST_SELLER_SCHEMA_DATA["cnpj_new"])
+        SellerCreate(
+            seller_id=TEST_SELLER_SCHEMA_DATA["empty_string"],
+            nome_fantasia=TEST_SELLER_SCHEMA_DATA["loja"],
+            cnpj=TEST_SELLER_SCHEMA_DATA["cnpj_new"],
+        )
     assert TEST_SELLER_SCHEMA_DATA["required_message"] in str(exc_info.value)

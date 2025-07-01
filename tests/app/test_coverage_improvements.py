@@ -20,16 +20,10 @@ TEST_DATA = {
         'test_from_json': 'test_from_json',
         'ab_short': 'ab',
         'test_basic': 'Test',
-        'test_field': 'test'
+        'test_field': 'test',
     },
-    'ids': {
-        'seller_123': '123',
-        'field_ge': 10,
-        'field_lt': 20
-    }
+    'ids': {'seller_123': '123', 'field_ge': 10, 'field_lt': 20},
 }
-
-
 
 
 def test_worker_init_import():
@@ -100,10 +94,10 @@ def test_error_handlers_missing_lines():
     from app.api.common.error_handlers import extract_error_detail_body
 
     error = {
-        "msg": TEST_DATA["test_messages"]["test_error"], 
-        "type": TEST_DATA["test_messages"]["test_type"], 
-        "loc": ["body", "field1", "field2"], 
-        "ctx": {"extra": "info"}
+        "msg": TEST_DATA["test_messages"]["test_error"],
+        "type": TEST_DATA["test_messages"]["test_type"],
+        "loc": ["body", "field1", "field2"],
+        "ctx": {"extra": "info"},
     }
 
     result = extract_error_detail_body(error)
@@ -142,29 +136,25 @@ def test_seller_schema_missing_lines():
         SellerCreate(seller_id="", nome_fantasia="", cnpj=TEST_DATA["cnpj_invalid"])
 
     valid_schema = SellerCreate(
-        seller_id=TEST_DATA["seller_id"], 
-        nome_fantasia=TEST_DATA["nome_fantasia"], 
-        cnpj=TEST_DATA["cnpj_valid"]
+        seller_id=TEST_DATA["seller_id"], nome_fantasia=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
     )
     assert valid_schema.nome_fantasia == TEST_DATA["nome_fantasia"]
 
     with pytest.raises(ValidationError):
-        SellerUpdate(nome_fantasia=TEST_DATA["test_messages"]["ab_short"])  
+        SellerUpdate(nome_fantasia=TEST_DATA["test_messages"]["ab_short"])
 
     with pytest.raises(ValidationError):
         SellerReplace(nome_fantasia=TEST_DATA["test_messages"]["ab_short"], cnpj=TEST_DATA["cnpj_invalid"])
 
     response = SellerResponse(
-        seller_id=TEST_DATA["seller_id"], 
-        nome_fantasia=TEST_DATA["nome_fantasia"], 
-        cnpj=TEST_DATA["cnpj_valid"]
+        seller_id=TEST_DATA["seller_id"], nome_fantasia=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
     )
     assert response.seller_id == TEST_DATA["seller_id"]
 
     response = SellerResponse(
-        seller_id=TEST_DATA["ids"]["seller_123"], 
-        nome_fantasia=TEST_DATA["test_messages"]["test_basic"], 
-        cnpj=TEST_DATA["cnpj_valid"]
+        seller_id=TEST_DATA["ids"]["seller_123"],
+        nome_fantasia=TEST_DATA["test_messages"]["test_basic"],
+        cnpj=TEST_DATA["cnpj_valid"],
     )
     assert response.seller_id == TEST_DATA["ids"]["seller_123"]
 
@@ -201,9 +191,9 @@ def test_query_model_branch_coverage():
         normal_field: Optional[str] = None
 
     model = TestQuery(
-        field__ge=TEST_DATA["ids"]["field_ge"], 
-        field__lt=TEST_DATA["ids"]["field_lt"], 
-        normal_field=TEST_DATA["test_messages"]["test_field"]
+        field__ge=TEST_DATA["ids"]["field_ge"],
+        field__lt=TEST_DATA["ids"]["field_lt"],
+        normal_field=TEST_DATA["test_messages"]["test_field"],
     )
     result = model.to_query_dict()
 

@@ -1,4 +1,7 @@
 import os
+
+from app.api.common.auth_handler import UserAuthInfo
+from app.api.v1.schemas.seller_schema import SellerCreate
 from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.common.datetime import utcnow
 from app.common.exceptions import BadRequestException, NotFoundException
@@ -11,9 +14,6 @@ from app.messages import (
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
-
-from app.api.v1.schemas.seller_schema import SellerCreate
-from app.api.common.auth_handler import UserAuthInfo
 
 from ..models import Seller
 from ..repositories import SellerRepository
@@ -51,7 +51,6 @@ class SellerService(CrudService[Seller, str]):
             seller_id=data.seller_id,
             nome_fantasia=data.nome_fantasia,
             cnpj=data.cnpj,
-
             created_at=now,
             updated_at=now,
             created_by=user_identifier,

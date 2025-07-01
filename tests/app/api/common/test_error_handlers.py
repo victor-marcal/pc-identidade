@@ -14,9 +14,10 @@ DEFAULT_MENSAGE = {
     "msgTest": "test message",
 }
 
-DEFAULT_PAGINATION= {
+DEFAULT_PAGINATION = {
     "request_path": "/test",
 }
+
 
 def test_extract_error_detail():
     """Test extract_error_detail function"""
@@ -38,7 +39,12 @@ def test_extract_error_detail():
 
 def test_extract_error_detail_body_location():
     """Test extract_error_detail with body location"""
-    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": ["body", "field1", "subfield"], "ctx": {}}
+    error = {
+        "msg": DEFAULT_MENSAGE["msgValidation"],
+        "type": "value_error",
+        "loc": ["body", "field1", "subfield"],
+        "ctx": {},
+    }
 
     result = extract_error_detail(error)
 
@@ -48,7 +54,12 @@ def test_extract_error_detail_body_location():
 
 def test_extract_error_detail_invalid_location():
     """Test extract_error_detail with invalid location defaults to body"""
-    error = {"msg": DEFAULT_MENSAGE["msgValidation"], "type": "value_error", "loc": ["invalid_location", "field_name"], "ctx": {}}
+    error = {
+        "msg": DEFAULT_MENSAGE["msgValidation"],
+        "type": "value_error",
+        "loc": ["invalid_location", "field_name"],
+        "ctx": {},
+    }
 
     result = extract_error_detail(error)
 
@@ -174,7 +185,12 @@ def test_extract_error_detail_with_valueerror_ctx():
 
 def test_extract_error_detail_with_non_valueerror_ctx():
     """Test extract_error_detail with non-ValueError in ctx - covers else branch"""
-    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "string error"}}
+    error = {
+        "msg": DEFAULT_MENSAGE["msgTest"],
+        "loc": ["query", "param"],
+        "type": "value_error",
+        "ctx": {"error": "string error"},
+    }
 
     result = extract_error_detail(error)
 
@@ -182,7 +198,7 @@ def test_extract_error_detail_with_non_valueerror_ctx():
     assert result.location == "query"
     assert result.slug == "value_error"
     assert result.field == "param"
-    assert result.ctx["error"] == "string error"  
+    assert result.ctx["error"] == "string error"
 
 
 def test_extract_error_detail_empty_location():
@@ -224,7 +240,12 @@ def test_extract_error_detail_body_with_valueerror():
 
 def test_extract_error_detail_body_without_valueerror():
     """Test extract_error_detail_body without ValueError in ctx - covers else branch"""
-    error = {"msg": DEFAULT_MENSAGE["msgTest"], "loc": ["query", "param"], "type": "value_error", "ctx": {"error": "regular error"}}
+    error = {
+        "msg": DEFAULT_MENSAGE["msgTest"],
+        "loc": ["query", "param"],
+        "type": "value_error",
+        "ctx": {"error": "regular error"},
+    }
 
     result = extract_error_detail_body(error)
 

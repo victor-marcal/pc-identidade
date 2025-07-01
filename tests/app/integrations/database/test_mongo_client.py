@@ -10,7 +10,7 @@ TEST_MONGO_DATA = {
     "db_name": "test_db",
     "collection_name": "test_collection",
     "database_name": "test_database",
-    "error_message": "Connection error"
+    "error_message": "Connection error",
 }
 
 

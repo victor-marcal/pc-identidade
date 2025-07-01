@@ -3,11 +3,7 @@ import pytest
 from app.api.common.schemas.pagination import Paginator
 
 # Valores padrão para evitar repetição nos testes
-DEFAULT_PAGINATION = {
-    "request_path": "/test",
-    "limit": 10,
-    "offset": 0
-}
+DEFAULT_PAGINATION = {"request_path": "/test", "limit": 10, "offset": 0}
 
 
 def test_paginator_basic():
@@ -22,7 +18,9 @@ def test_paginator_basic():
 
 def test_paginator_with_sort():
     """Test paginator with sort parameter"""
-    paginator = Paginator(request_path=DEFAULT_PAGINATION["request_path"], limit=5, offset=10, sort="name:asc,date:desc")
+    paginator = Paginator(
+        request_path=DEFAULT_PAGINATION["request_path"], limit=5, offset=10, sort="name:asc,date:desc"
+    )
 
     assert paginator.limit == 5
     assert paginator.offset == 10
