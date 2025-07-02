@@ -1,5 +1,7 @@
 import httpx
 import jwt
+import logging
+logger = logging.getLogger(__name__)
 
 # ----- Exceções -----
 
@@ -28,6 +30,7 @@ class KeycloakAdapter:
 
     async def validate_token(self, token: str) -> dict:
         try:
+            logger.debug("Iniciando validação do token JWT.")
             signing_key = self.jwks_client.get_signing_key_from_jwt(token)
 
             unverified_header = jwt.get_unverified_header(token)
@@ -42,10 +45,14 @@ class KeycloakAdapter:
                 algorithms=[alg],  # A correção está aqui
                 options={"verify_aud": False},
             )
+            logger.info(f"Token validado com sucesso para o usuário sub: {info_token.get('sub')}")
             return info_token
         except jwt.ExpiredSignatureError as exception:
+            logger.warning("Tentativa de uso de token expirado.")
             raise TokenExpiredException("Token expirou") from exception
         except jwt.InvalidTokenError as exception:
+            logger.warning(f"Token inválido recebido: {exception}")
             raise InvalidTokenException("Token inválido") from exception
         except Exception as e:
+            logger.error("Erro inesperado durante a validação do token.", exc_info=True)
             raise OAuthException("Falha ao validar o token") from e

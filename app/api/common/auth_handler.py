@@ -38,7 +38,7 @@ async def do_auth(
     token: Annotated[str, Depends(oauth2_scheme)],
     seller_id: str = Depends(get_seller_id_from_path),
     openid_adapter: "KeycloakAdapter" = Depends(Provide["keycloak_adapter"]),
-) -> UserAuthInfo:
+) -> None:
     try:
         info_token = await openid_adapter.validate_token(token)
     except TokenExpiredException as exception:
@@ -58,10 +58,9 @@ async def do_auth(
     )
 
     if seller_id not in user_info.sellers:
-        raise ForbiddenException("Não autorizado para trabalhar com este seller")
+        raise ForbiddenException(message="Você não tem permissão para acessar este seller.")
 
     request.state.user = user_info
-    return user_info
 
 
 async def get_current_user(request: Request) -> UserAuthInfo:
