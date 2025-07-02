@@ -3,6 +3,9 @@ from fastapi import HTTPException, status
 
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.settings.app import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class KeycloakAdminClient:
@@ -17,6 +20,7 @@ class KeycloakAdminClient:
         """
         Obtém um token de acesso com permissões de administrador.
         """
+        logger.info("Obtendo token de administrador do Keycloak para operação interna.")
         token_data = {
             "grant_type": "password",
             "client_id": self.settings.KEYCLOAK_ADMIN_CLIENT_ID,
@@ -32,6 +36,7 @@ class KeycloakAdminClient:
         """
         Cria um novo usuário no Keycloak.
         """
+        logger.info(f"Iniciando criação de usuário no Keycloak para o seller: {seller_id}")
         try:
             admin_token = await self._get_admin_token()
             headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
@@ -70,6 +75,7 @@ class KeycloakAdminClient:
                     issuer = f"{self.settings.KEYCLOAK_URL}/realms/{self.settings.KEYCLOAK_REALM_NAME}"
                     return f"{issuer}:{new_user_id}"
 
+                logger.error(f"Falha ao criar usuário '{username}' no Keycloak.", exc_info=True)
                 raise Exception("Resposta inesperada do Keycloak ao criar usuário.")
 
         except httpx.HTTPStatusError as e:

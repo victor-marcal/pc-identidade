@@ -24,5 +24,8 @@ class AppSettings(BaseSettings):
     KEYCLOAK_ADMIN_PASSWORD: str = Field(..., description="Senha do usuário admin do Keycloak")
     KEYCLOAK_ADMIN_CLIENT_ID: str = Field(..., description="Client ID para operações de admin")
 
+    pc_logging_level: str = Field("INFO", description="Nível do logging")
+    pc_logging_env: str = Field("prod", description="Ambiente do logging (dev ou prod)")
+
 
 settings = AppSettings()
