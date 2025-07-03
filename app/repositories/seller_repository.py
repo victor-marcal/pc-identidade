@@ -14,7 +14,15 @@ class SellerRepository(AsyncMemoryRepository[Seller]):
         super().__init__(client=client, db_name=db_name, collection_name=self.COLLECTION_NAME, model_class=Seller)
 
     async def find_by_nome_fantasia(self, nome_fantasia: str) -> Optional[Seller]:
+        """Método legado - mantido para compatibilidade"""
         result = await self.collection.find_one({"nome_fantasia": nome_fantasia})
+        if result:
+            return self.model_class(**result)
+        return None
+
+    async def find_by_trade_name(self, trade_name: str) -> Optional[Seller]:
+        """Busca seller por trade_name (nome fantasia)"""
+        result = await self.collection.find_one({"trade_name": trade_name})
         if result:
             return self.model_class(**result)
         return None

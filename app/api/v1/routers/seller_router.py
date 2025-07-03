@@ -57,16 +57,12 @@ async def _find_seller_by_cnpj_with_access_check(cnpj: str, user_info: "UserAuth
 @inject
 async def get(
     paginator: Paginator = Depends(get_request_pagination),
-    cnpj: Optional[str] = Query(None),
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
 ):
     """
     Retorna todos os sellers cadastrados no sistema
     """
-    filters = {}
-    if cnpj:
-        filters["cnpj"] = cnpj
-    results = await seller_service.find(paginator=paginator, filters=filters)
+    results = await seller_service.find(paginator=paginator)
     return paginator.paginate(results=results)
 
 
@@ -74,7 +70,7 @@ async def get(
     "/buscar",
     response_model=SellerResponse,
     name="Buscar Seller por ID ou CNPJ",
-    description="Buscar um Seller pelo 'seller_id' ou 'cnpj'. Requer autorização.",
+    description="Buscar um Seller pelo 'seller_id' ou 'cnpj'. Se ambos forem fornecidos, deve bater os dois campos. Requer autorização.",
     status_code=status.HTTP_200_OK,
     summary="Buscar Seller por ID ou CNPJ",
 )
@@ -87,19 +83,25 @@ async def get_by_id_or_cnpj(
 ):
     """
     Busca um seller por seller_id ou cnpj.
-    Exatamente um dos parâmetros deve ser fornecido.
+    Se ambos os parâmetros forem fornecidos, busca um seller que tenha exatamente esse seller_id E esse cnpj.
+    Pelo menos um dos parâmetros deve ser fornecido.
     Validação de acesso é feita para o seller_id encontrado.
     """
     if not seller_id and not cnpj:
         raise HTTPException(status_code=400, detail="seller_id ou cnpj deve ser fornecido")
 
-    if seller_id and cnpj:
-        raise HTTPException(status_code=400, detail="Apenas seller_id ou cnpj deve ser fornecido, não ambos")
-
     try:
-        if seller_id:
+        if seller_id and cnpj:
+            # Busca por seller_id e valida se o cnpj também bate
+            seller = await _find_seller_by_id_with_access_check(seller_id, auth_info, seller_service)
+            if seller.cnpj != cnpj:
+                raise HTTPException(status_code=404, detail="Seller não encontrado com os critérios fornecidos")
+            return seller
+        elif seller_id:
+            # Busca apenas por seller_id
             return await _find_seller_by_id_with_access_check(seller_id, auth_info, seller_service)
-        else:  # cnpj
+        else:  # apenas cnpj
+            # Busca apenas por cnpj
             return await _find_seller_by_cnpj_with_access_check(cnpj, auth_info, seller_service)
     except Exception as e:
         if "não tem permissão" in str(e) or "acesso não permitido" in str(e):
@@ -203,5 +205,28 @@ async def replace_by_id(
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
     auth_info: "UserAuthInfo" = Depends(get_current_user),
 ):
-    seller = Seller(seller_id=seller_id, nome_fantasia=seller_data.nome_fantasia, cnpj=seller_data.cnpj)
+    seller = Seller(
+        seller_id=seller_id,
+        company_name=seller_data.company_name,
+        trade_name=seller_data.trade_name,
+        cnpj=seller_data.cnpj,
+        state_municipal_registration=seller_data.state_municipal_registration,
+        commercial_address=seller_data.commercial_address,
+        contact_phone=seller_data.contact_phone,
+        contact_email=seller_data.contact_email,
+        legal_rep_full_name=seller_data.legal_rep_full_name,
+        legal_rep_cpf=seller_data.legal_rep_cpf,
+        legal_rep_rg_number=seller_data.legal_rep_rg_number,
+        legal_rep_rg_state=seller_data.legal_rep_rg_state,
+        legal_rep_birth_date=seller_data.legal_rep_birth_date,
+        legal_rep_phone=seller_data.legal_rep_phone,
+        legal_rep_email=seller_data.legal_rep_email,
+        bank_name=seller_data.bank_name,
+        agency_account=seller_data.agency_account,
+        account_type=seller_data.account_type,
+        account_holder_name=seller_data.account_holder_name,
+        uploaded_documents=seller_data.uploaded_documents,
+        product_categories=seller_data.product_categories,
+        business_description=seller_data.business_description,
+    )
     return await seller_service.replace(seller_id, seller, auth_info=auth_info)
