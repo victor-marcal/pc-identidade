@@ -23,13 +23,64 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 class UserAuthInfo(BaseModel):
+    """
+    Modelo para armazenar informações do usuário autenticado.
+    """
     user: UserModel
     trace_id: str | None
     sellers: list[str]
 
     @staticmethod
-    def to_sellers(sellers: str | None) -> list[str]:
-        return sellers.split(",") if sellers else []
+    def to_sellers(sellers_attr: str | list[str] | None) -> list[str]:
+        """Converte o atributo 'sellers' do token para uma lista de strings."""
+        if isinstance(sellers_attr, list):
+            return sellers_attr
+        if isinstance(sellers_attr, str):
+            return sellers_attr.split(",") if sellers_attr else []
+        return []
+
+
+@inject
+async def get_current_user_info(
+        request: Request,
+        token: Annotated[str, Depends(oauth2_scheme)],
+        openid_adapter: "KeycloakAdapter" = Depends(Provide["keycloak_adapter"]),
+) -> UserAuthInfo:
+    """
+    Dependência FastAPI para validar o token e retornar as informações do usuário.
+    Esta função será o único ponto de entrada para autenticação nas rotas.
+    """
+    try:
+        info_token = await openid_adapter.validate_token(token)
+    except TokenExpiredException as e:
+        raise UnauthorizedException(message="Seu token de acesso expirou.") from e
+    except InvalidTokenException as e:
+        raise UnauthorizedException(message="Seu token de acesso é inválido.") from e
+    except Exception as e:
+        raise UnauthorizedException(message=f"Falha na autenticação: {e}") from e
+
+    user_info = UserAuthInfo(
+        user=UserModel(
+            name=info_token.get("sub"),
+            server=info_token.get("iss"),
+        ),
+        trace_id=getattr(request.state, 'trace_id', None),
+        sellers=UserAuthInfo.to_sellers(info_token.get("sellers")),
+    )
+
+    request.state.user = user_info
+
+    return user_info
+
+
+def require_seller_permission(seller_id: str, auth_info: UserAuthInfo = Depends(get_current_user_info)):
+    """
+    Dependência para verificar se o usuário autenticado tem permissão para um seller_id específico.
+    Use isto em rotas que operam em um seller existente (GET, PATCH, DELETE).
+    """
+    if seller_id not in auth_info.sellers:
+        raise ForbiddenException(message="Você não tem permissão para acessar este seller.")
+    return auth_info
 
 
 @inject

@@ -28,58 +28,98 @@ class KeycloakAdminClient:
             "password": self.settings.KEYCLOAK_ADMIN_PASSWORD,
         }
         async with httpx.AsyncClient() as client:
-            response = await client.post(self.token_url, data=token_data)
-            response.raise_for_status()
-            return response.json()["access_token"]
-
-    async def create_user(self, username: str, email: str, password: str, seller_id: str) -> str:
-        """
-        Cria um novo usuário no Keycloak.
-        """
-        logger.info(f"Iniciando criação de usuário no Keycloak para o seller: {seller_id}")
-        try:
-            admin_token = await self._get_admin_token()
-            headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
-
-            user_payload = {
-                "username": username,
-                "email": email,
-                "firstName": username,
-                "lastName": username,
-                "enabled": True,
-                "emailVerified": True,
-                "credentials": [{"type": "password", "value": password, "temporary": False}],
-                "attributes": {"sellers": [seller_id]},
-                "realmRoles": ["offline_access", "uma_authorization"],
-                "requiredActions": [],
-            }
-
-            users_url = f"{self.base_url}/users"
-            async with httpx.AsyncClient() as client:
-                response = await client.post(users_url, headers=headers, json=user_payload)
-
-                if response.status_code == 409:
-                    raise BadRequestException(message=f"Usuário '{username}' já existe no Keycloak.")
-
+            try:
+                response = await client.post(self.token_url, data=token_data)
                 response.raise_for_status()
+                return response.json()["access_token"]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Erro ao obter token de admin: {e.response.text}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    detail="Falha ao autenticar com o Keycloak.")
 
-                if response.status_code == 201:
-                    location_header = response.headers.get("Location")
-                    if not location_header:
-                        raise Exception("Keycloak não retornou a localização do novo usuário.")
+    async def create_user(
+            self, username: str, email: str, password: str, first_name: str | None, last_name: str | None,
+            sellers: list[str]
+    ) -> str:
+        logger.info(f"Iniciando criação de usuário no Keycloak: {username}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
 
-                    # Extrai o ID do usuário (sub) da URL
-                    new_user_id = location_header.split("/")[-1]
+        user_payload = {
+            "username": username,
+            "email": email,
+            "firstName": first_name or '',
+            "lastName": last_name or '',
+            "enabled": True,
+            "emailVerified": True,
+            "credentials": [{"type": "password", "value": password, "temporary": False}],
+            "attributes": {"sellers": sellers},
+            "realmRoles": ["offline_access", "uma_authorization"],
+            "requiredActions": [],
+        }
 
-                    # Constrói o identificador (iss+sub)
-                    issuer = f"{self.settings.KEYCLOAK_URL}/realms/{self.settings.KEYCLOAK_REALM_NAME}"
-                    return f"{issuer}:{new_user_id}"
+        users_url = f"{self.base_url}/users"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(users_url, headers=headers, json=user_payload)
+                if response.status_code == 409:
+                    raise BadRequestException(message=f"Usuário '{username}' já existe.")
+                response.raise_for_status()
+                location_header = response.headers.get("Location")
+                if not location_header:
+                    raise Exception("Keycloak não retornou a localização do novo usuário.")
+                return location_header.split("/")[-1]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Erro ao criar usuário no Keycloak: {e.response.text}")
+                raise HTTPException(status_code=e.response.status_code, detail=f"Erro no Keycloak: {e.response.text}")
 
-                logger.error(f"Falha ao criar usuário '{username}' no Keycloak.", exc_info=True)
-                raise Exception("Resposta inesperada do Keycloak ao criar usuário.")
+    async def get_user(self, user_id: str) -> dict | None:
+        logger.debug(f"Buscando usuário por ID: {user_id}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        user_url = f"{self.base_url}/users/{user_id}"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(user_url, headers=headers)
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return response.json()
 
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao criar usuário no Keycloak: {e.response.text}",
-            )
+    async def get_users(self) -> list[dict]:
+        logger.debug("Listando todos os usuários.")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        users_url = f"{self.base_url}/users"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(users_url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
+    async def update_user_attributes(self, user_id: str, attributes: dict):
+        logger.info(f"Atualizando atributos para o usuário ID: {user_id}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        user_url = f"{self.base_url}/users/{user_id}"
+        async with httpx.AsyncClient() as client:
+            current_user_response = await client.get(user_url, headers=headers)
+            current_user_response.raise_for_status()
+            user_data = current_user_response.json()
+
+            user_data['attributes'] = attributes
+
+            response = await client.put(user_url, headers=headers, json=user_data)
+            response.raise_for_status()
+            logger.info(f"Atributos do usuário {user_id} atualizados com sucesso.")
+
+    async def delete_user(self, user_id: str) -> bool:
+        logger.info(f"Deletando usuário ID: {user_id}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        user_url = f"{self.base_url}/users/{user_id}"
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(user_url, headers=headers)
+            if response.status_code == 404:
+                return False
+            response.raise_for_status()
+            return True
+
