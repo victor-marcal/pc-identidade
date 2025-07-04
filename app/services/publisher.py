@@ -1,14 +1,12 @@
 import pika
 import json
 import os
-import logging
 from typing import Dict
 
 class RabbitMQPublisher:
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
         self.__host = os.getenv("RABBITMQ_HOST")
-        self.__port = int(os.getenv("RABBITMQ_PORT", 5672))
+        self.__port = os.getenv("RABBITMQ_PORT")
         self.__username = os.getenv("RABBITMQ_USERNAME")
         self.__password = os.getenv("RABBITMQ_PASSWORD")
         self.__exchange = os.getenv("RABBITMQ_EXCHANGE")
@@ -36,9 +34,6 @@ class RabbitMQPublisher:
             # Serializar com cuidado especial para tipos datetime e enum
             message_body = json.dumps(body, default=self._json_serializer, ensure_ascii=False, indent=None)
             
-            self.logger.debug(f"Enviando mensagem para exchange '{self.__exchange}' com routing_key '{self.__routing_key}'")
-            self.logger.debug(f"Tamanho da mensagem: {len(message_body)} caracteres")
-            
             channel.basic_publish(
                 exchange=self.__exchange,
                 routing_key=self.__routing_key,
@@ -49,8 +44,6 @@ class RabbitMQPublisher:
                 )
             )
             
-            self.logger.info("Mensagem enviada com sucesso para RabbitMQ")
-            
         except Exception as e:
             self.logger.error(f"Erro ao enviar mensagem: {str(e)}")
             raise
@@ -60,11 +53,11 @@ class RabbitMQPublisher:
 
     def _json_serializer(self, obj):
         """Serializer customizado para tipos especiais"""
-        if hasattr(obj, 'isoformat'):  # datetime objects
+        if hasattr(obj, 'isoformat'):
             return obj.isoformat()
-        elif hasattr(obj, 'value'):  # enum objects
+        elif hasattr(obj, 'value'):
             return obj.value
-        elif hasattr(obj, '__dict__'):  # pydantic models or other objects
+        elif hasattr(obj, '__dict__'): 
             return obj.__dict__
         return str(obj)
 
