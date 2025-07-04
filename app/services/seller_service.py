@@ -40,18 +40,38 @@ class SellerService(CrudService[Seller, str]):
             logger.warning(f"Tentativa de criar seller com ID duplicado: {data.seller_id}")
             raise BadRequestException(message=MSG_SELLER_ID_JA_CADASTRADO)
 
-        # Verifica se nome_fantasia já existe
-        if await self.repository.find_by_nome_fantasia(data.nome_fantasia):
-            logger.warning(f"Tentativa de criar seller com nome_fantasia duplicado: {data.seller_id}")
+        # Verifica se trade_name já existe
+        if await self.repository.find_by_trade_name(data.trade_name):
+            logger.warning(f"Tentativa de criar seller com trade_name duplicado: {data.seller_id}")
             raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
+
         now = utcnow()
 
         seller_to_create = Seller(
             seller_id=data.seller_id,
-            nome_fantasia=data.nome_fantasia,
+            company_name=data.company_name,
+            trade_name=data.trade_name,
             cnpj=data.cnpj,
+            state_municipal_registration=data.state_municipal_registration,
+            commercial_address=data.commercial_address,
+            contact_phone=data.contact_phone,
+            contact_email=data.contact_email,
+            legal_rep_full_name=data.legal_rep_full_name,
+            legal_rep_cpf=data.legal_rep_cpf,
+            legal_rep_rg_number=data.legal_rep_rg_number,
+            legal_rep_rg_state=data.legal_rep_rg_state,
+            legal_rep_birth_date=data.legal_rep_birth_date,
+            legal_rep_phone=data.legal_rep_phone,
+            legal_rep_email=data.legal_rep_email,
+            bank_name=data.bank_name,
+            agency_account=data.agency_account,
+            account_type=data.account_type,
+            account_holder_name=data.account_holder_name,
+            uploaded_documents=data.uploaded_documents,
+            product_categories=data.product_categories,
+            business_description=data.business_description,
             created_at=now,
             updated_at=now,
             created_by=user_identifier,
@@ -109,6 +129,7 @@ class SellerService(CrudService[Seller, str]):
             raise NotFoundException(message=MSG_SELLER_CNPJ_NAO_ENCONTRADO.format(cnpj=cnpj))
         return seller
 
+
     async def update(self, entity_id: str, data: SellerPatch, auth_info: UserAuthInfo) -> Seller:
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
         logger.info(f"Usuário '{user_identifier}' iniciando atualização (PATCH) para o seller_id: {entity_id}")
@@ -123,10 +144,10 @@ class SellerService(CrudService[Seller, str]):
             logger.info(f"Nenhum campo para atualizar no seller_id: {entity_id}. Nenhuma ação realizada.")
             return current
 
-        if "nome_fantasia" in update_data:
-            existing = await self.repository.find_by_nome_fantasia(update_data["nome_fantasia"])
+        if "trade_name" in update_data:
+            existing = await self.repository.find_by_trade_name(update_data["trade_name"])
             if existing and existing.seller_id != entity_id:
-                logger.warning(f"Tentativa de atualizar seller '{entity_id}' com nome_fantasia que já está em uso.")
+                logger.warning(f"Tentativa de atualizar seller '{entity_id}' com trade_name que já está em uso.")
                 raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
         now = utcnow()
@@ -148,11 +169,11 @@ class SellerService(CrudService[Seller, str]):
             logger.warning(f"Usuário '{user_identifier}' tentou substituir um seller inexistente: {entity_id}")
             raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
 
-        if await self.repository.find_by_nome_fantasia(data.nome_fantasia):
-            if data.nome_fantasia != existing.nome_fantasia:
+        if await self.repository.find_by_trade_name(data.trade_name):
+            if data.trade_name != existing.trade_name:
                 logger.warning(
                     f"Conflito de nome fantasia ao tentar substituir o seller '{entity_id}'. "
-                    f"O nome '{data.nome_fantasia}' já está em uso."
+                    f"O nome '{data.trade_name}' já está em uso."
                 )
                 raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
@@ -161,8 +182,27 @@ class SellerService(CrudService[Seller, str]):
         logger.debug(f"Montando objeto de substituição para o seller '{entity_id}'.")
         updated_seller = Seller(
             seller_id=entity_id,
-            nome_fantasia=data.nome_fantasia,
+            company_name=data.company_name,
+            trade_name=data.trade_name,
             cnpj=data.cnpj,
+            state_municipal_registration=data.state_municipal_registration,
+            commercial_address=data.commercial_address,
+            contact_phone=data.contact_phone,
+            contact_email=data.contact_email,
+            legal_rep_full_name=data.legal_rep_full_name,
+            legal_rep_cpf=data.legal_rep_cpf,
+            legal_rep_rg_number=data.legal_rep_rg_number,
+            legal_rep_rg_state=data.legal_rep_rg_state,
+            legal_rep_birth_date=data.legal_rep_birth_date,
+            legal_rep_phone=data.legal_rep_phone,
+            legal_rep_email=data.legal_rep_email,
+            bank_name=data.bank_name,
+            agency_account=data.agency_account,
+            account_type=data.account_type,
+            account_holder_name=data.account_holder_name,
+            uploaded_documents=data.uploaded_documents,
+            product_categories=data.product_categories,
+            business_description=data.business_description,
             created_at=existing.created_at,
             created_by=existing.created_by,
             updated_at=now,
