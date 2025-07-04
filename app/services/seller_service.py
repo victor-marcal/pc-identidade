@@ -17,6 +17,7 @@ from app.messages import (
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
+from app.services.publisher import publish_seller_message
 
 from ..models import Seller
 from ..repositories import SellerRepository
@@ -82,6 +83,16 @@ class SellerService(CrudService[Seller, str]):
         logger.debug(f"Enviando dados do seller '{data.seller_id}' para o repositório.")
         created_seller = await self.repository.create(seller_to_create)
         logger.info(f"Seller '{data.seller_id}' criado com sucesso no banco de dados.")
+
+        # Publicar mensagem do seller criado
+        try:
+            seller_dict = created_seller.model_dump()
+            logger.debug(f"Dados do seller para publicação: {seller_dict}")
+            publish_seller_message(seller_dict)
+            logger.info(f"Mensagem do seller '{data.seller_id}' publicada com sucesso no RabbitMQ.")
+        except Exception as e:
+            logger.error(f"Falha ao publicar mensagem do seller '{data.seller_id}' no RabbitMQ: {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
 
         try:
             logger.debug(f"Atualizando usuário '{auth_info.user.name}' no Keycloak com o novo seller.")

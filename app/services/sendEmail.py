@@ -1,13 +1,14 @@
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-server = 'smtp.gmail.com'
-port = 587
-sender_email = 'joaopedrovr91@gmail.com'
-password = 'nmfi fekq qvob jgnv'
+server = os.getenv("SMTP_SERVER")
+port = os.getenv("SMTP_PORT")
+sender_email = os.getenv("SENDER_EMAIL")
+password = os.getenv("SENDER_PASSWORD")
 
-receiver_email = 'joaopedro.vieira@tecprime.com.br'
+receiver_email = os.getenv("RECIPIENT_EMAIL")
 subject = 'Test Email'
 body = """
 <!DOCTYPE html>
