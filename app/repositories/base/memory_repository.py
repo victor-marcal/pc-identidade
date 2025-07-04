@@ -1,5 +1,7 @@
 from typing import Any, Generic, List, Optional, Type, TypeVar
 from uuid import UUID
+from datetime import date, datetime
+from enum import Enum
 
 from pydantic import BaseModel
 
@@ -14,6 +16,22 @@ ID = TypeVar("ID", bound=UUID)
 Q = TypeVar("Q", bound=QueryModel)
 
 DEFAULT_USER = "system"
+
+
+def convert_for_mongo(obj):
+    """
+    Converte tipos não serializáveis pelo MongoDB/BSON
+    """
+    if isinstance(obj, dict):
+        return {key: convert_for_mongo(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_for_mongo(item) for item in obj]
+    elif isinstance(obj, date) and not isinstance(obj, datetime):
+        return datetime.combine(obj, datetime.min.time())
+    elif isinstance(obj, Enum):
+        return obj.value
+    else:
+        return obj
 
 
 class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
@@ -40,6 +58,10 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
         entity_dict.setdefault("updated_by", DEFAULT_USER)
         entity_dict.setdefault("audit_created_at", now)
         entity_dict.setdefault("audit_updated_at", now)
+        
+        # Converte tipos não serializáveis pelo MongoDB
+        entity_dict = convert_for_mongo(entity_dict)
+        
         await self.collection.insert_one(entity_dict)
         return self.model_class(**entity_dict)
 
@@ -52,7 +74,6 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
     async def find(self, filters: dict, limit: int = 10, offset: int = 0, sort: Optional[dict] = None) -> List[T]:
         cursor = self.collection.find(filters)
         if sort:
-            # sort: {"field": 1/-1}
             cursor = cursor.sort(list(sort.items()))
         cursor = cursor.skip(offset).limit(limit)
         results = []
@@ -63,6 +84,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
     async def update(self, seller_id: str, entity: Any) -> Optional[T]:
         # PUT: substitui todos os campos (menos _id)
         entity_dict = entity.model_dump(by_alias=True, exclude={"identity"})
+        entity_dict = convert_for_mongo(entity_dict)
         result = await self.collection.find_one_and_update(
             {"seller_id": str(seller_id)}, {"$set": entity_dict}, return_document=True
         )
@@ -76,6 +98,7 @@ class AsyncMemoryRepository(AsyncCrudRepository[T], Generic[T]):
 
     async def patch(self, seller_id: str, update_fields: dict) -> Optional[T]:
         # PATCH: atualiza só os campos enviados
+        update_fields = convert_for_mongo(update_fields)
         result = await self.collection.find_one_and_update(
             {"seller_id": str(seller_id)}, {"$set": update_fields}, return_document=True
         )

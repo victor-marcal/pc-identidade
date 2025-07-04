@@ -62,7 +62,7 @@ async def get(
     """
     Retorna todos os sellers cadastrados no sistema
     """
-    results = await seller_service.find(paginator=paginator)
+    results = await seller_service.find(paginator=paginator, filters={})
     return paginator.paginate(results=results)
 
 
@@ -225,7 +225,6 @@ async def replace_by_id(
         agency_account=seller_data.agency_account,
         account_type=seller_data.account_type,
         account_holder_name=seller_data.account_holder_name,
-        uploaded_documents=seller_data.uploaded_documents,
         product_categories=seller_data.product_categories,
         business_description=seller_data.business_description,
     )

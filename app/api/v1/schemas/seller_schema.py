@@ -32,7 +32,6 @@ DESC_BANK_NAME = "Nome do banco"
 DESC_AGENCY_ACCOUNT = "Agência e conta bancária"
 DESC_ACCOUNT_TYPE = "Tipo de conta bancária"
 DESC_ACCOUNT_HOLDER_NAME = "Nome do titular da conta"
-DESC_UPLOADED_DOCUMENTS = "Lista de documentos obrigatórios"
 DESC_PRODUCT_CATEGORIES = "Categorias de produtos"
 DESC_BUSINESS_DESCRIPTION = "Descrição do negócio"
 
@@ -70,9 +69,6 @@ class SellerBase(SchemaType):
     agency_account: str = Field(..., description=DESC_AGENCY_ACCOUNT)
     account_type: AccountType = Field(..., description=DESC_ACCOUNT_TYPE)
     account_holder_name: str = Field(..., description=DESC_ACCOUNT_HOLDER_NAME)
-
-    # Required Documents
-    uploaded_documents: List[str] = Field(..., description=DESC_UPLOADED_DOCUMENTS)
 
     # Operational Data
     product_categories: List[ProductCategory] = Field(..., description=DESC_PRODUCT_CATEGORIES)
@@ -170,9 +166,6 @@ class SellerUpdate(SchemaType):
     account_type: Optional[AccountType] = Field(None, description=DESC_ACCOUNT_TYPE)
     account_holder_name: Optional[str] = Field(None, description=DESC_ACCOUNT_HOLDER_NAME)
 
-    # Required Documents
-    uploaded_documents: Optional[List[str]] = Field(None, description=DESC_UPLOADED_DOCUMENTS)
-
     # Operational Data
     product_categories: Optional[List[ProductCategory]] = Field(None, description=DESC_PRODUCT_CATEGORIES)
     business_description: Optional[str] = Field(None, description=DESC_BUSINESS_DESCRIPTION)
@@ -254,9 +247,6 @@ class SellerReplace(SchemaType):
     agency_account: str = Field(..., description=DESC_AGENCY_ACCOUNT)
     account_type: AccountType = Field(..., description=DESC_ACCOUNT_TYPE)
     account_holder_name: str = Field(..., description=DESC_ACCOUNT_HOLDER_NAME)
-
-    # Required Documents
-    uploaded_documents: List[str] = Field(..., description=DESC_UPLOADED_DOCUMENTS)
 
     # Operational Data
     product_categories: List[ProductCategory] = Field(..., description=DESC_PRODUCT_CATEGORIES)

@@ -31,9 +31,6 @@ class Seller(PersistableEntity):
     account_type: AccountType  # Tipo de Conta
     account_holder_name: str  # Nome do Titular
 
-    # Required Documents (file paths/IDs after upload)
-    uploaded_documents: List[str]  # Documentos Obrigatórios
-
     # Operational Data
     product_categories: List[ProductCategory] # Categorias de Produtos
     business_description: str  # Descrição do Negócio

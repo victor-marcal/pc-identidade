@@ -30,9 +30,6 @@ class SellerPatch(BaseModel):
     account_type: Optional[AccountType] = Field(None, description="Tipo de conta bancária")
     account_holder_name: Optional[str] = Field(None, description="Nome do titular da conta")
 
-    # Required Documents
-    uploaded_documents: Optional[List[str]] = Field(None, description="Lista de documentos obrigatórios")
-
     # Operational Data
     product_categories: Optional[List[ProductCategory]] = Field(None, description="Categorias de produtos")
     business_description: Optional[str] = Field(None, description="Descrição do negócio")
