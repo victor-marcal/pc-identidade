@@ -2,8 +2,9 @@ import os
 
 import logging
 
+from fastapi import HTTPException, status
+
 from app.api.common.auth_handler import UserAuthInfo
-from app.api.v1.schemas.seller_schema import SellerCreate
 from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.common.datetime import utcnow
 from app.common.exceptions import BadRequestException, NotFoundException
@@ -32,7 +33,7 @@ class SellerService(CrudService[Seller, str]):
         self.repository: SellerRepository = repository
         self.keycloak_client: KeycloakAdminClient = keycloak_client
 
-    async def create(self, data: Seller) -> Seller:
+    async def create(self, data: Seller, auth_info: UserAuthInfo) -> Seller:
         logger.info(f"Iniciando processo de criação para o seller_id: {data.seller_id}")
         # Verifica se seller_id já existe
         if await self.repository.find_by_id(data.seller_id):
@@ -44,19 +45,7 @@ class SellerService(CrudService[Seller, str]):
             logger.warning(f"Tentativa de criar seller com trade_name duplicado: {data.seller_id}")
             raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
-        # Tenta criar o usuário no Keycloak ANTES de criar no banco.
-        try:
-            logger.debug(f"Tentando criar usuário no Keycloak para o seller: {data.seller_id}")
-            user_identifier = await self.keycloak_client.create_user(
-                username=data.seller_id,
-                email=data.contact_email,  # Usa o email de contato do formulário
-                password=os.getenv("KEYCLOAK_DEFAULT_PASSWORD", "senha123"),
-                seller_id=data.seller_id,
-            )
-            logger.info(f"Usuário criado com sucesso no Keycloak: {user_identifier}")
-        except Exception:
-            logger.error(f"Falha crítica ao tentar criar usuário no Keycloak para o seller: {data.seller_id}", exc_info=True)
-            raise
+        user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
 
         now = utcnow()
 
@@ -94,6 +83,28 @@ class SellerService(CrudService[Seller, str]):
         created_seller = await self.repository.create(seller_to_create)
         logger.info(f"Seller '{data.seller_id}' criado com sucesso no banco de dados.")
 
+        try:
+            logger.debug(f"Atualizando usuário '{auth_info.user.name}' no Keycloak com o novo seller.")
+            user_keycloak_id = auth_info.user.name  # O 'sub' do token
+
+            # Pega os sellers atuais do usuário e adiciona o novo
+            current_sellers = auth_info.sellers
+            if data.seller_id not in current_sellers:
+                updated_sellers = current_sellers + [data.seller_id]
+                await self.keycloak_client.update_user_attributes(
+                    user_id=user_keycloak_id,
+                    attributes={"sellers": updated_sellers}
+                )
+                logger.info(f"Atributo 'sellers' do usuário '{auth_info.user.name}' atualizado no Keycloak.")
+
+        except Exception as e:
+            logger.error(
+                f"Falha ao atualizar o usuário no Keycloak após criar o seller '{data.seller_id}'. Reversão manual pode ser necessária.",
+                exc_info=True)
+            # Considere uma lógica de compensação aqui se necessário
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Seller criado, mas falha ao atualizar permissões do usuário.")
+
         return created_seller
 
     async def delete_by_id(self, entity_id) -> None:
@@ -116,6 +127,7 @@ class SellerService(CrudService[Seller, str]):
         if not seller:
             raise NotFoundException(message=MSG_SELLER_CNPJ_NAO_ENCONTRADO.format(cnpj=cnpj))
         return seller
+
 
     async def update(self, entity_id: str, data: SellerPatch, auth_info: UserAuthInfo) -> Seller:
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"

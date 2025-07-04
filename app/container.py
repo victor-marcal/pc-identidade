@@ -4,16 +4,14 @@ from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
-from app.services import HealthCheckService, SellerService
+from app.services import HealthCheckService, SellerService, UserService
 from app.settings.app import AppSettings
 from app.settings.app import settings as settings_instance
 
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
-
     config.from_pydantic(settings_instance)
-
     settings = providers.Singleton(AppSettings.model_validate, config)
 
     mongo_client = providers.Singleton(
@@ -44,5 +42,10 @@ class Container(containers.DeclarativeContainer):
     seller_service = providers.Singleton(
         SellerService,
         repository=seller_repository,
+        keycloak_client=keycloak_admin_client,
+    )
+
+    user_service = providers.Singleton(
+        UserService,
         keycloak_client=keycloak_admin_client,
     )
