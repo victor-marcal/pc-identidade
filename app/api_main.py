@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 # Inicializando a biblioteca de logs
 LoggingBuilder.init()
 
-logging.basicConfig(level=LoggingBuilder._log_level)
-
 
 async def log_requests_middleware(request: Request, call_next):
     """
