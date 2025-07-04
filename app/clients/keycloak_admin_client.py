@@ -123,3 +123,56 @@ class KeycloakAdminClient:
             response.raise_for_status()
             return True
 
+    async def update_user(self, user_id: str, data_to_update: dict):
+        """
+        Atualiza dados específicos de um usuário (lógica de PATCH).
+        """
+        logger.info(f"Atualizando dados para o usuário ID: {user_id}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        user_url = f"{self.base_url}/users/{user_id}"
+
+        async with httpx.AsyncClient() as client:
+            try:
+                current_user_response = await client.get(user_url, headers=headers)
+                current_user_response.raise_for_status()
+                user_data = current_user_response.json()
+
+                if "first_name" in data_to_update:
+                    user_data["firstName"] = data_to_update["first_name"]
+                if "last_name" in data_to_update:
+                    user_data["lastName"] = data_to_update["last_name"]
+                if "email" in data_to_update:
+                    user_data["email"] = data_to_update["email"]
+
+                response = await client.put(user_url, headers=headers, json=user_data)
+                response.raise_for_status()
+                logger.info(f"Dados do usuário {user_id} atualizados com sucesso.")
+
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code in [409, 400]:
+                    error_detail = e.response.json().get("errorMessage", e.response.text)
+                    logger.warning(f"Erro de conflito ao atualizar usuário no Keycloak: {error_detail}")
+                    raise BadRequestException(message=f"Erro ao atualizar no Keycloak: {error_detail}")
+                raise e
+
+    async def reset_user_password(self, user_id: str, password: str):
+        """
+        Define uma nova senha para o usuário.
+        """
+        logger.info(f"Redefinindo a senha para o usuário ID: {user_id}")
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        password_reset_url = f"{self.base_url}/users/{user_id}/reset-password"
+
+        password_payload = {
+            "type": "password",
+            "temporary": False,
+            "value": password,
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.put(password_reset_url, headers=headers, json=password_payload)
+            response.raise_for_status()
+            logger.info(f"Senha do usuário {user_id} redefinida com sucesso.")
+

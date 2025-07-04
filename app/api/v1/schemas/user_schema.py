@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -23,3 +24,14 @@ class UserResponse(BaseModel):
     last_name: str | None = Field(None, description="Sobrenome.")
     enabled: bool = Field(..., description="Indica se o usuário está ativo.")
     attributes: dict | None = Field(None, description="Atributos personalizados do usuário, como 'sellers'.")
+
+
+class UserPatch(BaseModel):
+    """
+    Schema para atualização parcial (PATCH) de um usuário.
+    Todos os campos são opcionais.
+    """
+    email: Optional[EmailStr] = Field(None, description="Novo email do usuário.")
+    first_name: Optional[str] = Field(None, description="Novo primeiro nome do usuário.")
+    last_name: Optional[str] = Field(None, description="Novo sobrenome do usuário.")
+    password: Optional[str] = Field(None, description="Nova senha para o usuário.", min_length=8)
