@@ -3,21 +3,20 @@ from typing import TYPE_CHECKING, Optional
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.common.auth_handler import do_auth, get_current_user
+from app.api.common.auth_handler import get_current_user_info, require_seller_permission, UserAuthInfo
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 
 from ..schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
-from . import SELLER_PREFIX
+
 
 if TYPE_CHECKING:
-    from app.api.common.auth_handler import UserAuthInfo, do_auth
     from app.container import Container
     from app.services import SellerService
 
 
-router = APIRouter(prefix=SELLER_PREFIX, tags=["Sellers"])
+router = APIRouter(tags=["Sellers"])
 
 # Constantes
 SELLER_NOT_FOUND_OR_ACCESS_DENIED = "Seller não encontrado ou acesso não permitido"
@@ -62,7 +61,7 @@ async def get(
     """
     Retorna todos os sellers cadastrados no sistema
     """
-    results = await seller_service.find(paginator=paginator)
+    results = await seller_service.find(paginator=paginator, filters={})
     return paginator.paginate(results=results)
 
 
@@ -79,7 +78,7 @@ async def get_by_id_or_cnpj(
     seller_id: Optional[str] = Query(None),
     cnpj: Optional[str] = Query(None),
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
-    auth_info: "UserAuthInfo" = Depends(do_auth),
+    auth_info: UserAuthInfo = Depends(get_current_user_info),
 ):
     """
     Busca um seller por seller_id ou cnpj.
@@ -116,7 +115,7 @@ async def get_by_id_or_cnpj(
     description="Buscar um Seller pelo seu 'seller_id'. Requer autorização.",
     status_code=status.HTTP_200_OK,
     summary="Buscar Seller por ID",
-    dependencies=[Depends(do_auth)],  # Protegida pelo novo handler
+    dependencies=[Depends(require_seller_permission)],
 )
 @inject
 async def get_by_id(
@@ -134,7 +133,7 @@ async def get_by_id(
     "",
     response_model=SellerResponse,
     name="Criar Seller",
-    description="Cria um novo Seller",
+    description="Cria um novo Seller associado ao usuário autenticado.",
     status_code=status.HTTP_201_CREATED,
     summary="Criar um novo Seller",
 )
@@ -142,8 +141,13 @@ async def get_by_id(
 async def create(
     seller: SellerCreate,
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
+    auth_info: UserAuthInfo = Depends(get_current_user_info),
 ):
-    return await seller_service.create(seller)
+    """
+        Cria um novo seller. O seller será associado ao usuário autenticado.
+    """
+    seller_model = Seller(**seller.model_dump())
+    return await seller_service.create(seller_model, auth_info)
 
 
 @router.patch(
@@ -153,40 +157,40 @@ async def create(
     description="Atualizar um Seller pelo 'seller_id'",
     status_code=status.HTTP_200_OK,
     summary="Atualizar um Seller",
-    dependencies=[Depends(do_auth)],
 )
 @inject
 async def update_by_id(
     seller_id: str,
     seller: SellerUpdate,
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
-    auth_info: "UserAuthInfo" = Depends(get_current_user),
+    auth_info: UserAuthInfo = Depends(require_seller_permission),
 ):
     """
     Atualiza os dados do seller. Pode alterar nome_fantasia e/ou cnpj.
     """
-    # Converte apenas os campos que foram enviados na requisição
     patch_data = SellerPatch(**seller.model_dump(exclude_unset=True))
     return await seller_service.update(seller_id, patch_data, auth_info=auth_info)
 
 
 @router.delete(
     "/{seller_id}",
+    response_model=SellerResponse,
     name="Remover Seller",
     description="Remove um Seller pelo 'seller_id'",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Remover um Seller",
-    dependencies=[Depends(do_auth)],
+    dependencies=[Depends(require_seller_permission)],
 )
 @inject
 async def delete_by_id(
     seller_id: str,
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
+    auth_info: UserAuthInfo = Depends(require_seller_permission),
 ):
     """
     Remove permanentemente o seller do sistema.
     """
-    await seller_service.delete_by_id(seller_id)
+    return await seller_service.delete_by_id(seller_id, auth_info=auth_info)
 
 
 @router.put(
@@ -196,14 +200,13 @@ async def delete_by_id(
     description="Substitui completamente um Seller",
     status_code=status.HTTP_200_OK,
     summary="Atualizar Seller (completo)",
-    dependencies=[Depends(do_auth)],
 )
 @inject
 async def replace_by_id(
     seller_id: str,
     seller_data: SellerReplace,
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
-    auth_info: "UserAuthInfo" = Depends(get_current_user),
+    auth_info: UserAuthInfo = Depends(require_seller_permission),
 ):
     seller = Seller(
         seller_id=seller_id,
@@ -225,7 +228,6 @@ async def replace_by_id(
         agency_account=seller_data.agency_account,
         account_type=seller_data.account_type,
         account_holder_name=seller_data.account_holder_name,
-        uploaded_documents=seller_data.uploaded_documents,
         product_categories=seller_data.product_categories,
         business_description=seller_data.business_description,
     )

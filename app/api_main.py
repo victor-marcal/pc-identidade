@@ -17,12 +17,12 @@ is_dev = ENV == "dev"
 
 dotenv.load_dotenv(override=is_dev)
 
-logger = logging.getLogger(__name__)
-
 # Inicializando a biblioteca de logs
 LoggingBuilder.init()
 
 logging.basicConfig(level=LoggingBuilder._log_level)
+
+logger = logging.getLogger(__name__)
 
 
 async def log_requests_middleware(request: Request, call_next):
@@ -60,6 +60,7 @@ def init() -> FastAPI:
     # Autowiring
     container.wire(modules=["app.api.common.routers.health_check_routers"])
     container.wire(modules=["app.api.v1.routers.seller_router"])
+    container.wire(modules=["app.api.v1.routers.user_router"])
 
     # Outros middlewares podem ser adicionados aqui se necessário
 

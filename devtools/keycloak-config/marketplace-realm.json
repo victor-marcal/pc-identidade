@@ -23,6 +23,21 @@
                         "id.token.claim": "false",
                         "userinfo.token.claim": "false"
                     }
+                },
+                {
+                    "name": "admin-roles-mapper",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-user-client-role-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "client_id": "realm-management",
+                        "claim.name": "resource_access.realm-management.roles",
+                        "json.type.label": "String",
+                        "access.token.claim": "true",
+                        "id.token.claim": "false",
+                        "userinfo.token.claim": "false",
+                        "multivalued": "true"
+                    }
                 }
             ]
         }

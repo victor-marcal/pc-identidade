@@ -1,1 +1,0 @@
-SELLER_PREFIX = "/sellers"

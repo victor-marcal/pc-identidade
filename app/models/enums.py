@@ -84,3 +84,8 @@ class ProductCategory(str, Enum):
     COMPUTING = "informática"
     GAMES = "games"
     FLOWERS_GARDEN = "flores e jardim"
+
+
+class SellerStatus(str, Enum):
+    ACTIVE = "Ativo"
+    INACTIVE = "Inativo"

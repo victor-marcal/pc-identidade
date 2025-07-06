@@ -2,8 +2,10 @@ import os
 
 import logging
 
+from fastapi import HTTPException, status
+from pydantic import ValidationError
+
 from app.api.common.auth_handler import UserAuthInfo
-from app.api.v1.schemas.seller_schema import SellerCreate
 from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.common.datetime import utcnow
 from app.common.exceptions import BadRequestException, NotFoundException
@@ -16,6 +18,9 @@ from app.messages import (
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
+from app.services.publisher import publish_seller_message
+from ..api.v1.schemas.seller_schema import SellerResponse
+from app.models.enums import SellerStatus
 
 from ..models import Seller
 from ..repositories import SellerRepository
@@ -26,13 +31,14 @@ DEFAULT_USER = "system"
 logger = logging.getLogger(__name__)
 
 
+
 class SellerService(CrudService[Seller, str]):
     def __init__(self, repository: SellerRepository, keycloak_client: KeycloakAdminClient):
         super().__init__(repository)
         self.repository: SellerRepository = repository
         self.keycloak_client: KeycloakAdminClient = keycloak_client
 
-    async def create(self, data: Seller) -> Seller:
+    async def create(self, data: Seller, auth_info: UserAuthInfo) -> Seller:
         logger.info(f"Iniciando processo de criação para o seller_id: {data.seller_id}")
         # Verifica se seller_id já existe
         if await self.repository.find_by_id(data.seller_id):
@@ -44,19 +50,7 @@ class SellerService(CrudService[Seller, str]):
             logger.warning(f"Tentativa de criar seller com trade_name duplicado: {data.seller_id}")
             raise BadRequestException(message=MSG_NOME_FANTASIA_JA_CADASTRADO)
 
-        # Tenta criar o usuário no Keycloak ANTES de criar no banco.
-        try:
-            logger.debug(f"Tentando criar usuário no Keycloak para o seller: {data.seller_id}")
-            user_identifier = await self.keycloak_client.create_user(
-                username=data.seller_id,
-                email=data.contact_email,  # Usa o email de contato do formulário
-                password=os.getenv("KEYCLOAK_DEFAULT_PASSWORD", "senha123"),
-                seller_id=data.seller_id,
-            )
-            logger.info(f"Usuário criado com sucesso no Keycloak: {user_identifier}")
-        except Exception:
-            logger.error(f"Falha crítica ao tentar criar usuário no Keycloak para o seller: {data.seller_id}", exc_info=True)
-            raise
+        user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
 
         now = utcnow()
 
@@ -80,7 +74,6 @@ class SellerService(CrudService[Seller, str]):
             agency_account=data.agency_account,
             account_type=data.account_type,
             account_holder_name=data.account_holder_name,
-            uploaded_documents=data.uploaded_documents,
             product_categories=data.product_categories,
             business_description=data.business_description,
             created_at=now,
@@ -95,28 +88,100 @@ class SellerService(CrudService[Seller, str]):
         created_seller = await self.repository.create(seller_to_create)
         logger.info(f"Seller '{data.seller_id}' criado com sucesso no banco de dados.")
 
+        # Publicar mensagem do seller criado
+        try:
+            seller_dict = created_seller.model_dump()
+            logger.debug(f"Dados do seller para publicação: {seller_dict}")
+            publish_seller_message(seller_dict)
+            logger.info(f"Mensagem do seller '{data.seller_id}' publicada com sucesso no RabbitMQ.")
+        except Exception as e:
+            logger.error(f"Falha ao publicar mensagem do seller '{data.seller_id}' no RabbitMQ: {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
+
+        try:
+            logger.debug(f"Atualizando usuário '{auth_info.user.name}' no Keycloak com o novo seller.")
+            user_keycloak_id = auth_info.user.name  # O 'sub' do token
+
+            # Pega os sellers atuais do usuário e adiciona o novo
+            current_sellers = auth_info.sellers
+            if data.seller_id not in current_sellers:
+                updated_sellers = current_sellers + [data.seller_id]
+                await self.keycloak_client.update_user_attributes(
+                    user_id=user_keycloak_id,
+                    attributes={"sellers": updated_sellers}
+                )
+                logger.info(f"Atributo 'sellers' do usuário '{auth_info.user.name}' atualizado no Keycloak.")
+
+        except Exception as e:
+            logger.error(
+                f"Falha ao atualizar o usuário no Keycloak após criar o seller '{data.seller_id}'. Reversão manual pode ser necessária.",
+                exc_info=True)
+            # Considere uma lógica de compensação aqui se necessário
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Seller criado, mas falha ao atualizar permissões do usuário.")
+
         return created_seller
 
-    async def delete_by_id(self, entity_id) -> None:
-        logger.info(f"Iniciando processo de exclusão para o seller_id: {entity_id}")
-        deleted = await self.repository.delete_by_id(entity_id)
-        if not deleted:
-            logger.warning(f"Tentativa de excluir seller inexistente com ID: {entity_id}")
-            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
-        logger.info(f"Seller '{entity_id}' excluído com sucesso.")
-        return deleted
+    async def find(self, paginator, filters: dict) -> list[Seller]:
+        """
+                Busca sellers, adicionando um filtro padrão para retornar apenas os ativos.
+        """
+        # Adiciona o filtro de status 'Ativo' por padrão
+        if 'status' not in filters:
+            filters['status'] = SellerStatus.ACTIVE
 
-    async def find_by_id(self, seller_id: str) -> Seller:
-        seller = await self.repository.find_by_id(seller_id)
-        if not seller:
-            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=seller_id))
-        return seller
+        return await self.repository.find(
+            filters=filters, limit=paginator.limit, offset=paginator.offset, sort=paginator.get_sort_order()
+        )
+
+    async def delete_by_id(self, entity_id: str, auth_info: UserAuthInfo) -> Seller:
+        """
+        Realiza um 'soft delete' alterando o status do seller para 'Inativo'.
+        """
+        user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
+        logger.info(f"Usuário '{user_identifier}' iniciando exclusão lógica para o seller_id: {entity_id}")
+
+        # Primeiro, verifica se o seller existe e está ativo
+        current_seller = await self.repository.find_by_id(entity_id)
+        if not current_seller or current_seller.status == SellerStatus.INACTIVE:
+            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
+
+        # Prepara os campos para a atualização (PATCH)
+        now = utcnow()
+        update_data = {
+            "status": SellerStatus.INACTIVE,
+            "updated_at": now,
+            "updated_by": user_identifier,
+            "audit_updated_at": now,
+        }
+
+        updated_seller = await self.repository.patch(entity_id, update_data)
+        logger.info(f"Seller '{entity_id}' marcado como 'Inativo' com sucesso pelo usuário '{user_identifier}'.")
+
+        try:
+            user_keycloak_id = auth_info.user.name  # 'name' é o 'sub' (ID do usuário)
+            await self.keycloak_client.remove_seller_from_user(
+                user_id=user_keycloak_id,
+                seller_to_remove=entity_id
+            )
+        except Exception:
+            # Se a atualização do Keycloak falhar, o seller já foi inativado.
+            # É crucial logar este erro.
+            logger.error(
+                f"ALERTA: O seller '{entity_id}' foi inativado no banco, mas a remoção "
+                f"do atributo no Keycloak para o usuário '{user_identifier}' FALHOU. "
+                "O acesso pode precisar ser revogado manualmente.",
+                exc_info=True
+            )
+
+        return updated_seller
 
     async def find_by_cnpj(self, cnpj: str) -> Seller:
         seller = await self.repository.find_by_cnpj(cnpj)
         if not seller:
             raise NotFoundException(message=MSG_SELLER_CNPJ_NAO_ENCONTRADO.format(cnpj=cnpj))
         return seller
+
 
     async def update(self, entity_id: str, data: SellerPatch, auth_info: UserAuthInfo) -> Seller:
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
@@ -188,7 +253,6 @@ class SellerService(CrudService[Seller, str]):
             agency_account=data.agency_account,
             account_type=data.account_type,
             account_holder_name=data.account_holder_name,
-            uploaded_documents=data.uploaded_documents,
             product_categories=data.product_categories,
             business_description=data.business_description,
             created_at=existing.created_at,

@@ -43,8 +43,8 @@ class Paginator(BaseModel):
         filters: dict | None = None,
     ) -> ListResponse:
         count = len(results) if results else 0
-        results = results[: self.limit] if results else []
-        has_next = count > self.limit
+        results = results if results else []
+        has_next = count >= self.limit
         filters_str = (
             urlencode(
                 {
@@ -62,7 +62,7 @@ class Paginator(BaseModel):
             page=PageResponse(
                 limit=self.limit,
                 offset=self.offset,
-                count=count - 1 if has_next else count,
+                count=count,
             ),
             links=NavigationLinks.build(
                 request_path=self.request_path,
@@ -77,25 +77,28 @@ class Paginator(BaseModel):
 
 def get_request_pagination(
     request: Request,
-    _limit: int | None = Query(
+    limit: int | None = Query(
         default=50,
         ge=1,
         le=PAGE_MAX_LIMIT,
         description="Determina a quantidade de registros a serem retornados.",
+        alias="_limit"
     ),
-    _offset: int | None = Query(
+    offset: int | None = Query(
         default=0,
         ge=0,
         le=PAGE_MAX_LIMIT,
         description=("Posição do registro de referência, a partir dele serão retornados os próximos N registros."),
+        alias="_offset"
     ),
-    _sort: str | None = Query(
+    sort: str | None = Query(
         default=None,
         description=(
             "Ordena pelo(s) campo(s). Use o sufixo :asc e :desc para ordenação"
             " ascendente e descendente, respectivamente."
             " Ex: name:asc,email:desc."
         ),
+        alias="_sort"
     ),
 ):
-    return Paginator(request_path=request.url.path, limit=_limit, offset=_offset, sort=_sort)
+    return Paginator(request_path=request.url.path, limit=limit, offset=offset, sort=sort)
