@@ -3,6 +3,7 @@ import os
 import logging
 
 from fastapi import HTTPException, status
+from pydantic import ValidationError
 
 from app.api.common.auth_handler import UserAuthInfo
 from app.clients.keycloak_admin_client import KeycloakAdminClient
@@ -18,6 +19,8 @@ from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
 from app.services.publisher import publish_seller_message
+from ..api.v1.schemas.seller_schema import SellerResponse
+from app.models.enums import SellerStatus
 
 from ..models import Seller
 from ..repositories import SellerRepository
@@ -26,6 +29,7 @@ from .base import CrudService
 DEFAULT_USER = "system"
 
 logger = logging.getLogger(__name__)
+
 
 
 class SellerService(CrudService[Seller, str]):
@@ -118,20 +122,59 @@ class SellerService(CrudService[Seller, str]):
 
         return created_seller
 
-    async def delete_by_id(self, entity_id) -> None:
-        logger.info(f"Iniciando processo de exclusão para o seller_id: {entity_id}")
-        deleted = await self.repository.delete_by_id(entity_id)
-        if not deleted:
-            logger.warning(f"Tentativa de excluir seller inexistente com ID: {entity_id}")
-            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
-        logger.info(f"Seller '{entity_id}' excluído com sucesso.")
-        return deleted
+    async def find(self, paginator, filters: dict) -> list[Seller]:
+        """
+                Busca sellers, adicionando um filtro padrão para retornar apenas os ativos.
+        """
+        # Adiciona o filtro de status 'Ativo' por padrão
+        if 'status' not in filters:
+            filters['status'] = SellerStatus.ACTIVE
 
-    async def find_by_id(self, seller_id: str) -> Seller:
-        seller = await self.repository.find_by_id(seller_id)
-        if not seller:
-            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=seller_id))
-        return seller
+        return await self.repository.find(
+            filters=filters, limit=paginator.limit, offset=paginator.offset, sort=paginator.get_sort_order()
+        )
+
+    async def delete_by_id(self, entity_id: str, auth_info: UserAuthInfo) -> Seller:
+        """
+        Realiza um 'soft delete' alterando o status do seller para 'Inativo'.
+        """
+        user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
+        logger.info(f"Usuário '{user_identifier}' iniciando exclusão lógica para o seller_id: {entity_id}")
+
+        # Primeiro, verifica se o seller existe e está ativo
+        current_seller = await self.repository.find_by_id(entity_id)
+        if not current_seller or current_seller.status == SellerStatus.INACTIVE:
+            raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
+
+        # Prepara os campos para a atualização (PATCH)
+        now = utcnow()
+        update_data = {
+            "status": SellerStatus.INACTIVE,
+            "updated_at": now,
+            "updated_by": user_identifier,
+            "audit_updated_at": now,
+        }
+
+        updated_seller = await self.repository.patch(entity_id, update_data)
+        logger.info(f"Seller '{entity_id}' marcado como 'Inativo' com sucesso pelo usuário '{user_identifier}'.")
+
+        try:
+            user_keycloak_id = auth_info.user.name  # 'name' é o 'sub' (ID do usuário)
+            await self.keycloak_client.remove_seller_from_user(
+                user_id=user_keycloak_id,
+                seller_to_remove=entity_id
+            )
+        except Exception:
+            # Se a atualização do Keycloak falhar, o seller já foi inativado.
+            # É crucial logar este erro.
+            logger.error(
+                f"ALERTA: O seller '{entity_id}' foi inativado no banco, mas a remoção "
+                f"do atributo no Keycloak para o usuário '{user_identifier}' FALHOU. "
+                "O acesso pode precisar ser revogado manualmente.",
+                exc_info=True
+            )
+
+        return updated_seller
 
     async def find_by_cnpj(self, cnpj: str) -> Seller:
         seller = await self.repository.find_by_cnpj(cnpj)

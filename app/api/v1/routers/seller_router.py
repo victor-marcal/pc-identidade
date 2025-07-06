@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.common.auth_handler import do_auth, get_current_user_info, require_seller_permission, UserAuthInfo
+from app.api.common.auth_handler import get_current_user_info, require_seller_permission, UserAuthInfo
 from app.api.common.schemas import ListResponse, Paginator, get_request_pagination
 from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
@@ -174,9 +174,10 @@ async def update_by_id(
 
 @router.delete(
     "/{seller_id}",
+    response_model=SellerResponse,
     name="Remover Seller",
     description="Remove um Seller pelo 'seller_id'",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Remover um Seller",
     dependencies=[Depends(require_seller_permission)],
 )
@@ -184,11 +185,12 @@ async def update_by_id(
 async def delete_by_id(
     seller_id: str,
     seller_service: "SellerService" = Depends(Provide["seller_service"]),
+    auth_info: UserAuthInfo = Depends(require_seller_permission),
 ):
     """
     Remove permanentemente o seller do sistema.
     """
-    await seller_service.delete_by_id(seller_id)
+    return await seller_service.delete_by_id(seller_id, auth_info=auth_info)
 
 
 @router.put(

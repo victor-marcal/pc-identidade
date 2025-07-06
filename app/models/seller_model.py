@@ -1,12 +1,16 @@
+from pydantic import Field
+
 from . import PersistableEntity
-from .enums import BrazilianState, AccountType, ProductCategory
+from .enums import BrazilianState, AccountType, ProductCategory, SellerStatus
 from typing import List
 from datetime import date
 
 
 class Seller(PersistableEntity):
     seller_id: str
-    
+
+    status: SellerStatus = Field(default=SellerStatus.ACTIVE, description="Status do seller na plataforma")
+
     # Company Information
     company_name: str  # Razão Social
     trade_name: str  # Nome Fantasia (nome_fantasia existente)

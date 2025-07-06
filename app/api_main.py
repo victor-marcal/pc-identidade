@@ -17,10 +17,12 @@ is_dev = ENV == "dev"
 
 dotenv.load_dotenv(override=is_dev)
 
-logger = logging.getLogger(__name__)
-
 # Inicializando a biblioteca de logs
 LoggingBuilder.init()
+
+logging.basicConfig(level=LoggingBuilder._log_level)
+
+logger = logging.getLogger(__name__)
 
 
 async def log_requests_middleware(request: Request, call_next):
