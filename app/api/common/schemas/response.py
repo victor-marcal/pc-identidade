@@ -52,7 +52,7 @@ class ListResponse(BaseModel, Generic[T]):
     results: Sequence[T] | None = Field(None, description="The content of the response")
 
 
-ErrorLocation = Literal["query", "path", "body", "header"]  # type: ignore[valid-type]
+ErrorLocation = Literal["query", "path", "body", "header"]
 
 
 class ErrorDetail(BaseModel):

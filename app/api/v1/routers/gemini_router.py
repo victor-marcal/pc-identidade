@@ -2,37 +2,33 @@ import logging
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
 
-from app.services.gemini_chat_handler import GeminiChatHandler
+from app.api.v1.schemas.gemini_schema import ChatRequest, ChatResponse
+from app.common.datetime import utcnow
+from app.services import GeminiService
 
-router = APIRouter()
+router = APIRouter(prefix="/gemini", tags=["Gemini"])
 
 logger = logging.getLogger(__name__)
 
 
-class Message(BaseModel):
-    text: str
-
-
-class ChatResponse(BaseModel):
-    response: str
-
-
-@router.post("/chat/")
+@router.post("/chat", response_model=ChatResponse)
 @inject
 async def chat(
-    message: Message,
-    gemini_handler: GeminiChatHandler = Depends(Provide["gemini_chat_handler"])
+    request: ChatRequest,
+    gemini_service: GeminiService = Depends(Provide["gemini_service"])
 ):
+    """Endpoint principal para chat com o Gemini."""
     try:
-        response_text = gemini_handler.generate_response(message.text)
-        return ChatResponse(response=response_text)
-    except HTTPException as e:
-        raise e
+        response_text = gemini_service.chat(request.text)
+        return ChatResponse(
+            response=response_text,
+            timestamp=utcnow()
+        )
     except Exception as e:
-        logger.error(f"Erro ao gerar resposta com Gemini: {e}")
+        logger.error(f"Erro ao processar chat: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Erro ao gerar resposta com Gemini: {str(e)}"
+            status_code=500, 
+            detail=f"Erro ao processar chat: {str(e)}"
         )
 

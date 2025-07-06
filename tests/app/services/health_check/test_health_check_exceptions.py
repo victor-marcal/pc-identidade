@@ -169,7 +169,6 @@ class TestModuleExports:
         """Test that all classes are accessible through the module"""
         from app.services.health_check import exceptions
 
-        # Test direct access to classes
         assert hasattr(exceptions, 'HealthCheckException')
         assert hasattr(exceptions, 'InvalidConfigurationException')
         assert hasattr(exceptions, 'ServiceWarning')

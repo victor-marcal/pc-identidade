@@ -4,8 +4,7 @@ from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
-from app.services import HealthCheckService, SellerService, UserService
-from app.services.gemini_chat_handler import GeminiChatHandler
+from app.services import HealthCheckService, SellerService, UserService, GeminiService
 from app.settings.app import AppSettings
 from app.settings.app import settings as settings_instance
 
@@ -35,7 +34,6 @@ class Container(containers.DeclarativeContainer):
         well_known_url=config.KEYCLOAK_WELL_KNOWN_URL,
     )
 
-    # Serviços
     health_check_service = providers.Singleton(
         HealthCheckService, checkers=config.health_check_checkers, settings=settings
     )
@@ -51,8 +49,8 @@ class Container(containers.DeclarativeContainer):
         keycloak_client=keycloak_admin_client,
     )
 
-    gemini_chat_handler = providers.Singleton(
-        GeminiChatHandler,
+    gemini_service = providers.Singleton(
+        GeminiService,
         api_key=config.API_KEY_GEMINI,
         pdfs_folder_path="pdfs",
     )

@@ -1,20 +1,19 @@
-import os
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
 import fitz  # PyMuPDF
-from dotenv import load_dotenv
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 
 class GeminiService:
+    """Serviço principal para chat com IA Gemini - mantém funcionalidade original."""
+    
     def __init__(self, api_key: str, pdfs_folder_path: str = "pdfs"):
         self.api_key = api_key
         self.pdfs_folder_path = pdfs_folder_path
@@ -120,3 +119,7 @@ class GeminiService:
         except Exception as e:
             logger.error(f"Erro ao gerar resposta com Gemini: {e}")
             raise
+    
+    def chat(self, message: str) -> str:
+        """Método para compatibilidade com o router."""
+        return self.generate_response(message)

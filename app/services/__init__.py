@@ -1,6 +1,6 @@
 from .health_check.service import HealthCheckService
 from .seller_service import SellerService
 from .user_service import UserService
-from .gemini_chat_handler import GeminiChatHandler
+from .gemini_service import GeminiService
 
-__all__ = ["HealthCheckService", "SellerService", "UserService", "GeminiChatHandler"]
+__all__ = ["HealthCheckService", "SellerService", "UserService", "GeminiService"]

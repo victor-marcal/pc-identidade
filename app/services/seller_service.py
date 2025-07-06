@@ -182,7 +182,6 @@ class SellerService(CrudService[Seller, str]):
             raise NotFoundException(message=MSG_SELLER_CNPJ_NAO_ENCONTRADO.format(cnpj=cnpj))
         return seller
 
-
     async def update(self, entity_id: str, data: SellerPatch, auth_info: UserAuthInfo) -> Seller:
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
         logger.info(f"Usuário '{user_identifier}' iniciando atualização (PATCH) para o seller_id: {entity_id}")

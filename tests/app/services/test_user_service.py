@@ -116,7 +116,6 @@ async def test_get_all_users_with_invalid_data(user_service, mock_keycloak_clien
     assert "Usuário ignorado devido a dados incompletos" in caplog.text
 
 
-# --- Testes para delete_user ---
 
 @pytest.mark.asyncio
 async def test_delete_user_success(user_service, mock_keycloak_client):

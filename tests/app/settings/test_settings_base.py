@@ -12,23 +12,19 @@ def test_environment_enum_values():
     assert EnvironmentEnum.PRODUCTION == "prod"
     assert EnvironmentEnum.TEST == "test"
 
-    # Test that it's a StrEnum
     assert issubclass(EnvironmentEnum, StrEnum)
 
 
 def test_environment_enum_properties():
     """Test EnvironmentEnum properties"""
-    # Test is_test
     assert EnvironmentEnum.TEST.is_test is True
     assert EnvironmentEnum.DEVELOPMENT.is_test is False
     assert EnvironmentEnum.PRODUCTION.is_test is False
 
-    # Test is_production
     assert EnvironmentEnum.PRODUCTION.is_production is True
     assert EnvironmentEnum.DEVELOPMENT.is_production is False
     assert EnvironmentEnum.TEST.is_production is False
 
-    # Test is_development
     assert EnvironmentEnum.DEVELOPMENT.is_development is True
     assert EnvironmentEnum.PRODUCTION.is_development is False
     assert EnvironmentEnum.TEST.is_development is False
@@ -79,13 +75,11 @@ def test_env_file_prod():
 
 def test_base_settings_default_values():
     """Test BaseSettings default values"""
-    # Mock the environment variable to ensure test behavior
     import os
     from unittest.mock import patch
 
     with patch.dict(os.environ, {'ENV': 'test'}):
         settings = BaseSettings()
-        # In test environment, env should be TEST
         assert settings.env == EnvironmentEnum.TEST
         assert isinstance(settings.env_file, str)
 
@@ -113,7 +107,6 @@ def test_base_settings_sources_customization():
 
     from pydantic_settings import PydanticBaseSettingsSource
 
-    # Mock the source objects
     init_settings = MagicMock(spec=PydanticBaseSettingsSource)
     env_settings = MagicMock(spec=PydanticBaseSettingsSource)
     dotenv_settings = MagicMock(spec=PydanticBaseSettingsSource)
@@ -123,7 +116,6 @@ def test_base_settings_sources_customization():
         BaseSettings, init_settings, env_settings, dotenv_settings, file_secret_settings
     )
 
-    # Verify the order of sources
     assert sources[0] == init_settings
     assert sources[1] == env_settings
     assert sources[2] == dotenv_settings

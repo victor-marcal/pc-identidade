@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
 router = APIRouter(tags=["Sellers"])
 
-# Constantes
 SELLER_NOT_FOUND_OR_ACCESS_DENIED = "Seller não encontrado ou acesso não permitido"
 
 
@@ -91,16 +90,13 @@ async def get_by_id_or_cnpj(
 
     try:
         if seller_id and cnpj:
-            # Busca por seller_id e valida se o cnpj também bate
             seller = await _find_seller_by_id_with_access_check(seller_id, auth_info, seller_service)
             if seller.cnpj != cnpj:
                 raise HTTPException(status_code=404, detail="Seller não encontrado com os critérios fornecidos")
             return seller
         elif seller_id:
-            # Busca apenas por seller_id
             return await _find_seller_by_id_with_access_check(seller_id, auth_info, seller_service)
-        else:  # apenas cnpj
-            # Busca apenas por cnpj
+        else:
             return await _find_seller_by_cnpj_with_access_check(cnpj, auth_info, seller_service)
     except Exception as e:
         if "não tem permissão" in str(e) or "acesso não permitido" in str(e):

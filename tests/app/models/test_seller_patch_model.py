@@ -102,6 +102,6 @@ class TestSellerPatchValidation:
     def test_seller_patch_cnpj_wrong_length(self):
         """Test CNPJ with wrong length - covers len() != 14 branch"""
         with pytest.raises(ValidationError) as exc_info:
-            SellerPatch(nome_fantasia="Teste", cnpj="123456780001")  # 12 digits
+            SellerPatch(nome_fantasia="Teste", cnpj="123456780001") 
 
         assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)
