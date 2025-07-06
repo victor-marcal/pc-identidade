@@ -10,5 +10,9 @@ motor==3.7.1
 pymongo==4.13.0
 mongodb-migrations==1.3.1
 PyJWT==2.8.0
+langchain==0.3.20
+langchain-google-genai==2.0.10
+pymupdf==1.25.3
+python-multipart
 git+ssh://git@github.com/projeto-carreira-luizalabs-2025/pc-logging.git@v0.1.0
 pika==1.3.2

@@ -61,6 +61,7 @@ def init() -> FastAPI:
     container.wire(modules=["app.api.common.routers.health_check_routers"])
     container.wire(modules=["app.api.v1.routers.seller_router"])
     container.wire(modules=["app.api.v1.routers.user_router"])
+    container.wire(modules=["app.api.v1.routers.gemini_router"])
 
     # Outros middlewares podem ser adicionados aqui se necessário
 
