@@ -26,6 +26,9 @@ class AppSettings(BaseSettings):
 
     pc_logging_level: str = Field("INFO", description="Nível do logging")
     pc_logging_env: str = Field("prod", description="Ambiente do logging (dev ou prod)")
+    
+    # Gemini AI
+    API_KEY_GEMINI: str = Field(..., description="API Key do Google Gemini")
 
 
 settings = AppSettings()

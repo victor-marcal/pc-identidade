@@ -5,6 +5,7 @@ from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
 from app.services import HealthCheckService, SellerService, UserService
+from app.services.gemini_chat_handler import GeminiChatHandler
 from app.settings.app import AppSettings
 from app.settings.app import settings as settings_instance
 
@@ -48,4 +49,10 @@ class Container(containers.DeclarativeContainer):
     user_service = providers.Singleton(
         UserService,
         keycloak_client=keycloak_admin_client,
+    )
+
+    gemini_chat_handler = providers.Singleton(
+        GeminiChatHandler,
+        api_key=config.API_KEY_GEMINI,
+        pdfs_folder_path="pdfs",
     )
