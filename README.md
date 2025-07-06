@@ -10,7 +10,6 @@ Esta camada de identidade será essencial para garantir a confiabilidade dos ven
 ## 🎯 Objetivos principais:
 - Identificação e validação da identidade do varejista
 - Recolhimento e análise de dados/documentos obrigatórios
-- Avaliação da reputação e relevância do vendedor
 - Organização das informações operacionais e de negócio
 - Preparação dos dados para uso nas demais áreas do marketplace
 
@@ -21,265 +20,150 @@ Esta camada de identidade será essencial para garantir a confiabilidade dos ven
 - Murilo Alves
 - Victor Hugo Buiatti
 
-## ✨ Configuração do ambiente local
+---
 
-### Linux 🐧
-
-Todos os comandos serão via terminal.
-
-Este _seed_ trabalha com o [Python 3.12](https://docs.python.org/3.12/), confirme se o mesmo está instalado em sua máquina.
-
-Depois de clonar o projeto, acesse o diretório:
-
-```sh
-cd pc-identidade
-```
-
-Crie o [ambiente virtual](https://docs.python.org/3.12/tutorial/venv.html)
-para instalar as bibliotecas e trabalharmos com o projeto:
-
-```sh
-make build-venv
-# ou
-# python3.12 -m venv venv
-```
-
-Uma vez criado o ambiente virtual do Python, você precisa ativá-lo
-(estou supondo que você está no Linux 🐧):
-
-```sh
-. ./venv/bin/activate
-```
-
-Quaisquer comandos daqui para frente, iremos considerar que você está dentro
-do ambiente virtual `(venv)`.
-
-Instale as bibliotecas necessárias
-
-```sh
-pip install -r requirements.txt
-```
-
-Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
-
-```env
-# Variáveis de Ambiente
-ENV=dev
-
-# MongoDB
-APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
-MONGO_DB=pc_identidade
-
-# Keycloak
-KEYCLOAK_URL=http://pc-identidade-keycloak:8080
-KEYCLOAK_REALM_NAME=marketplace
-KEYCLOAK_CLIENT_ID=varejo
-KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
-
-# Credenciais Admin do Keycloak (usadas para criar usuários)
-KEYCLOAK_ADMIN_USER=admin_marketplace
-KEYCLOAK_ADMIN_PASSWORD=senha123
-KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
-```
-
-### Windows 🖥️
-
-#### 1. Clone o repositório
-
-```powershell
-git clone https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git
-cd pc-catalogo
-```
-
-#### 2. Crie o ambiente virtual
-
-```powershell
-python -m venv venv
-.\venv\Scripts\activate
-```
-
-#### 3. Instale as dependências
-
-```powershell
-pip install -r requirements.txt
-```
-
-#### 4. Configure variáveis de ambiente
-
-Crie um arquivo .env na raiz do projeto com o seguinte conteúdo:
-
-```env
-# Variáveis de Ambiente
-ENV=dev
-
-# MongoDB
-APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
-MONGO_DB=pc_identidade
-
-# Keycloak
-KEYCLOAK_URL=http://pc-identidade-keycloak:8080
-KEYCLOAK_REALM_NAME=marketplace
-KEYCLOAK_CLIENT_ID=varejo
-KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
-
-# Credenciais Admin do Keycloak (usadas para criar usuários)
-KEYCLOAK_ADMIN_USER=admin_marketplace
-KEYCLOAK_ADMIN_PASSWORD=senha123
-KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
-```
-
-## 🐳 Instalação do Docker 
+## 🐳 Instalação do Docker
 
 Para instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/), siga o manual disponível no site oficial.
 
-## ▶️ Executando o Projeto com Docker (Método Recomendado)
+## 🚀 Ambiente de Desenvolvimento Local (Windows)
 
-### Linux 🐧
+Este guia descreve o fluxo de trabalho para rodar os serviços de apoio (MongoDB, Keycloak, etc.) via Docker, e a aplicação FastAPI localmente na sua máquina.
 
-Para construir a imagem Docker da aplicação, execute:
+### Pré-requisitos
+- **Git**
+- **Python 3.12**
+- **Docker Desktop** para Windows (instalado e em execução)
 
-``` bash
-make docker-build # Criará uma imagem com o nome pc/identidade.
-```
+### Passo 1: Preparar o Projeto
 
-Para rodar a aplicação em um contêiner Docker:
+1.  **Clone o Repositório:** Se ainda não o fez, clone o projeto.
+    ```powershell
+    git clone [https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git](https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git)
+    ```
 
-``` bash
-make docker-run # Iniciará um contêiner chamado pc-identidade, expondo a porta 8000 do contêiner para a porta 8000 do seu host.
-```
+2.  **Acesse a Pasta do Projeto:**
+    ```powershell
+    cd pc-identidade
+    ```
 
-Se precisar acessar o shell do contêiner para depuração ou outras operações:
+### Passo 2: Configurar Variáveis de Ambiente (`.env`)
 
-```bash
-make docker-shell # Isso abrirá uma sessão bash interativa dentro do contêiner.
-```
+Crie um arquivo chamado `.env` na raiz do projeto. Ele é crucial para a comunicação da sua aplicação com os serviços no Docker.
 
-Use o comando para subir a api:
-
-```bash
-make run-dev
-```
-
-Acesse a doc da API em: [localhost:8000/api/docs](http://0.0.0.0:8000/api/docs) ou em [localhost:8000/redoc](http://0.0.0.0:8000/redoc)
-
-### Windows 🖥️
-
-#### 📦 Estrutura
-
-- **MongoDB** e **KeyCloak** rodam via `docker-compose.yml`
-
-#### 🚀 Passo a passo
-
-1. Clonar o Repositório
-
-Abra seu terminal e clone o projeto:
-
-```sh
-git clone [https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git](https://github.com/projeto-carreira-luizalabs-2025/pc-identidade.git)
-cd pc-identidade
-```
-
-2. Configurar Variáveis de Ambiente
-
-Crie um arquivo chamado .env na raiz do projeto. 
-
-Este arquivo é crucial para a comunicação entre os contêineres. Copie e cole o seguinte conteúdo nele:
-
+**Copie e cole o seguinte conteúdo nele:**
 ```env
-# Variáveis de Ambiente
+# Variáveis de Ambiente Globais
 ENV=dev
 
-# MongoDB
-APP_DB_URL_MONGO=mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin
+# --- Banco de Dados Quente (Principal) ---
+# Conexão com autenticação.
+APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin
 MONGO_DB=pc_identidade
 
-# Keycloak
-KEYCLOAK_URL=http://pc-identidade-keycloak:8080
+# --- Banco de Dados Frio (Arquivo de Inativos) ---
+# Conexão com autenticação.
+MONGO_COLD_URL=mongodb://admin_cold:admin_cold@localhost:27018/bd01_cold?authSource=admin
+
+# --- Keycloak ---
+KEYCLOAK_URL=http://localhost:8080
 KEYCLOAK_REALM_NAME=marketplace
 KEYCLOAK_CLIENT_ID=varejo
-KEYCLOAK_WELL_KNOWN_URL=http://pc-identidade-keycloak:8080/realms/marketplace/.well-known/openid-configuration
+KEYCLOAK_WELL_KNOWN_URL=http://localhost:8080/realms/marketplace/.well-known/openid-configuration
 
-# Credenciais Admin do Keycloak (usadas para criar usuários)
+# Credenciais Admin do Keycloak
 KEYCLOAK_ADMIN_USER=admin_marketplace
 KEYCLOAK_ADMIN_PASSWORD=senha123
 KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+
+# --- Logging ---
+PC_LOGGING_LEVEL=info
+PC_LOGGING_ENV=dev
+
+# --- RabbitMQ ---
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USERNAME=admin
+RABBITMQ_PASSWORD=admin
+RABBITMQ_EXCHANGE=data_exchange
+RABBITMQ_QUEUE=data_queue
+RABBITMQ_ROUTING_KEY=
+
+# --- Email (Exemplo) ---
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=joaopedrovr91@gmail.com
+SENDER_PASSWORD=nmfi fekq qvob jgnv
 ```
 
-3. Crie o ambiente virtual
+### Passo 3: Preparar Ambiente Python
+
+1. **Crie o ambiente virtual (execute apenas uma vez):**
 
 ```powershell
 python -m venv venv
+```
+
+2. **Ative o ambiente virtual (execute sempre que for desenvolver):**
+
+```powershell
 .\venv\Scripts\activate
 ```
 
-Instale as dependências
+3. **Instale as dependências:**
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-4. Subir os Contêineres
+### Passo 4: Iniciar os Serviços no Docker
 
-Com o Docker em execução, use o seguinte comando para construir a imagem da sua aplicação e iniciar todos os serviços em segundo plano:
+Este comando irá subir os contêineres do MongoDB (quente e frio), Keycloak e RabbitMQ.
 
-```bash
+```powershell
 docker-compose up --build -d
 ```
 
-Aguarde de 1 a 2 minutos para que todos os serviços, especialmente o Keycloak, iniciem completamente.
+Aguarde de 1 a 2 minutos para que os serviços iniciem completamente.
 
-5. Configurando o Keycloak
+### Passo 5: Configurar o Keycloak (Passo Crítico Pós-Inicialização)
 
-Rode o seguinte comando para finalizar a configuração do Keycloak.
+Após os contêineres estarem no ar, você precisa executar o script abaixo para configurar corretamente os atributos de usuário no Keycloak.
 
-```bash
-python ./devtools/keycloak-config/setup_sellers_attribute.py
+```powershell
+# Com o venv ativado
+python devtools/keycloak-config/setup_sellers_attribute.py
 ```
 
-6. Executando a Aplicação
+### Passo 6: Executar a Aplicação FastAPI
 
-Com todos os passos anteriores executados com sucesso, rode a aplicação localmente com o seguinte comando.
+Com tudo pronto, inicie o servidor da sua aplicação localmente (garanta que o venv está ativado).
 
-```bash
-uvicorn app.api_main:app --reload --port 8000        
+```powershell
+uvicorn app.api_main:app --reload --port 8000
 ```
 
-#### Comandos Úteis do Dia a Dia
+### Acessando os Serviços
 
-Para ver os logs da aplicação em tempo real:
-
-```bash
-docker-compose logs -f app
-```
-
-Para parar todos os serviços:
-
-```bash
-docker-compose down
-```
-
-Para iniciar os serviços novamente (sem reconstruir):
-
-```bash
-docker-compose up -d
-```
-
-Para testar se o Mongo está acessível
-
-Em outro terminal, rode:
-
-```bash
-docker run --rm -it mongo mongosh "mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin"
-```
-
-Você verá o prompt bd01> se tudo estiver OK.
-
-#### Acessando os Serviços
-
-- API da Aplicação (Swagger): http://localhost:8000/api/docs
+- API (Swagger UI): http://127.0.0.1:8000/api/docs
 - Admin Console do Keycloak: http://localhost:8080
   - **Usuário**: admin
   - **Senha**: admin
+- RabbitMQ Management: http://localhost:15672
+
+---
+
+## 🛠️ Tarefas de Manutenção e Scripts
+
+Execute estes scripts no seu terminal com o ambiente virtual (venv) ativado.
+
+### Arquivando Sellers Inativos (Banco Frio)
+
+Para mover todos os sellers com status "Inativo" do banco de dados principal para o banco de dados de arquivamento (frio), execute:
+
+```powershell
+python devtools/scripts/move_inactive_to_cold.py
+```
 
 ## 🔍 Análise de Qualidade com SonarQube
 
@@ -399,3 +283,34 @@ python3.12 run_migrations.py
 ### 🔧 Configuração
 
 As migrations utilizam a mesma configuração de banco definida nas variáveis de ambiente do projeto (`APP_DB_URL_MONGO`).
+
+
+### Comandos Úteis do Dia a Dia
+
+Para ver os logs da aplicação em tempo real:
+
+```bash
+docker-compose logs -f app
+```
+
+Para parar todos os serviços:
+
+```bash
+docker-compose down
+```
+
+Para iniciar os serviços novamente (sem reconstruir):
+
+```bash
+docker-compose up -d
+```
+
+Para testar se o Mongo está acessível
+
+Em outro terminal, rode:
+
+```bash
+docker run --rm -it mongo mongosh "mongodb://admin:admin@pc-identidade-mongo:27017/bd01?authSource=admin"
+```
+
+Você verá o prompt bd01> se tudo estiver OK.
