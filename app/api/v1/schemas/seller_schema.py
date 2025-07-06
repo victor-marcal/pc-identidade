@@ -2,6 +2,7 @@ import re
 from typing import Optional, List
 from datetime import date
 from pydantic import Field, field_validator, EmailStr
+from app.models.enums import SellerStatus
 
 from app.api.common.schemas import SchemaType
 from app.models.enums import BrazilianState, AccountType, ProductCategory
@@ -306,4 +307,6 @@ class SellerReplace(SchemaType):
 
 
 class SellerResponse(SellerBase):
+    status: SellerStatus = Field(description="Status atual do seller")
     pass
+

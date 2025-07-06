@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.settings.app import settings
 import logging
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -175,4 +176,33 @@ class KeycloakAdminClient:
             response = await client.put(password_reset_url, headers=headers, json=password_payload)
             response.raise_for_status()
             logger.info(f"Senha do usuário {user_id} redefinida com sucesso.")
+
+    async def remove_seller_from_user(self, user_id: str, seller_to_remove: str):
+        """
+        Busca os atributos de um usuário, remove um seller específico da lista
+        e atualiza o usuário no Keycloak.
+        """
+        logger.info(f"Iniciando remoção do seller '{seller_to_remove}' do usuário Keycloak ID: {user_id}")
+
+        user_data = await self.get_user(user_id)
+        if not user_data:
+            logger.error(f"Tentativa de remover seller de um usuário inexistente no Keycloak: {user_id}")
+            return
+
+        current_attributes = user_data.get("attributes", {})
+        current_sellers = current_attributes.get("sellers", [])
+
+        if isinstance(current_sellers, str):
+            current_sellers = [current_sellers]
+
+        if seller_to_remove in current_sellers:
+            updated_sellers = [s for s in current_sellers if s != seller_to_remove]
+            current_attributes["sellers"] = updated_sellers
+
+            await self.update_user_attributes(user_id, current_attributes)
+            logger.info(f"Seller '{seller_to_remove}' removido com sucesso do usuário '{user_id}'.")
+        else:
+            logger.warning(
+                f"O seller '{seller_to_remove}' não foi encontrado nos atributos do usuário '{user_id}'. Nenhuma alteração foi feita.")
+
 
