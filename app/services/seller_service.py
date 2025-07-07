@@ -19,6 +19,7 @@ from app.models.seller_model import Seller
 from app.models.seller_patch_model import SellerPatch
 from app.repositories.seller_repository import SellerRepository
 from app.services.publisher import publish_seller_message
+from app.services.webhook_service import WebhookService
 from ..api.v1.schemas.seller_schema import SellerResponse
 from app.models.enums import SellerStatus
 
@@ -37,6 +38,7 @@ class SellerService(CrudService[Seller, str]):
         super().__init__(repository)
         self.repository: SellerRepository = repository
         self.keycloak_client: KeycloakAdminClient = keycloak_client
+        self.webhook_service = WebhookService()
 
     async def create(self, data: Seller, auth_info: UserAuthInfo) -> Seller:
         logger.info(f"Iniciando processo de criação para o seller_id: {data.seller_id}")
@@ -88,7 +90,6 @@ class SellerService(CrudService[Seller, str]):
         created_seller = await self.repository.create(seller_to_create)
         logger.info(f"Seller '{data.seller_id}' criado com sucesso no banco de dados.")
 
-        # Publicar mensagem do seller criado
         try:
             seller_dict = created_seller.model_dump()
             logger.debug(f"Dados do seller para publicação: {seller_dict}")
@@ -96,6 +97,16 @@ class SellerService(CrudService[Seller, str]):
             logger.info(f"Mensagem do seller '{data.seller_id}' publicada com sucesso no RabbitMQ.")
         except Exception as e:
             logger.error(f"Falha ao publicar mensagem do seller '{data.seller_id}' no RabbitMQ: {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
+
+        # Enviar notificação webhook
+        try:
+            await self.webhook_service.send_update_message(
+                message=f"Seller '{data.seller_id}' foi criado",
+                changes={"operation": "created", "seller_id": data.seller_id}
+            )
+        except Exception as e:
+            logger.error(f"Falha ao enviar notificação webhook para seller criado '{data.seller_id}': {str(e)}")
             # Não falha a operação principal, apenas loga o erro
 
         try:
@@ -158,6 +169,16 @@ class SellerService(CrudService[Seller, str]):
         updated_seller = await self.repository.patch(entity_id, update_data)
         logger.info(f"Seller '{entity_id}' marcado como 'Inativo' com sucesso pelo usuário '{user_identifier}'.")
 
+        # Enviar notificação webhook
+        try:
+            await self.webhook_service.send_update_message(
+                message=f"Seller '{entity_id}' foi marcado como inativo",
+                changes={"operation": "deleted", "seller_id": entity_id}
+            )
+        except Exception as e:
+            logger.error(f"Falha ao enviar notificação webhook para seller excluído '{entity_id}': {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
+
         try:
             user_keycloak_id = auth_info.user.name  # 'name' é o 'sub' (ID do usuário)
             await self.keycloak_client.remove_seller_from_user(
@@ -210,6 +231,17 @@ class SellerService(CrudService[Seller, str]):
 
         updated_seller = await self.repository.patch(entity_id, update_data)
         logger.info(f"Seller '{entity_id}' atualizado com sucesso pelo usuário '{user_identifier}'.")
+
+        # Enviar notificação webhook
+        try:
+            changes_made = {key: value for key, value in update_data.items() if key not in ['updated_at', 'updated_by', 'audit_updated_at']}
+            await self.webhook_service.send_update_message(
+                message=f"Seller '{entity_id}' foi atualizado",
+                changes={"operation": "updated", "seller_id": entity_id, "fields_changed": changes_made}
+            )
+        except Exception as e:
+            logger.error(f"Falha ao enviar notificação webhook para seller atualizado '{entity_id}': {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
 
         return updated_seller
 
@@ -265,5 +297,15 @@ class SellerService(CrudService[Seller, str]):
         result = await self.repository.update(entity_id, updated_seller)
 
         logger.info(f"Seller '{entity_id}' substituído com sucesso pelo usuário '{user_identifier}'.")
+
+        # Enviar notificação webhook
+        try:
+            await self.webhook_service.send_update_message(
+                message=f"Seller '{entity_id}' foi substituído completamente",
+                changes={"operation": "replaced", "seller_id": entity_id}
+            )
+        except Exception as e:
+            logger.error(f"Falha ao enviar notificação webhook para seller substituído '{entity_id}': {str(e)}")
+            # Não falha a operação principal, apenas loga o erro
 
         return result
