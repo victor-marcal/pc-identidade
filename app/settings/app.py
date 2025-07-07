@@ -29,6 +29,9 @@ class AppSettings(BaseSettings):
     
     # Gemini AI
     API_KEY_GEMINI: str = Field(..., description="API Key do Google Gemini")
+    
+    # Webhook Configuration
+    WEBHOOK_URL: str = Field(..., description="URL do webhook para envio de notificações")
 
 
 settings = AppSettings()

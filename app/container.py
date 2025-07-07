@@ -4,7 +4,7 @@ from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.integrations.auth.keycloak_adapter import KeycloakAdapter
 from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
-from app.services import HealthCheckService, SellerService, UserService, GeminiService
+from app.services import HealthCheckService, SellerService, UserService, GeminiService, WebhookService
 from app.settings.app import AppSettings
 from app.settings.app import settings as settings_instance
 
@@ -53,4 +53,8 @@ class Container(containers.DeclarativeContainer):
         GeminiService,
         api_key=config.API_KEY_GEMINI,
         pdfs_folder_path="pdfs",
+    )
+
+    webhook_service = providers.Singleton(
+        WebhookService,
     )
