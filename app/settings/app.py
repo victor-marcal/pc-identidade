@@ -1,4 +1,4 @@
-from pydantic import Field, MongoDsn
+from pydantic import Field, MongoDsn, RedisDsn
 from pydantic_settings import SettingsConfigDict
 
 from .base import BaseSettings
@@ -32,6 +32,8 @@ class AppSettings(BaseSettings):
     
     # Webhook Configuration
     WEBHOOK_URL: str = Field(..., description="URL do webhook para envio de notificações")
+
+    REDIS_URL: RedisDsn = Field(..., title="URI para o Redis")
 
 
 settings = AppSettings()
