@@ -45,11 +45,9 @@ async def get_user(
     """
     Retorna os detalhes de um usuário específico do Keycloak.
     """
-    resource_access = auth_info.info_token.get("resource_access", {})
-    realm_management_access = resource_access.get("realm-management", {})
-    client_roles = realm_management_access.get("roles", [])
-
-    is_admin = "realm-admin" in client_roles
+    realm_access = auth_info.info_token.get("realm_access", {})
+    realm_roles = realm_access.get("roles", [])
+    is_admin = "realm-admin" in realm_roles
 
     if not is_admin and auth_info.user.name != user_id:
         raise ForbiddenException(message="Você só pode consultar seus próprios dados.")
@@ -89,11 +87,9 @@ async def delete_user(
     Remove um usuário permanentemente.
     Acessível pelo próprio usuário para deletar sua conta ou por um administrador.
     """
-    resource_access = auth_info.info_token.get("resource_access", {})
-    realm_management_access = resource_access.get("realm-management", {})
-    client_roles = realm_management_access.get("roles", [])
-
-    is_admin = "realm-admin" in client_roles
+    realm_access = auth_info.info_token.get("realm_access", {})
+    realm_roles = realm_access.get("roles", [])
+    is_admin = "realm-admin" in realm_roles
 
     # Regra: Se não for admin, só pode deletar a si mesmo.
     if not is_admin and auth_info.user.name != user_id:

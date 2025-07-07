@@ -6,9 +6,9 @@ import os
 # --- Configurações ---
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
 REALM_NAME = os.getenv("REALM_NAME", "marketplace")
-ADMIN_USER = os.getenv("KEYCLOAK_ADMIN_USER", "admin_marketplace")
-ADMIN_PASSWORD = os.getenv("KEYCLOAK_ADMIN_PASSWORD", "senha123")
-CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID", "admin-cli")
+ADMIN_USER = os.getenv("KEYCLOAK_ADMIN", "admin")
+ADMIN_PASSWORD = os.getenv("KEYCLOAK_ADMIN_PASSWORD", "admin")
+CLIENT_ID = "admin-cli"
 MAX_RETRIES = 30
 RETRY_DELAY = 5  # seconds
 
@@ -35,7 +35,7 @@ def wait_for_keycloak():
 def get_admin_token():
     """Obtém o token de acesso do admin."""
     print("Obtendo token de acesso do admin...")
-    token_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/token"
+    token_url = f"{KEYCLOAK_URL}/realms/master/protocol/openid-connect/token"
     data = {
         "grant_type": "password",
         "client_id": CLIENT_ID,

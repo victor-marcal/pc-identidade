@@ -58,6 +58,21 @@
                 "roles",
                 "web-origins"
             ],
+            "protocolMappers": [
+                {
+                    "name": "realm roles",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "claim.name": "realm_access.roles",
+                        "json.type.label": "String",
+                        "user.attribute": "realm-roles",
+                        "access.token.claim": "true",
+                        "id.token.claim": "true"
+                    }
+                }
+            ],
             "optionalClientScopes": [
                 "address",
                 "phone",
@@ -87,7 +102,8 @@
             },
             "realmRoles": [
                 "offline_access",
-                "uma_authorization"
+                "uma_authorization",
+                "realm-admin"
             ]
         },
         {
