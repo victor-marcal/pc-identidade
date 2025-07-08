@@ -14,6 +14,13 @@ from app.integrations.auth.keycloak_adapter import (
     TokenExpiredException,
 )
 
+
+@pytest.fixture
+def mock_inmemory_adapter():
+    """Mock do RedisAsyncioAdapter"""
+    return MagicMock()
+
+
 # Dicionário com constantes para evitar duplicação
 TEST_KEYCLOAK_DATA = {
     "well_known_url": "https://keycloak.example.com/.well-known/openid_connect",
@@ -40,7 +47,7 @@ TEST_KEYCLOAK_DATA = {
 
 
 @pytest.mark.asyncio
-async def test_keycloak_adapter_init_success():
+async def test_keycloak_adapter_init_success(mock_inmemory_adapter):
     """Testa inicialização bem-sucedida do KeycloakAdapter"""
     mock_well_known_data = {"jwks_uri": TEST_KEYCLOAK_DATA["jwks_uri"]}
 
@@ -51,7 +58,7 @@ async def test_keycloak_adapter_init_success():
         mock_client.return_value.__enter__.return_value.get.return_value = mock_response
 
         with patch(TEST_KEYCLOAK_DATA["jwt_pyjwk_client"]) as mock_jwks_client:
-            adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"])
+            adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"], mock_inmemory_adapter)
 
             # Verifica que PyJWKClient foi inicializado com a URI correta
             mock_jwks_client.assert_called_once_with(mock_well_known_data["jwks_uri"])
@@ -59,7 +66,7 @@ async def test_keycloak_adapter_init_success():
 
 
 @pytest.mark.asyncio
-async def test_keycloak_adapter_init_http_error():
+async def test_keycloak_adapter_init_http_error(mock_inmemory_adapter):
     """Testa erro HTTP durante inicialização"""
     with patch(TEST_KEYCLOAK_DATA["httpx_client"]) as mock_client:
         mock_client.return_value.__enter__.return_value.get.side_effect = httpx.HTTPStatusError(
@@ -67,14 +74,13 @@ async def test_keycloak_adapter_init_http_error():
         )
 
         with pytest.raises(httpx.HTTPStatusError):
-            KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"])
+            KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"], mock_inmemory_adapter)
 
 
 @pytest.mark.asyncio
-async def test_validate_token_success():
+async def test_validate_token_success(mock_inmemory_adapter):
     """Testa validação bem-sucedida de token"""
     mock_well_known_data = {"jwks_uri": TEST_KEYCLOAK_DATA["jwks_uri"]}
-
     mock_token_payload = {
         "sub": TEST_KEYCLOAK_DATA["user_id"],
         "preferred_username": TEST_KEYCLOAK_DATA["username"],
@@ -101,7 +107,7 @@ async def test_validate_token_success():
                 with patch(TEST_KEYCLOAK_DATA["jwt_decode"]) as mock_jwt_decode:
                     mock_jwt_decode.return_value = mock_token_payload
 
-                    adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"])
+                    adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"], mock_inmemory_adapter)
                     result = await adapter.validate_token(TEST_KEYCLOAK_DATA["mock_token"])
 
                     assert result == mock_token_payload
@@ -109,7 +115,7 @@ async def test_validate_token_success():
 
 
 @pytest.mark.asyncio
-async def test_validate_token_jwt_error():
+async def test_validate_token_jwt_error(mock_inmemory_adapter):
     """Testa erro de JWT durante validação"""
     mock_well_known_data = {"jwks_uri": TEST_KEYCLOAK_DATA["jwks_uri"]}
 
@@ -129,7 +135,7 @@ async def test_validate_token_jwt_error():
             with patch(TEST_KEYCLOAK_DATA["jwt_decode"]) as mock_jwt_decode:
                 mock_jwt_decode.side_effect = Exception(TEST_KEYCLOAK_DATA["jwt_error"])
 
-                adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"])
+                adapter = KeycloakAdapter(TEST_KEYCLOAK_DATA["well_known_url"], mock_inmemory_adapter)
 
                 with pytest.raises(InvalidTokenException):
                     await adapter.validate_token(TEST_KEYCLOAK_DATA["invalid_token"])

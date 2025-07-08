@@ -129,34 +129,28 @@ def test_health_check_router_missing_line():
 def test_seller_schema_missing_lines():
     """Testa linhas não cobertas do seller_schema.py"""
     from pydantic import ValidationError
+    from tests.helpers.test_fixtures import create_seller_create, create_seller_response
 
     from app.api.v1.schemas.seller_schema import SellerCreate, SellerReplace, SellerResponse, SellerUpdate
 
     with pytest.raises(ValidationError):
-        SellerCreate(seller_id="", nome_fantasia="", cnpj=TEST_DATA["cnpj_invalid"])
+        SellerCreate(seller_id="", trade_name="", cnpj=TEST_DATA["cnpj_invalid"])
 
-    valid_schema = SellerCreate(
-        seller_id=TEST_DATA["seller_id"], nome_fantasia=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
+    valid_schema = create_seller_create(
+        seller_id=TEST_DATA["seller_id"], trade_name=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
     )
-    assert valid_schema.nome_fantasia == TEST_DATA["nome_fantasia"]
+    assert valid_schema.trade_name == TEST_DATA["nome_fantasia"]
 
     with pytest.raises(ValidationError):
-        SellerUpdate(nome_fantasia=TEST_DATA["test_messages"]["ab_short"])
+        SellerUpdate(trade_name=TEST_DATA["test_messages"]["ab_short"])
 
     with pytest.raises(ValidationError):
-        SellerReplace(nome_fantasia=TEST_DATA["test_messages"]["ab_short"], cnpj=TEST_DATA["cnpj_invalid"])
+        SellerReplace(trade_name=TEST_DATA["test_messages"]["ab_short"], cnpj=TEST_DATA["cnpj_invalid"])
 
-    response = SellerResponse(
-        seller_id=TEST_DATA["seller_id"], nome_fantasia=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
+    response = create_seller_response(
+        seller_id=TEST_DATA["seller_id"], trade_name=TEST_DATA["nome_fantasia"], cnpj=TEST_DATA["cnpj_valid"]
     )
     assert response.seller_id == TEST_DATA["seller_id"]
-
-    response = SellerResponse(
-        seller_id=TEST_DATA["ids"]["seller_123"],
-        nome_fantasia=TEST_DATA["test_messages"]["test_basic"],
-        cnpj=TEST_DATA["cnpj_valid"],
-    )
-    assert response.seller_id == TEST_DATA["ids"]["seller_123"]
 
 
 def test_application_exception_error_response():
@@ -207,18 +201,18 @@ def test_seller_patch_model_branches():
     """Testa branches do seller_patch_model.py"""
     from app.models.seller_patch_model import SellerPatch
 
-    patch1 = SellerPatch(nome_fantasia=TEST_DATA["test_messages"]["updated_fantasia"])
-    assert patch1.nome_fantasia == TEST_DATA["test_messages"]["updated_fantasia"]
+    patch1 = SellerPatch(trade_name=TEST_DATA["test_messages"]["updated_fantasia"])
+    assert patch1.trade_name == TEST_DATA["test_messages"]["updated_fantasia"]
     assert patch1.cnpj is None
 
     patch2 = SellerPatch()
-    assert patch2.nome_fantasia is None
+    assert patch2.trade_name is None
     assert patch2.cnpj is None
 
-    result = SellerPatch.model_validate({"nome_fantasia": TEST_DATA["test_messages"]["test_basic"]})
-    assert result.nome_fantasia == TEST_DATA["test_messages"]["test_basic"]
+    result = SellerPatch.model_validate({"trade_name": TEST_DATA["test_messages"]["test_basic"]})
+    assert result.trade_name == TEST_DATA["test_messages"]["test_basic"]
     assert result.cnpj is None
 
     patch_dict = patch1.model_dump()
-    assert patch_dict["nome_fantasia"] == TEST_DATA["test_messages"]["updated_fantasia"]
+    assert patch_dict["trade_name"] == TEST_DATA["test_messages"]["updated_fantasia"]
     assert patch_dict["cnpj"] is None

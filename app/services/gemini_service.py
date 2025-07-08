@@ -111,15 +111,25 @@ class GeminiService:
                 {"input": user_message, "chat_history": self.memory.buffer_as_messages}
             )
             
-            # Atualiza o histórico de mensagens
+            # Atualiza o histórico com a mensagem do usuário
             self.memory.chat_memory.add_user_message(user_message)
+            
+            # Verifica se a resposta tem conteúdo
+            if not response.content:
+                return "Desculpe, não consegui gerar uma resposta."
+            
+            # Atualiza o histórico com a mensagem da IA
             self.memory.chat_memory.add_ai_message(response.content)
             
             return response.content
         except Exception as e:
             logger.error(f"Erro ao gerar resposta com Gemini: {e}")
-            raise
+            return "Desculpe, ocorreu um erro ao processar sua mensagem."
     
     def chat(self, message: str) -> str:
         """Método para compatibilidade com o router."""
         return self.generate_response(message)
+    
+    def reset_memory(self):
+        """Reseta a memória do chat."""
+        self.memory.chat_memory.clear()

@@ -40,5 +40,6 @@ class RabbitmqConsumer:
 def minha_callback(ch, method, properties, body):
     print(body)
 
-rabitmq_consumer = RabbitmqConsumer(minha_callback)
-rabitmq_consumer.start()
+if __name__ == "__main__":
+    rabitmq_consumer = RabbitmqConsumer(minha_callback)
+    rabitmq_consumer.start()

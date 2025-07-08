@@ -3,14 +3,22 @@ import pytest
 
 def test_worker_module_import_attempt():
     """Test worker module import behavior"""
-    with pytest.raises(ImportError):
-        from app.worker import WorkerDefinition, WorkerFactory, WorkerInfo
+    # Agora que worker_factory existe, deveria importar com sucesso
+    from app.worker import WorkerDefinition, WorkerFactory, WorkerInfo
+    
+    assert WorkerDefinition is not None
+    assert WorkerFactory is not None
+    assert WorkerInfo is not None
 
 
 def test_worker_module_exists():
-    """Test that worker module exists but fails to import due to missing worker_factory"""
-    with pytest.raises(ModuleNotFoundError, match="No module named 'app.worker.worker_factory'"):
-        import app.worker
+    """Test that worker module exists and imports successfully"""
+    import app.worker
+    
+    # O módulo deve existir e ter os atributos esperados
+    assert hasattr(app.worker, 'WorkerDefinition')
+    assert hasattr(app.worker, 'WorkerFactory')
+    assert hasattr(app.worker, 'WorkerInfo')
 
 
 def test_worker_module_all_attribute():
@@ -33,3 +41,21 @@ def test_worker_module_all_attribute():
                 assert '"WorkerDefinition"' in content
                 assert '"WorkerFactory"' in content
                 assert '"WorkerInfo"' in content
+
+
+def test_worker_factory_global_instance():
+    """Test that the global worker_factory instance is available"""
+    from app.worker.worker_factory import worker_factory
+    
+    assert worker_factory is not None
+    from app.worker.worker_factory import WorkerFactory
+    assert isinstance(worker_factory, WorkerFactory)
+    
+    # Test that it has the expected methods
+    assert hasattr(worker_factory, 'list_workers')
+    assert hasattr(worker_factory, 'register')
+    assert hasattr(worker_factory, 'create')
+    
+    # Test list_workers specifically to cover the missing line
+    workers = worker_factory.list_workers()
+    assert isinstance(workers, dict)

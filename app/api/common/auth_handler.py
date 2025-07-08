@@ -137,6 +137,7 @@ async def do_auth(
         ),
         trace_id=getattr(request.state, 'trace_id', None),
         sellers=UserAuthInfo.to_sellers(info_token.get("sellers")),
+        info_token=info_token
     )
 
     if seller_id not in user_info.sellers:
