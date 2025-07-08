@@ -51,36 +51,27 @@ Este guia descreve o fluxo de trabalho para rodar os serviços de apoio (MongoDB
 
 Crie um arquivo chamado `.env` na raiz do projeto. Ele é crucial para a comunicação da sua aplicação com os serviços no Docker.
 
-**Copie e cole o seguinte conteúdo nele:**
+**Solicite as informações confidenciais com o time e copie o conteudo no seu .env:**
 ```env
-# Variáveis de Ambiente Globais
+# Variáveis de Ambiente
 ENV=dev
 
-# --- Banco de Dados Quente (Principal) ---
-# Conexão com autenticação.
-APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin
+# MongoDB
+APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
 MONGO_DB=pc_identidade
 
-# --- Banco de Dados Frio (Arquivo de Inativos) ---
-# Conexão com autenticação.
-MONGO_COLD_URL=mongodb://admin_cold:admin_cold@localhost:27018/bd01_cold?authSource=admin
-
-# --- Keycloak ---
+# Keycloak
 KEYCLOAK_URL=http://localhost:8080
 KEYCLOAK_REALM_NAME=marketplace
 KEYCLOAK_CLIENT_ID=varejo
 KEYCLOAK_WELL_KNOWN_URL=http://localhost:8080/realms/marketplace/.well-known/openid-configuration
 
-# Credenciais Admin do Keycloak
+# Credenciais Admin do Keycloak (usadas pelo KeycloakAdminClient)
 KEYCLOAK_ADMIN_USER=admin_marketplace
 KEYCLOAK_ADMIN_PASSWORD=senha123
 KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
 
-# --- Logging ---
-PC_LOGGING_LEVEL=info
-PC_LOGGING_ENV=dev
-
-# --- RabbitMQ ---
+# Configurações do RabbitMQ
 RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USERNAME=admin
@@ -89,11 +80,27 @@ RABBITMQ_EXCHANGE=data_exchange
 RABBITMQ_QUEUE=data_queue
 RABBITMQ_ROUTING_KEY=
 
-# --- Email (Exemplo) ---
+# Configurações do Email
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SENDER_EMAIL=joaopedrovr91@gmail.com
-SENDER_PASSWORD=nmfi fekq qvob jgnv
+SENDER_PASSWORD=[SOLICITAR COM O TIME]
+
+# Configurações de Logging
+PC_LOGGING_LEVEL=info
+PC_LOGGING_ENV=dev
+
+# --- Configurações do Banco de Dados Frio ---
+MONGO_COLD_URL=mongodb://admin_cold:admin_cold@localhost:27018/identidade_db?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
+
+# Configuração do Gemini
+API_KEY_GEMINI=[SOLICITAR COM O TIME]
+
+# Configuração Webhook 
+WEBHOOK_URL=[SOLICITAR COM O TIME]
+
+# --- Configuração do Redis ---
+REDIS_URL=redis://localhost:6379/0
 ```
 
 ### Passo 3: Preparar Ambiente Python
@@ -286,12 +293,6 @@ As migrations utilizam a mesma configuração de banco definida nas variáveis d
 
 
 ### Comandos Úteis do Dia a Dia
-
-Para ver os logs da aplicação em tempo real:
-
-```bash
-docker-compose logs -f app
-```
 
 Para parar todos os serviços:
 
