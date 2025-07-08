@@ -7,7 +7,7 @@ from app.api.v1.schemas.gemini_schema import ChatRequest, ChatResponse
 from app.common.datetime import utcnow
 from app.services import GeminiService
 
-router = APIRouter(prefix="/gemini", tags=["Gemini"])
+router = APIRouter(prefix="/gemini")
 
 logger = logging.getLogger(__name__)
 
