@@ -90,8 +90,19 @@ services:
       timeout: 10s
       retries: 3
 
+  redis:
+    image: redis:7-alpine
+    container_name: pc-identidade-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
 
 volumes:
   mongo_data:
   rabbitmq_data:
   mongo_data_cold:
+  redis_data:
