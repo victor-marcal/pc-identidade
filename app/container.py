@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 
 from app.clients.keycloak_admin_client import KeycloakAdminClient
 from app.integrations.auth.keycloak_adapter import KeycloakAdapter
+from app.integrations.kv_db.redis_asyncio_adapter import RedisAsyncioAdapter
 from app.integrations.database.mongo_client import MongoClient
 from app.repositories import SellerRepository
 from app.services import HealthCheckService, SellerService, UserService, GeminiService, WebhookService
@@ -25,6 +26,11 @@ class Container(containers.DeclarativeContainer):
         db_name=config.MONGO_DB,
     )
 
+    redis_adapter = providers.Singleton(
+        RedisAsyncioAdapter,
+        redis_url=config.REDIS_URL,
+    )
+
     keycloak_admin_client = providers.Singleton(
         KeycloakAdminClient,
     )
@@ -32,6 +38,7 @@ class Container(containers.DeclarativeContainer):
     keycloak_adapter = providers.Singleton(
         KeycloakAdapter,
         well_known_url=config.KEYCLOAK_WELL_KNOWN_URL,
+        inmemory_adapter=redis_adapter,
     )
 
     health_check_service = providers.Singleton(

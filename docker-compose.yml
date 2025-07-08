@@ -88,7 +88,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-
+      
   rabbitmq-setup:
     image: curlimages/curl:latest
     depends_on:
@@ -104,8 +104,19 @@ services:
         echo 'Definições carregadas com sucesso!'
       "
     restart: "no"
+    
+  redis:
+    image: redis:7-alpine
+    container_name: pc-identidade-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
 
 volumes:
   mongo_data:
   rabbitmq_data:
   mongo_data_cold:
+  redis_data:
