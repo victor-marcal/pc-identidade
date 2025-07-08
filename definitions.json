@@ -1,0 +1,32 @@
+{
+  "exchanges": [
+    {
+      "name": "data_exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "data_queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "data_exchange",
+      "vhost": "/",
+      "destination": "data_queue",
+      "destination_type": "queue",
+      "routing_key": "data_routing_key",
+      "arguments": {}
+    }
+  ]
+}
