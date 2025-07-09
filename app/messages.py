@@ -29,3 +29,5 @@ MSG_SELLER_CNPJ_NAO_ENCONTRADO = "Nenhum Seller com CNPJ '{cnpj}' encontrado."
 MSG_SELLER_CRIADO = "Seller criado com sucesso."
 MSG_SELLER_ATUALIZADO = "Seller atualizado com sucesso."
 MSG_SELLER_REMOVIDO = "Seller removido com sucesso."
+
+MSG_KEYCLOAK_LOCATION_MISSING = "Keycloak não retornou a localização do novo usuário."

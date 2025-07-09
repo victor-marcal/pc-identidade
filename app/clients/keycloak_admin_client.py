@@ -5,9 +5,11 @@ from app.common.exceptions.bad_request_exception import BadRequestException
 from app.settings.app import settings
 import logging
 from typing import List
+from app.messages import  MSG_KEYCLOAK_LOCATION_MISSING
 
 logger = logging.getLogger(__name__)
 
+JSON = "application/json"
 
 class KeycloakAdminClient:
     def __init__(self):
@@ -44,7 +46,7 @@ class KeycloakAdminClient:
     ) -> str:
         logger.info(f"Iniciando criação de usuário no Keycloak: {username}")
         admin_token = await self._get_admin_token()
-        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
 
         user_payload = {
             "username": username,
@@ -68,7 +70,7 @@ class KeycloakAdminClient:
                 response.raise_for_status()
                 location_header = response.headers.get("Location")
                 if not location_header:
-                    raise Exception("Keycloak não retornou a localização do novo usuário.")
+                    raise BadRequestException(message=MSG_KEYCLOAK_LOCATION_MISSING)
                 return location_header.split("/")[-1]
             except httpx.HTTPStatusError as e:
                 logger.error(f"Erro ao criar usuário no Keycloak: {e.response.text}")
@@ -99,7 +101,7 @@ class KeycloakAdminClient:
     async def update_user_attributes(self, user_id: str, attributes: dict):
         logger.info(f"Atualizando atributos para o usuário ID: {user_id}")
         admin_token = await self._get_admin_token()
-        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
         user_url = f"{self.base_url}/users/{user_id}"
         async with httpx.AsyncClient() as client:
             current_user_response = await client.get(user_url, headers=headers)
@@ -130,7 +132,7 @@ class KeycloakAdminClient:
         """
         logger.info(f"Atualizando dados para o usuário ID: {user_id}")
         admin_token = await self._get_admin_token()
-        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
         user_url = f"{self.base_url}/users/{user_id}"
 
         async with httpx.AsyncClient() as client:
@@ -163,7 +165,7 @@ class KeycloakAdminClient:
         """
         logger.info(f"Redefinindo a senha para o usuário ID: {user_id}")
         admin_token = await self._get_admin_token()
-        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
         password_reset_url = f"{self.base_url}/users/{user_id}/reset-password"
 
         password_payload = {

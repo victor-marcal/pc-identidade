@@ -9,6 +9,7 @@ import pytest
 from app.integrations.database.mongo_client import MongoClient
 from app.models.seller_model import Seller
 from app.repositories.base.memory_repository import AsyncMemoryRepository
+from tests.helpers.test_fixtures import create_full_seller, create_minimal_seller_dict
 
 
 @pytest.fixture
@@ -30,7 +31,7 @@ async def test_create_with_all_defaults(mock_mongo_client):
     mock_client, mock_collection = mock_mongo_client
     mock_collection.insert_one = AsyncMock(return_value=None)
 
-    seller = Seller(seller_id="1", nome_fantasia="Test", cnpj="12345678000100")
+    seller = create_full_seller(seller_id="1", trade_name="Test")
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
 
     with patch('app.repositories.base.memory_repository.utcnow') as mock_utcnow:
@@ -46,7 +47,7 @@ async def test_find_by_id_found(mock_mongo_client):
     """Test find_by_id when entity is found"""
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one = AsyncMock(
-        return_value={"seller_id": "1", "nome_fantasia": "Found", "cnpj": "12345678000100"}
+        return_value=create_minimal_seller_dict(seller_id="1", trade_name="Found")
     )
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
@@ -81,16 +82,16 @@ async def test_find_with_sort(mock_mongo_client):
 
     # Mock async iteration
     async def mock_async_iter(self):
-        yield {"seller_id": "1", "nome_fantasia": "Test", "cnpj": "12345678000100"}
+        yield create_minimal_seller_dict(seller_id="1", trade_name="Test")
 
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor  # This should return the cursor, not a coroutine
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
-    result = await repo.find({}, sort={"nome_fantasia": 1})
+    result = await repo.find({}, sort={"trade_name": 1})
 
     assert len(result) == 1
-    mock_cursor.sort.assert_called_once_with([("nome_fantasia", 1)])
+    mock_cursor.sort.assert_called_once_with([("trade_name", 1)])
 
 
 @pytest.mark.asyncio
@@ -105,7 +106,7 @@ async def test_find_without_sort(mock_mongo_client):
 
     # Mock async iteration
     async def mock_async_iter(self):
-        yield {"seller_id": "1", "nome_fantasia": "Test", "cnpj": "12345678000100"}
+        yield create_minimal_seller_dict(seller_id="1", trade_name="Test")
 
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor
@@ -123,15 +124,15 @@ async def test_update_found(mock_mongo_client):
     """Test update when entity is found"""
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one_and_update = AsyncMock(
-        return_value={"seller_id": "1", "nome_fantasia": "Updated", "cnpj": "12345678000100"}
+        return_value=create_minimal_seller_dict(seller_id="1", trade_name="Updated")
     )
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
-    seller = Seller(seller_id="1", nome_fantasia="Updated", cnpj="12345678000100")
+    seller = create_full_seller(seller_id="1", trade_name="Updated")
     result = await repo.update("1", seller)
 
     assert result is not None
-    assert result.nome_fantasia == "Updated"
+    assert result.trade_name == "Updated"
 
 
 @pytest.mark.asyncio
@@ -141,7 +142,7 @@ async def test_update_not_found(mock_mongo_client):
     mock_collection.find_one_and_update = AsyncMock(return_value=None)
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
-    seller = Seller(seller_id="999", nome_fantasia="Test", cnpj="12345678000100")
+    seller = create_full_seller(seller_id="999", trade_name="Test")
     result = await repo.update("999", seller)
 
     assert result is None
@@ -182,14 +183,14 @@ async def test_patch_found(mock_mongo_client):
     """Test patch when entity is found"""
     mock_client, mock_collection = mock_mongo_client
     mock_collection.find_one_and_update = AsyncMock(
-        return_value={"seller_id": "1", "nome_fantasia": "Patched", "cnpj": "12345678000100"}
+        return_value=create_minimal_seller_dict(seller_id="1", trade_name="Patched")
     )
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
-    result = await repo.patch("1", {"nome_fantasia": "Patched"})
+    result = await repo.patch("1", {"trade_name": "Patched"})
 
     assert result is not None
-    assert result.nome_fantasia == "Patched"
+    assert result.trade_name == "Patched"
 
 
 @pytest.mark.asyncio
@@ -199,7 +200,7 @@ async def test_patch_not_found(mock_mongo_client):
     mock_collection.find_one_and_update = AsyncMock(return_value=None)
 
     repo = AsyncMemoryRepository(mock_client, "test_db", "sellers", Seller)
-    result = await repo.patch("999", {"nome_fantasia": "Test"})
+    result = await repo.patch("999", {"trade_name": "Test"})
 
     assert result is None
 
@@ -216,9 +217,9 @@ async def test_find_with_multiple_documents(mock_mongo_client):
 
     # Mock async iteration with multiple documents
     async def mock_async_iter(self):
-        yield {"seller_id": "1", "nome_fantasia": "Test1", "cnpj": "11111111000111"}
-        yield {"seller_id": "2", "nome_fantasia": "Test2", "cnpj": "22222222000222"}
-        yield {"seller_id": "3", "nome_fantasia": "Test3", "cnpj": "33333333000333"}
+        yield create_minimal_seller_dict(seller_id="1", trade_name="Test1")
+        yield create_minimal_seller_dict(seller_id="2", trade_name="Test2")
+        yield create_minimal_seller_dict(seller_id="3", trade_name="Test3")
 
     mock_cursor.__aiter__ = mock_async_iter
     mock_collection.find.return_value = mock_cursor

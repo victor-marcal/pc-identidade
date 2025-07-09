@@ -1,10 +1,12 @@
 import pika
 import json
 import os
+import logging
 from typing import Dict
 
 class RabbitMQPublisher:
     def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
         self.__host = os.getenv("RABBITMQ_HOST")
         self.__port = os.getenv("RABBITMQ_PORT")
         self.__username = os.getenv("RABBITMQ_USERNAME")

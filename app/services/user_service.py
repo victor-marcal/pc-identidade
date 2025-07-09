@@ -109,6 +109,7 @@ class UserService:
                 logger.info(f"Senha do usuário '{user_id}' foi redefinida.")
 
         except BadRequestException as e:
+            logging.exception('erro ao acessar o dict')
             raise e
 
         return await self.get_user_by_id(user_id)

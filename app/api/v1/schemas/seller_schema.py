@@ -308,5 +308,4 @@ class SellerReplace(SchemaType):
 
 class SellerResponse(SellerBase):
     status: SellerStatus = Field(description="Status atual do seller")
-    pass
 

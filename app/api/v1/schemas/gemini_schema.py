@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +12,7 @@ class ChatRequest(BaseModel):
 # Response Schemas  
 class ChatResponse(BaseModel):
     """Schema para resposta de mensagem do chat."""
-    response: str = Field(..., description="Resposta do assistente")
+    response: Optional[str] = Field(None, description="Resposta do assistente")
     timestamp: datetime = Field(..., description="Timestamp da resposta")
 
 

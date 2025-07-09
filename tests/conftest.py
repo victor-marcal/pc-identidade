@@ -22,6 +22,19 @@ TEST_CONSTANTS = {
     "test_sellers": "1,2,3",
 }
 
+# Dados de teste seguros (não usar em produção)
+TEST_USER_DATA = {
+    "first_name": "João",
+    "last_name": "Silva", 
+    "email": "joao.test@example.com",
+    "password": "test_password_123!"  # Senha de teste - não usar em produção
+}
+
+TEST_PATCH_DATA = {
+    "first_name": "João Atualizado",
+    "last_name": "Silva Atualizado"
+}
+
 
 @pytest.fixture
 def mock_mongo_client():
@@ -86,14 +99,32 @@ def dummy_settings():
 
 @pytest.fixture
 def mock_seller_service():
-    return AsyncMock()
+    mock_service = AsyncMock()
+    mock_service.find.return_value = []
+    mock_service.find_by_id.return_value = None
+    mock_service.find_by_cnpj.return_value = None
+    mock_service.create.return_value = None
+    mock_service.update.return_value = None
+    mock_service.delete_by_id.return_value = None
+    mock_service.replace.return_value = None
+    return mock_service
 
 
 @pytest.fixture
-def client(mock_seller_service):
+def mock_user_service():
+    mock_service = AsyncMock()
+    mock_service.create_user.return_value = None
+    mock_service.get_user.return_value = None
+    mock_service.get_users.return_value = []
+    mock_service.delete_user.return_value = None
+    return mock_service
+
+
+@pytest.fixture
+def client(mock_seller_service, mock_user_service):
     from fastapi import Request
     from app.api.common.auth_handler import UserAuthInfo, do_auth, get_current_user
-    from app.api.v1.routers import seller_router
+    from app.api.v1.routers import seller_router, user_router
     from app.container import Container
     from app.models.base import UserModel
 
@@ -101,6 +132,7 @@ def client(mock_seller_service):
 
     container = Container()
     container.seller_service.override(providers.Object(mock_seller_service))
+    container.user_service.override(providers.Object(mock_user_service))
 
     mock_keycloak_adapter = MagicMock()
     mock_keycloak_adapter.validate_token = AsyncMock(
@@ -112,12 +144,13 @@ def client(mock_seller_service):
     )
     container.keycloak_adapter.override(providers.Object(mock_keycloak_adapter))
 
-    container.wire(modules=[seller_router])
+    container.wire(modules=[seller_router, user_router])
 
     fake_user = UserAuthInfo(
         user=UserModel(name=TEST_CONSTANTS["test_user_id"], server=TEST_CONSTANTS["test_server"]),
         trace_id=TEST_CONSTANTS["test_trace_id"],
         sellers=["1", "2", "3"],
+        info_token={}
     )
 
     def mock_do_auth_with_state(request: Request) -> UserAuthInfo:
@@ -126,6 +159,7 @@ def client(mock_seller_service):
 
     app.dependency_overrides[do_auth] = mock_do_auth_with_state
 
-    app.include_router(seller_router.router, prefix="/seller/v1")
+    app.include_router(seller_router.router, prefix="/seller/v1/sellers")
+    app.include_router(user_router.router, prefix="/seller/v1")
 
     return TestClient(app)

@@ -7,6 +7,7 @@ from app.common.datetime import utcnow
 
 logger = logging.getLogger(__name__)
 
+JSON = "application/json"
 
 class WebhookService:
     def __init__(self):
@@ -66,7 +67,7 @@ class WebhookService:
                 response = await client.post(
                     self.webhook_url,
                     json=slack_payload,
-                    headers={"Content-Type": "application/json"}
+                    headers={"Content-Type": JSON}
                 )
                 
                 logger.warning(f"📈 WEBHOOK: Status = {response.status_code}")
