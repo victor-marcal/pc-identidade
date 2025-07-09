@@ -1,12 +1,26 @@
 """
 Testes para aumentar cobertura de user_router.py
 """
+
+import secrets
+import string
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.api.common.auth_handler import UserAuthInfo
 from app.models.base import UserModel
+
+
+SELLER_ROUTER = 'app.api.v1.routers.user_router.Provide'
+SELLER_ALL = "/seller/v1/users"
+API_V1 = 'app.api.v1.routers.user_router.get_current_user_info'
+SELLER_BY_ID_DIFF = "/seller/v1/users/test-user"
+
+def generate_test_password(length: int = 12) -> str:
+    """Gera uma senha segura para testes"""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 
 class TestUserRouterCoverage:
@@ -44,7 +58,7 @@ class TestUserRouterCoverage:
             "first_name": "Test",
             "last_name": "User",
             "email": "test@example.com",
-            "password": "password123"
+            "password": generate_test_password()
         }
         
         # Mock do service
@@ -56,10 +70,10 @@ class TestUserRouterCoverage:
         }
         
         # Mock do provider
-        with patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(SELLER_ROUTER) as mock_provide:
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.post("/seller/v1/users", json=user_data)
+            response = client.post(SELLER_ALL, json=user_data)
             
             # Verificar resposta
             assert response.status_code in [200, 201, 422]
@@ -70,14 +84,14 @@ class TestUserRouterCoverage:
             "first_name": "A",  # Muito curto
             "last_name": "User",
             "email": "invalid-email",  # Email inválido
-            "password": "123"  # Senha muito curta
+            "password": generate_test_password()
         }
         
         # Mock do provider
-        with patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(SELLER_ROUTER) as mock_provide:
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.post("/seller/v1/users", json=invalid_user_data)
+            response = client.post(SELLER_ALL, json=invalid_user_data)
             
             # Deve retornar erro de validação
             assert response.status_code == 422
@@ -99,13 +113,13 @@ class TestUserRouterCoverage:
             "last_name": "User"
         }
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_user_info
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.get("/seller/v1/users/test-user")
+            response = client.get(SELLER_BY_ID_DIFF)
             
             # Verificar resposta
             assert response.status_code in [200, 401, 403, 404]
@@ -129,12 +143,12 @@ class TestUserRouterCoverage:
         ]
         
         with patch('app.api.v1.routers.user_router.require_admin_user') as mock_admin, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_admin.return_value = mock_admin_info
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.get("/seller/v1/users")
+            response = client.get(SELLER_ALL)
             
             # Verificar resposta
             assert response.status_code in [200, 401, 403]
@@ -151,13 +165,13 @@ class TestUserRouterCoverage:
         
         mock_user_service.delete_user.return_value = None
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_user_info
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.delete("/seller/v1/users/test-user")
+            response = client.delete(SELLER_BY_ID_DIFF)
             
             # Verificar resposta
             assert response.status_code in [200, 204, 401, 403, 404]
@@ -182,13 +196,13 @@ class TestUserRouterCoverage:
             "first_name": "Updated"
         }
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_user_info
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.patch("/seller/v1/users/test-user", json=patch_data)
+            response = client.patch(SELLER_BY_ID_DIFF, json=patch_data)
             
             # Verificar resposta
             assert response.status_code in [200, 401, 403, 404, 422]
@@ -207,13 +221,13 @@ class TestUserRouterCoverage:
             "email": "invalid-email"  # Email inválido
         }
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_user_info
             mock_provide.__getitem__.return_value = mock_user_service
             
-            response = client.patch("/seller/v1/users/test-user", json=invalid_patch_data)
+            response = client.patch(SELLER_BY_ID_DIFF, json=invalid_patch_data)
             
             # Deve retornar erro de validação
             assert response.status_code in [401, 422]
@@ -231,8 +245,8 @@ class TestUserRouterCoverage:
         # Mock do service retornando None
         mock_user_service.get_user_by_id.return_value = None
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_user_info
             mock_provide.__getitem__.return_value = mock_user_service
@@ -262,8 +276,8 @@ class TestUserRouterCoverage:
             "last_name": "User"
         }
         
-        with patch('app.api.v1.routers.user_router.get_current_user_info') as mock_auth, \
-             patch('app.api.v1.routers.user_router.Provide') as mock_provide:
+        with patch(API_V1) as mock_auth, \
+             patch(SELLER_ROUTER) as mock_provide:
             
             mock_auth.return_value = mock_admin_info
             mock_provide.__getitem__.return_value = mock_user_service

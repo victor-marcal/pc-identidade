@@ -3,6 +3,12 @@ from unittest.mock import MagicMock, patch, AsyncMock
 import httpx
 from app.services.webhook_service import WebhookService
 
+ATUALIZADO = "📝 Atualizado"
+NOVO_NOME_FANTASIA = "*Nome Fantasia:* Novo Nome" 
+CAMPOS_ALTERADO = "*Campos alterados:*"
+TESTE_MENSAGEM = "Test message"
+NOVO_NOME = "Novo Nome"
+URL_WEBHOOK = "https://hooks.slack.com/test"
 
 class TestWebhookService:
     """Testes para o serviço de webhook"""
@@ -10,11 +16,11 @@ class TestWebhookService:
     @patch('app.services.webhook_service.settings')
     def test_init(self, mock_settings):
         """Testa inicialização do serviço"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         
         service = WebhookService()
         
-        assert service.webhook_url == "https://hooks.slack.com/test"
+        assert service.webhook_url == URL_WEBHOOK
         assert service.timeout == 30.0
     
     @patch('app.services.webhook_service.settings')
@@ -22,7 +28,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.utcnow')
     async def test_send_update_message_success(self, mock_utcnow, mock_client, mock_settings):
         """Testa envio de mensagem com sucesso"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         mock_utcnow.return_value.timestamp.return_value = 1640995200
         
         mock_response = MagicMock()
@@ -40,7 +46,7 @@ class TestWebhookService:
         changes = {
             "operation": "updated",
             "seller_id": "001",
-            "fields_changed": {"trade_name": "Novo Nome"}
+            "fields_changed": {"trade_name": NOVO_NOME}
         }
         
         result = await service.send_update_message(message, changes)
@@ -50,7 +56,7 @@ class TestWebhookService:
         
         # Verifica se o payload foi montado corretamente
         call_args = mock_client_instance.post.call_args
-        assert call_args[0][0] == "https://hooks.slack.com/test"
+        assert call_args[0][0] == URL_WEBHOOK
         
         payload = call_args[1]['json']
         assert payload['text'] == "🔔 *Seller atualizado*"
@@ -62,7 +68,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.utcnow')
     async def test_send_update_message_created_operation(self, mock_utcnow, mock_client, mock_settings):
         """Testa envio de mensagem para operação created"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         mock_utcnow.return_value.timestamp.return_value = 1640995200
         
         mock_response = MagicMock()
@@ -95,7 +101,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.utcnow')
     async def test_send_update_message_deleted_operation(self, mock_utcnow, mock_client, mock_settings):
         """Testa envio de mensagem para operação deleted"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         mock_utcnow.return_value.timestamp.return_value = 1640995200
         
         mock_response = MagicMock()
@@ -128,7 +134,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.utcnow')
     async def test_send_update_message_replaced_operation(self, mock_utcnow, mock_client, mock_settings):
         """Testa envio de mensagem para operação replaced"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         mock_utcnow.return_value.timestamp.return_value = 1640995200
         
         mock_response = MagicMock()
@@ -160,7 +166,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.httpx.AsyncClient')
     async def test_send_update_message_timeout(self, mock_client, mock_settings):
         """Testa tratamento de timeout"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         
         mock_client_instance = AsyncMock()
         mock_client_instance.post.side_effect = httpx.TimeoutException("Timeout")
@@ -169,7 +175,7 @@ class TestWebhookService:
         
         service = WebhookService()
         
-        message = "Test message"
+        message = TESTE_MENSAGEM
         changes = {"operation": "updated"}
         
         result = await service.send_update_message(message, changes)
@@ -180,7 +186,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.httpx.AsyncClient')
     async def test_send_update_message_http_error(self, mock_client, mock_settings):
         """Testa tratamento de erro HTTP"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         
         mock_response = MagicMock()
         mock_response.status_code = 404
@@ -196,7 +202,7 @@ class TestWebhookService:
         
         service = WebhookService()
         
-        message = "Test message"
+        message = TESTE_MENSAGEM
         changes = {"operation": "updated"}
         
         result = await service.send_update_message(message, changes)
@@ -207,7 +213,7 @@ class TestWebhookService:
     @patch('app.services.webhook_service.httpx.AsyncClient')
     async def test_send_update_message_generic_exception(self, mock_client, mock_settings):
         """Testa tratamento de exceção genérica"""
-        mock_settings.WEBHOOK_URL = "https://hooks.slack.com/test"
+        mock_settings.WEBHOOK_URL = URL_WEBHOOK
         
         mock_client_instance = AsyncMock()
         mock_client_instance.post.side_effect = Exception("Generic error")
@@ -216,7 +222,7 @@ class TestWebhookService:
         
         service = WebhookService()
         
-        message = "Test message"
+        message = TESTE_MENSAGEM
         changes = {"operation": "updated"}
         
         result = await service.send_update_message(message, changes)
@@ -230,15 +236,15 @@ class TestWebhookService:
         changes = {
             "operation": "created",
             "seller_id": "001",
-            "fields_changed": {"trade_name": "Novo Nome", "cnpj": "12345678901234"}
+            "fields_changed": {"trade_name": NOVO_NOME, "cnpj": "12345678901234"}
         }
         
         result = service._format_changes(changes)
         
         assert "✨ Criado" in result
-        assert "*Seller ID:* `001`" in result
-        assert "*Campos alterados:*" in result
-        assert "*Nome Fantasia:* Novo Nome" in result
+        assert CAMPOS_ALTERADO in result
+        assert CAMPOS_ALTERADO in result
+        assert NOVO_NOME_FANTASIA in result
         assert "*CNPJ:* 12345678901234" in result
     
     def test_format_changes_without_operation(self):
@@ -247,17 +253,16 @@ class TestWebhookService:
         
         changes = {
             "seller_id": "001",
-            "fields_changed": {"trade_name": "Novo Nome"}
+            "fields_changed": {"trade_name": NOVO_NOME}
         }
         
         result = service._format_changes(changes)
         
-        assert "*Seller ID:* `001`" in result
-        assert "*Campos alterados:*" in result
-        assert "*Nome Fantasia:* Novo Nome" in result
-        # Não deve ter emoji de operação
+        assert CAMPOS_ALTERADO in result
+        assert CAMPOS_ALTERADO in result
+        assert NOVO_NOME_FANTASIA in result
         assert "✨" not in result
-        assert "📝 Atualizado" not in result  # Não deve aparecer sem operation
+        assert ATUALIZADO not in result 
     
     def test_format_changes_with_empty_fields_changed(self):
         """Testa formatação com fields_changed vazio"""
@@ -271,10 +276,8 @@ class TestWebhookService:
         
         result = service._format_changes(changes)
         
-        assert "📝 Atualizado" in result
-        assert "*Seller ID:* `001`" in result
-        # Não deve ter seção de campos alterados
-        assert "*Campos alterados:*" not in result
+        assert ATUALIZADO in result
+        assert CAMPOS_ALTERADO not in result
     
     def test_format_changes_without_seller_id(self):
         """Testa formatação sem seller_id"""
@@ -282,15 +285,14 @@ class TestWebhookService:
         
         changes = {
             "operation": "updated",
-            "fields_changed": {"trade_name": "Novo Nome"}
+            "fields_changed": {"trade_name": NOVO_NOME}
         }
         
         result = service._format_changes(changes)
         
-        assert "📝 Atualizado" in result
-        assert "*Campos alterados:*" in result
-        assert "*Nome Fantasia:* Novo Nome" in result
-        # Não deve ter seção de seller ID
+        assert ATUALIZADO in result
+        assert CAMPOS_ALTERADO in result
+        assert NOVO_NOME_FANTASIA in result
         assert "*Seller ID:*" not in result
     
     def test_format_changes_minimal(self):
@@ -301,5 +303,4 @@ class TestWebhookService:
         
         result = service._format_changes(changes)
         
-        # Deve retornar string vazia ou apenas quebras de linha
         assert result.strip() == ""

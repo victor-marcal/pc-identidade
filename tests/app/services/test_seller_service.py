@@ -15,11 +15,11 @@ from tests.helpers.test_fixtures import create_full_seller
 
 # --- Mocks e Dados de Teste ---
 
-
+EMPRESA_TESTE = 'Empresa Teste Ltda'
 @pytest.fixture
 def fake_auth_info() -> UserAuthInfo:
     return UserAuthInfo(
-        user=UserModel(name="test-user-sub-123", server="http://fake-keycloak/realms/test"),
+        user=UserModel(name="test-user-sub-123", server="https://fake-keycloak/realms/test"),
         trace_id="fake-trace-id-abc",
         sellers=["001"],
         info_token={"token": "fake-token"}
@@ -40,7 +40,7 @@ def mock_keycloak_client():
 def seller_create_data():
     return SellerCreate(
         seller_id='001',
-        company_name='Empresa Teste Ltda',
+        company_name=EMPRESA_TESTE,
         trade_name='Loja X',
         cnpj='12345678901234',
         state_municipal_registration='123456789',
@@ -54,12 +54,12 @@ def seller_create_data():
         legal_rep_birth_date=date(1990, 1, 1),
         legal_rep_phone='11888888888',
         legal_rep_email='joao@lojax.com',
-        bank_name='banco do brasil',
-        agency_account='1234-5/67890-1',
+        bank_name='banco do brasil2',
+        agency_account='1234-5/67890-3',
         account_type=AccountType.CURRENT,
-        account_holder_name='Empresa Teste Ltda',
+        account_holder_name=EMPRESA_TESTE,
         product_categories=[ProductCategory.COMPUTING],
-        business_description='Venda de produtos eletrônicos'
+        business_description='artesanato'
     )
 
 
@@ -67,26 +67,26 @@ def seller_create_data():
 def existing_seller_model():
     return Seller(
         seller_id='001',
-        company_name='Empresa Teste Ltda',
+        company_name=EMPRESA_TESTE,
         trade_name='Loja X',
         cnpj='12345678901234',
         state_municipal_registration='123456789',
         commercial_address='Rua Teste, 123',
         contact_phone='11999999999',
         contact_email='contato@lojax.com',
-        legal_rep_full_name='João Silva',
+        legal_rep_full_name='João Silva1',
         legal_rep_cpf='12345678901',
         legal_rep_rg_number='123456789',
         legal_rep_rg_state=BrazilianState.SP,
         legal_rep_birth_date=date(1990, 1, 1),
         legal_rep_phone='11888888888',
         legal_rep_email='joao@lojax.com',
-        bank_name='banco do brasil',
+        bank_name='banco do brasil1',
         agency_account='1234-5/67890-1',
         account_type=AccountType.CURRENT,
-        account_holder_name='Empresa Teste Ltda',
+        account_holder_name=EMPRESA_TESTE,
         product_categories=[ProductCategory.COMPUTING],
-        business_description='Venda de produtos eletrônicos',
+        business_description='cama, mesa e banho',
         created_by="system:init"
     )
 
@@ -109,7 +109,7 @@ async def test_create_success(mock_repository, mock_keycloak_client, seller_crea
     result = await service.create(seller_create_data, fake_auth_info)
 
     assert result.seller_id == seller_create_data.seller_id
-    assert result.created_by == "http://fake-keycloak/realms/test:test-user-sub-123"
+    assert result.created_by == "https://fake-keycloak/realms/test:test-user-sub-123"
     mock_repository.create.assert_called_once()
 
 

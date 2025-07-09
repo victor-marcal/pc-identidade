@@ -3,6 +3,9 @@ from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 from app.services.gemini_service import GeminiService
 
+RESPOSTA_GEMINI = "Resposta do Gemini"
+PATH_LIB_GLOB = 'pathlib.Path.glob'
+PATH_LIB_EXISTS = 'pathlib.Path.exists'
 
 @pytest.fixture
 def mock_api_key():
@@ -61,8 +64,8 @@ def test_gemini_service_init_no_pdfs():
 
 def test_load_pdfs_from_folder_success():
     """Testa carregamento bem-sucedido de PDFs."""
-    with patch('pathlib.Path.exists', return_value=True), \
-         patch('pathlib.Path.glob') as mock_glob, \
+    with patch(PATH_LIB_EXISTS, return_value=True), \
+         patch(PATH_LIB_GLOB) as mock_glob, \
          patch('fitz.open') as mock_fitz:
         
         # Mock PDF files
@@ -91,7 +94,7 @@ def test_load_pdfs_from_folder_success():
 
 def test_load_pdfs_folder_not_exists():
     """Testa quando a pasta de PDFs não existe."""
-    with patch('pathlib.Path.exists', return_value=False):
+    with patch(PATH_LIB_EXISTS, return_value=False):
         service = GeminiService.__new__(GeminiService)
         service.pdfs_folder_path = "nonexistent_folder"
         
@@ -102,8 +105,8 @@ def test_load_pdfs_folder_not_exists():
 
 def test_load_pdfs_no_pdf_files():
     """Testa quando não há arquivos PDF na pasta."""
-    with patch('pathlib.Path.exists', return_value=True), \
-         patch('pathlib.Path.glob', return_value=[]):
+    with patch(PATH_LIB_EXISTS, return_value=True), \
+         patch(PATH_LIB_GLOB, return_value=[]):
         
         service = GeminiService.__new__(GeminiService)
         service.pdfs_folder_path = "empty_folder"
@@ -115,8 +118,8 @@ def test_load_pdfs_no_pdf_files():
 
 def test_load_pdfs_file_error():
     """Testa erro ao carregar arquivo PDF específico."""
-    with patch('pathlib.Path.exists', return_value=True), \
-         patch('pathlib.Path.glob') as mock_glob, \
+    with patch(PATH_LIB_EXISTS, return_value=True), \
+         patch(PATH_LIB_GLOB) as mock_glob, \
          patch('fitz.open', side_effect=Exception("Erro ao abrir PDF")):
         
         mock_pdf_file = Mock()
@@ -163,12 +166,12 @@ def test_generate_response_success(mock_gemini_service):
     """Testa geração de resposta bem-sucedida."""
     # Mock response com atributo content
     mock_response = Mock()
-    mock_response.content = "Resposta do Gemini"
+    mock_response.content = RESPOSTA_GEMINI
     mock_gemini_service.chain.invoke.return_value = mock_response
     
     result = mock_gemini_service.generate_response("Olá, como você está?")
     
-    assert result == "Resposta do Gemini"
+    assert result == RESPOSTA_GEMINI
     mock_gemini_service.chain.invoke.assert_called_once()
 
 

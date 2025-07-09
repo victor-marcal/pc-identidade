@@ -8,8 +8,8 @@ class TestSellerPatchValidation:
     
     def test_valid_seller_patch(self):
         """Test valid SellerPatch creation"""
-        patch_data = SellerPatch(trade_name="Loja Teste", cnpj="12345678000100")
-        assert patch_data.trade_name == "Loja Teste"
+        patch_data = SellerPatch(trade_name="Loja Teste1", cnpj="12345678000100")
+        assert patch_data.trade_name == "Loja Teste1"
         assert patch_data.cnpj == "12345678000100"
 
     def test_nome_fantasia_too_short(self):
@@ -77,8 +77,8 @@ class TestSellerPatchValidation:
 
     def test_seller_patch_cnpj_none_validation(self):
         """Test that CNPJ can be None - covers None branch"""
-        seller_patch = SellerPatch(trade_name="Loja Teste", cnpj=None)
-        assert seller_patch.trade_name == "Loja Teste"
+        seller_patch = SellerPatch(trade_name="Loja Teste2", cnpj=None)
+        assert seller_patch.trade_name == "Loja Teste2"
         assert seller_patch.cnpj is None
 
     def test_seller_patch_nome_fantasia_whitespace_only(self):

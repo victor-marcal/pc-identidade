@@ -67,7 +67,7 @@ class TestSellerServiceSimple:
             commercial_address="Test Address, 123",
             contact_phone="11999999999",
             contact_email="test@example.com",
-            legal_rep_full_name="John Doe",
+            legal_rep_full_name="John Doe1",
             legal_rep_cpf="12345678901",
             legal_rep_rg_number="123456789",
             legal_rep_rg_state=BrazilianState.SP,
@@ -77,7 +77,7 @@ class TestSellerServiceSimple:
             bank_name="Test Bank",
             agency_account="0001-1",
             account_type=AccountType.CURRENT,
-            account_holder_name="John Doe",
+            account_holder_name="John Doe2",
             product_categories=[ProductCategory.AUTOMOTIVE],
             business_description="Test business description"
         )
@@ -169,7 +169,7 @@ class TestSellerServiceSimple:
             commercial_address="Test Address, 123",
             contact_phone="11999999999",
             contact_email="test@example.com",
-            legal_rep_full_name="John Doe",
+            legal_rep_full_name="John Doe3",
             legal_rep_cpf="12345678901",
             legal_rep_rg_number="123456789",
             legal_rep_rg_state=BrazilianState.SP,
@@ -179,7 +179,7 @@ class TestSellerServiceSimple:
             bank_name="Test Bank",
             agency_account="0001-1",
             account_type=AccountType.CURRENT,
-            account_holder_name="John Doe",
+            account_holder_name="John Doe4",
             product_categories=[ProductCategory.AUTOMOTIVE],
             business_description="Test business description"
         )

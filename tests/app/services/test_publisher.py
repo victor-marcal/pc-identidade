@@ -1,11 +1,16 @@
+import secrets
+import string
 import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch, ANY
+
 import json
 import os
 from datetime import datetime, date
 from app.services.publisher import RabbitMQPublisher, publish_seller_message
 from app.models.enums import BrazilianState, AccountType, ProductCategory
 
+EMPRESA_TESTE = 'Empresa Teste'
+GUEST = 'guest'
 
 class TestRabbitMQPublisher:
     """Testes para o publisher RabbitMQ"""
@@ -13,8 +18,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -24,16 +29,16 @@ class TestRabbitMQPublisher:
         
         assert publisher._RabbitMQPublisher__host == 'localhost'
         assert publisher._RabbitMQPublisher__port == '5672'
-        assert publisher._RabbitMQPublisher__username == 'guest'
-        assert publisher._RabbitMQPublisher__password == 'guest'
+        assert publisher._RabbitMQPublisher__username == GUEST
+        assert publisher._RabbitMQPublisher__password == GUEST
         assert publisher._RabbitMQPublisher__exchange == 'test_exchange'
         assert publisher._RabbitMQPublisher__routing_key == 'test.routing.key'
     
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -51,7 +56,7 @@ class TestRabbitMQPublisher:
         connection, channel = publisher._RabbitMQPublisher__create_channel()
         
         # Verifica se as credenciais foram criadas corretamente
-        mock_credentials.assert_called_once_with(username='guest', password='guest')
+        mock_credentials.assert_called_once_with(username=GUEST, password=ANY)
         
         # Verifica se os parâmetros de conexão foram criados
         mock_params.assert_called_once()
@@ -68,8 +73,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -88,7 +93,7 @@ class TestRabbitMQPublisher:
         
         message_data = {
             'seller_id': '001',
-            'company_name': 'Empresa Teste',
+            'company_name': EMPRESA_TESTE,
             'created_at': datetime(2024, 1, 1, 12, 0, 0)
         }
         
@@ -106,7 +111,7 @@ class TestRabbitMQPublisher:
         published_body = call_args[1]['body']
         parsed_data = json.loads(published_body)
         assert parsed_data['seller_id'] == '001'
-        assert parsed_data['company_name'] == 'Empresa Teste'
+        assert parsed_data['company_name'] == EMPRESA_TESTE
         
         # Verifica se a conexão foi fechada
         mock_connection_instance.close.assert_called_once()
@@ -114,8 +119,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -131,8 +136,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -148,8 +153,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -165,8 +170,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -187,8 +192,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -205,8 +210,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -225,8 +230,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -255,8 +260,8 @@ class TestRabbitMQPublisher:
     @patch.dict(os.environ, {
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
-        'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_USERNAME': GUEST,
+        'RABBITMQ_PASSWORD': GUEST,
         'RABBITMQ_EXCHANGE': 'test_exchange',
         'RABBITMQ_ROUTING_KEY': 'test.routing.key'
     })
@@ -276,7 +281,7 @@ class TestRabbitMQPublisher:
         # Dados complexos com diferentes tipos
         message_data = {
             'seller_id': '001',
-            'company_name': 'Empresa Teste',
+            'company_name': EMPRESA_TESTE,
             'legal_rep_birth_date': date(1990, 1, 1),
             'created_at': datetime(2024, 1, 1, 12, 0, 0),
             'legal_rep_rg_state': BrazilianState.SP,
@@ -295,7 +300,7 @@ class TestRabbitMQPublisher:
         parsed_data = json.loads(published_body)
         
         assert parsed_data['seller_id'] == '001'
-        assert parsed_data['company_name'] == 'Empresa Teste'
+        assert parsed_data['company_name'] == EMPRESA_TESTE
         assert parsed_data['legal_rep_birth_date'] == '1990-01-01'
         assert parsed_data['created_at'] == '2024-01-01T12:00:00'
         assert parsed_data['legal_rep_rg_state'] == 'SP'
@@ -313,7 +318,7 @@ class TestPublishSellerMessage:
         
         seller_data = {
             'seller_id': '001',
-            'company_name': 'Empresa Teste'
+            'company_name': EMPRESA_TESTE
         }
         
         publish_seller_message(seller_data)

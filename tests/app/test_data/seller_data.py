@@ -21,7 +21,7 @@ VALID_SELLER_DATA = {
     "bank_name": "Banco do Brasil",
     "agency_account": "1234-5 / 12345-6",
     "account_type": AccountType.CHECKING,
-    "account_holder_name": "João Silva",
+    "account_holder_name": "João Silva1",
     "product_categories": [ProductCategory.ELECTRONICS, ProductCategory.BOOKS],
     "business_description": "Comércio de eletrônicos e livros"
 }
@@ -37,8 +37,8 @@ def create_valid_seller_auth_info():
     from app.models.base import UserModel
     
     return UserAuthInfo(
-        user=UserModel(name="test-user-123", server="http://keycloak/realms/test"),
+        user=UserModel(name="test-user-123", server="https://keycloak/realms/test"),
         trace_id="test-trace-id",
         sellers=["abc123"],
-        info_token={"sub": "test-user-123", "iss": "http://keycloak/realms/test"}
+        info_token={"sub": "test-user-123", "iss": "https://keycloak/realms/test"}
     )

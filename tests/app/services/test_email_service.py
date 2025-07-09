@@ -4,6 +4,9 @@ import smtplib
 from app.services.email_service import EmailService
 
 
+EMPRESA_TESTE = 'Empresa Teste Ltda'
+EMAIl_LOJA_TESTE = 'contato@lojateste.com'
+
 class TestEmailService:
     """Testes para o serviço de email"""
     
@@ -39,10 +42,10 @@ class TestEmailService:
         service = EmailService()
         
         seller_data = {
-            'company_name': 'Empresa Teste Ltda',
-            'trade_name': 'Loja Teste',
-            'contact_email': 'contato@lojateste.com',
-            'business_description': 'Venda de produtos eletrônicos',
+            'company_name': EMPRESA_TESTE,
+            'trade_name': 'Loja Teste1',
+            'contact_email': EMAIl_LOJA_TESTE,
+            'business_description': 'cursos',
             'product_categories': ['ELETRONICOS', 'CASA_JARDIM']
         }
         
@@ -71,10 +74,10 @@ class TestEmailService:
         service = EmailService()
         
         seller_data = {
-            'company_name': 'Empresa Teste Ltda',
-            'trade_name': 'Loja Teste',
-            'contact_email': 'contato@lojateste.com',
-            'business_description': 'Venda de produtos eletrônicos',
+            'company_name': EMPRESA_TESTE,
+            'trade_name': 'Loja Teste2',
+            'contact_email': EMAIl_LOJA_TESTE,
+            'business_description': 'comércio e indústria',
             'product_categories': ['ELETRONICOS']
         }
         
@@ -94,15 +97,15 @@ class TestEmailService:
         service = EmailService()
         
         result = service._create_welcome_email_body(
-            company_name='Empresa Teste Ltda',
-            trade_name='Loja Teste',
-            business_description='Venda de produtos eletrônicos',
+            company_name=EMPRESA_TESTE,
+            trade_name='Loja Teste4',
+            business_description='celulares e smartphones',
             product_categories=['ELETRONICOS', 'CASA_JARDIM']
         )
         
-        assert 'Empresa Teste Ltda' in result
-        assert 'Loja Teste' in result
-        assert 'Venda de produtos eletrônicos' in result
+        assert EMPRESA_TESTE in result
+        assert 'Loja Teste4' in result
+        assert 'celulares e smartphones' in result
         assert 'ELETRONICOS' in result
         assert 'CASA_JARDIM' in result
         assert 'bem-vindo' in result.lower()
@@ -118,14 +121,14 @@ class TestEmailService:
         service = EmailService()
         
         result = service._create_welcome_email_body(
-            company_name='Empresa Teste Ltda',
-            trade_name='Empresa Teste Ltda',  # Mesmo que company_name
-            business_description='Venda de produtos eletrônicos',
+            company_name= EMPRESA_TESTE,
+            trade_name=EMPRESA_TESTE,  # Mesmo que company_name
+            business_description='casa inteligente',
             product_categories=['ELETRONICOS']
         )
         
         # Não deve repetir o nome da empresa
-        company_count = result.count('Empresa Teste Ltda')
+        company_count = result.count(EMPRESA_TESTE)
         assert company_count >= 1
         assert 'ELETRONICOS' in result
     
@@ -140,14 +143,14 @@ class TestEmailService:
         service = EmailService()
         
         result = service._create_welcome_email_body(
-            company_name='Empresa Teste Ltda',
-            trade_name='Loja Teste',
+            company_name= EMPRESA_TESTE,
+            trade_name='Loja Teste5',
             business_description='Venda de produtos diversos',
             product_categories=[]
         )
         
-        assert 'Empresa Teste Ltda' in result
-        assert 'Loja Teste' in result
+        assert EMPRESA_TESTE in result
+        assert 'Loja Teste5' in result
         assert 'Venda de produtos diversos' in result
         # Deve ter uma mensagem para categorias vazias ou não mencionar categorias
         assert result is not None
@@ -165,8 +168,8 @@ class TestEmailService:
         
         # Dados incompletos (sem contact_email)
         seller_data = {
-            'company_name': 'Empresa Teste Ltda',
-            'business_description': 'Venda de produtos eletrônicos',
+            'company_name': EMPRESA_TESTE,
+            'business_description': 'casa de construção',
             'product_categories': ['ELETRONICOS']
         }
         
@@ -210,10 +213,10 @@ class TestEmailService:
         service = EmailService()
         
         seller_data = {
-            'company_name': 'Empresa Teste Ltda',
-            'trade_name': 'Loja Teste',
-            'contact_email': 'contato@lojateste.com',
-            'business_description': 'Venda de produtos eletrônicos',
+            'company_name': EMPRESA_TESTE,
+            'trade_name': 'Loja Teste7',
+            'contact_email': EMAIl_LOJA_TESTE,
+            'business_description': 'câmeras e drones',
             'product_categories': ['ELETRONICOS']
         }
         

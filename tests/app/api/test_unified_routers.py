@@ -2,6 +2,8 @@
 Testes unificados para routers de seller e user com foco em cobertura.
 """
 
+import secrets
+import string
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
@@ -14,13 +16,26 @@ from app.models.enums import SellerStatus, ProductCategory, AccountType
 from app.common.exceptions import ForbiddenException, NotFoundException
 from tests.helpers.test_fixtures import create_full_seller
 
+TEST_COMPANY = "Test Company"
+CNPJ = "12345678901234"
+SELLER_BY_ALL = "/seller/v1/sellers"
+TRADE_NAME = "Test Trade"
+SELLER_BY_ID = "/seller/v1/sellers/test123"
+USER_ALL = "/seller/v1/users"
+USER_BY_ID = "/seller/v1/users/user123"
+SELER_BY_ID_DIFF = "/seller/v1/sellers/nonexistent"
+
+def generate_test_password(length: int = 12) -> str:
+    """Gera uma senha segura para testes"""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 class TestUnifiedRouters:
     """Testes unificados para aumentar cobertura dos routers"""
     
     def test_seller_get_all_success(self, client: TestClient):
         """Testa GET /sellers com sucesso"""
-        response = client.get("/seller/v1/sellers")
+        response = client.get(SELLER_BY_ALL)
         # Aceita qualquer resposta válida - foco é na cobertura
         assert response.status_code in [200, 401, 403, 422, 500]
     
@@ -42,26 +57,26 @@ class TestUnifiedRouters:
     
     def test_seller_search_with_cnpj(self, client: TestClient):
         """Testa GET /sellers/buscar com CNPJ"""
-        response = client.get("/seller/v1/sellers/buscar?cnpj=12345678901234")
+        response = client.get(f"/seller/v1/sellers/buscar?cnpj={CNPJ}")
         assert response.status_code in [200, 401, 403, 404, 422]
     
     def test_seller_search_with_both_params(self, client: TestClient):
         """Testa GET /sellers/buscar com seller_id e CNPJ"""
-        response = client.get("/seller/v1/sellers/buscar?seller_id=test123&cnpj=12345678901234")
+        response = client.get(f"/seller/v1/sellers/buscar?seller_id=test123&cnpj={CNPJ}")
         assert response.status_code in [200, 401, 403, 404, 422]
     
     def test_seller_get_by_id(self, client: TestClient):
         """Testa GET /sellers/{seller_id}"""
-        response = client.get("/seller/v1/sellers/test123")
+        response = client.get(SELLER_BY_ID)
         assert response.status_code in [200, 401, 403, 404, 422]
     
     def test_seller_create_basic(self, client: TestClient):
         """Testa POST /sellers"""
         seller_data = {
             "seller_id": "test001",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
-            "cnpj": "12345678901234",
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
+            "cnpj": CNPJ,
             "state_municipal_registration": "123456789",
             "commercial_address": "Test Address",
             "contact_phone": "1234567890",
@@ -81,7 +96,7 @@ class TestUnifiedRouters:
             "business_description": "Test Business"
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [201, 401, 403, 405, 422, 500]
     
     def test_seller_create_minimal(self, client: TestClient):
@@ -93,7 +108,7 @@ class TestUnifiedRouters:
             "cnpj": "98765432109876"
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [201, 400, 401, 403, 405, 422, 500]
     
     def test_seller_update(self, client: TestClient):
@@ -103,12 +118,12 @@ class TestUnifiedRouters:
             "contact_phone": "9876543210"
         }
         
-        response = client.patch("/seller/v1/sellers/test123", json=update_data)
+        response = client.patch(SELLER_BY_ID, json=update_data)
         assert response.status_code in [200, 401, 403, 404, 422, 500]
     
     def test_seller_delete(self, client: TestClient):
         """Testa DELETE /sellers/{seller_id}"""
-        response = client.delete("/seller/v1/sellers/test123")
+        response = client.delete(SELLER_BY_ID)
         assert response.status_code in [200, 204, 401, 403, 404, 422, 500]
     
     def test_seller_replace(self, client: TestClient):
@@ -136,7 +151,7 @@ class TestUnifiedRouters:
             "business_description": "Replaced Business"
         }
         
-        response = client.put("/seller/v1/sellers/test123", json=replace_data)
+        response = client.put(SELLER_BY_ID, json=replace_data)
         assert response.status_code in [200, 401, 403, 404, 422, 500]
     
     def test_user_create_basic(self, client: TestClient):
@@ -145,10 +160,10 @@ class TestUnifiedRouters:
             "first_name": "João",
             "last_name": "Silva",
             "email": "joao@test.com",
-            "password": "senha123"
+            "password": generate_test_password()
         }
         
-        response = client.post("/seller/v1/users", json=user_data)
+        response = client.post(USER_ALL, json=user_data)
         assert response.status_code in [201, 400, 422, 500]
     
     def test_user_create_invalid_email(self, client: TestClient):
@@ -157,10 +172,10 @@ class TestUnifiedRouters:
             "first_name": "João",
             "last_name": "Silva",
             "email": "email-invalido",
-            "password": "senha123"
+            "password": generate_test_password()
         }
         
-        response = client.post("/seller/v1/users", json=user_data)
+        response = client.post(USER_ALL, json=user_data)
         assert response.status_code in [400, 422, 500]
     
     def test_user_create_missing_fields(self, client: TestClient):
@@ -171,22 +186,22 @@ class TestUnifiedRouters:
             # email e password faltando
         }
         
-        response = client.post("/seller/v1/users", json=user_data)
+        response = client.post(USER_ALL, json=user_data)
         assert response.status_code in [400, 422, 500]
     
     def test_user_get_by_id(self, client: TestClient):
         """Testa GET /users/{user_id}"""
-        response = client.get("/seller/v1/users/user123")
+        response = client.get(USER_BY_ID)
         assert response.status_code in [200, 401, 403, 404, 422, 500]
     
     def test_user_list_all(self, client: TestClient):
         """Testa GET /users"""
-        response = client.get("/seller/v1/users")
+        response = client.get(USER_ALL)
         assert response.status_code in [200, 401, 403, 422, 500]
     
     def test_user_delete(self, client: TestClient):
         """Testa DELETE /users/{user_id}"""
-        response = client.delete("/seller/v1/users/user123")
+        response = client.delete(USER_BY_ID)
         assert response.status_code in [200, 204, 401, 403, 404, 422, 500]
     
     def test_user_patch(self, client: TestClient):
@@ -196,7 +211,7 @@ class TestUnifiedRouters:
             "email": "joao.atualizado@test.com"
         }
         
-        response = client.patch("/seller/v1/users/user123", json=patch_data)
+        response = client.patch(USER_BY_ID, json=patch_data)
         assert response.status_code in [200, 401, 403, 404, 422, 500]
     
     def test_user_patch_invalid_data(self, client: TestClient):
@@ -205,12 +220,12 @@ class TestUnifiedRouters:
             "email": "email-invalido"
         }
         
-        response = client.patch("/seller/v1/users/user123", json=patch_data)
+        response = client.patch(USER_BY_ID, json=patch_data)
         assert response.status_code in [400, 401, 403, 422, 500]
     
     def test_user_patch_empty_data(self, client: TestClient):
         """Testa PATCH /users/{user_id} com dados vazios"""
-        response = client.patch("/seller/v1/users/user123", json={})
+        response = client.patch(USER_BY_ID, json={})
         assert response.status_code in [200, 401, 403, 422, 500]
 
 
@@ -221,51 +236,51 @@ class TestRouterValidation:
         """Testa criação de seller com CNPJ inválido"""
         seller_data = {
             "seller_id": "test003",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
             "cnpj": "invalid-cnpj"
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [400, 401, 405, 422, 500]
     
     def test_seller_create_invalid_email(self, client: TestClient):
         """Testa criação de seller com email inválido"""
         seller_data = {
             "seller_id": "test004",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
-            "cnpj": "12345678901234",
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
+            "cnpj": CNPJ,
             "contact_email": "invalid-email"
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [400, 401, 405, 422, 500]
     
     def test_seller_create_invalid_product_category(self, client: TestClient):
         """Testa criação de seller com categoria de produto inválida"""
         seller_data = {
             "seller_id": "test005",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
-            "cnpj": "12345678901234",
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
+            "cnpj": CNPJ,
             "product_categories": ["INVALID_CATEGORY"]
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [400, 401, 405, 422, 500]
     
     def test_seller_create_invalid_account_type(self, client: TestClient):
         """Testa criação de seller com tipo de conta inválido"""
         seller_data = {
             "seller_id": "test006",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
-            "cnpj": "12345678901234",
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
+            "cnpj": CNPJ,
             "account_type": "INVALID_TYPE"
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [400, 401, 405, 422, 500]
     
     def test_seller_update_invalid_data(self, client: TestClient):
@@ -274,7 +289,7 @@ class TestRouterValidation:
             "contact_email": "invalid-email"
         }
         
-        response = client.patch("/seller/v1/sellers/test123", json=update_data)
+        response = client.patch(SELLER_BY_ID, json=update_data)
         assert response.status_code in [400, 401, 403, 404, 422, 500]
 
 
@@ -283,19 +298,19 @@ class TestRouterEdgeCases:
     
     def test_seller_get_nonexistent(self, client: TestClient):
         """Testa busca de seller inexistente"""
-        response = client.get("/seller/v1/sellers/nonexistent")
+        response = client.get(SELER_BY_ID_DIFF)
         assert response.status_code in [401, 403, 404, 422, 500]
     
     def test_seller_update_nonexistent(self, client: TestClient):
         """Testa atualização de seller inexistente"""
         update_data = {"trade_name": "Updated"}
         
-        response = client.patch("/seller/v1/sellers/nonexistent", json=update_data)
+        response = client.patch(SELER_BY_ID_DIFF, json=update_data)
         assert response.status_code in [401, 403, 404, 422, 500]
     
     def test_seller_delete_nonexistent(self, client: TestClient):
         """Testa deleção de seller inexistente"""
-        response = client.delete("/seller/v1/sellers/nonexistent")
+        response = client.delete(SELER_BY_ID_DIFF)
         assert response.status_code in [401, 403, 404, 422, 500]
     
     def test_user_get_nonexistent(self, client: TestClient):
@@ -312,14 +327,14 @@ class TestRouterEdgeCases:
         """Testa criação de seller com ID duplicado"""
         seller_data = {
             "seller_id": "duplicate_test",
-            "company_name": "Test Company",
-            "trade_name": "Test Trade",
-            "cnpj": "12345678901234"
+            "company_name": TEST_COMPANY,
+            "trade_name": TRADE_NAME,
+            "cnpj": CNPJ
         }
         
         # Tentar criar duas vezes
-        response1 = client.post("/seller/v1/sellers", json=seller_data)
-        response2 = client.post("/seller/v1/sellers", json=seller_data)
+        response1 = client.post(SELLER_BY_ALL, json=seller_data)
+        response2 = client.post(SELLER_BY_ALL, json=seller_data)
         
         # Pelo menos uma deve dar erro
         assert response1.status_code in [201, 401, 403, 405, 422, 500]
@@ -329,12 +344,12 @@ class TestRouterEdgeCases:
         """Testa criação de seller com strings muito longas"""
         seller_data = {
             "seller_id": "long_test",
-            "company_name": "A" * 1000,  # String muito longa
+            "company_name": "A" * 1000,  
             "trade_name": "B" * 1000,
-            "cnpj": "12345678901234"
+            "cnpj": CNPJ
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [400, 401, 403, 405, 422, 500]
     
     def test_seller_create_special_characters(self, client: TestClient):
@@ -343,10 +358,10 @@ class TestRouterEdgeCases:
             "seller_id": "special_test",
             "company_name": "Test Company Ação & Cia",
             "trade_name": "Test Trade Ção",
-            "cnpj": "12345678901234"
+            "cnpj": CNPJ
         }
         
-        response = client.post("/seller/v1/sellers", json=seller_data)
+        response = client.post(SELLER_BY_ALL, json=seller_data)
         assert response.status_code in [201, 401, 403, 405, 422, 500]
     
     def test_user_create_weak_password(self, client: TestClient):
@@ -355,10 +370,10 @@ class TestRouterEdgeCases:
             "first_name": "João",
             "last_name": "Silva",
             "email": "joao@test.com",
-            "password": "123"  # Senha muito fraca
+            "password": generate_test_password()
         }
         
-        response = client.post("/seller/v1/users", json=user_data)
+        response = client.post(USER_ALL, json=user_data)
         assert response.status_code in [400, 422, 500]
     
     def test_user_create_duplicate_email(self, client: TestClient):
@@ -367,12 +382,12 @@ class TestRouterEdgeCases:
             "first_name": "João",
             "last_name": "Silva",
             "email": "duplicate@test.com",
-            "password": "senha123"
+            "password": generate_test_password()
         }
         
         # Tentar criar duas vezes
-        response1 = client.post("/seller/v1/users", json=user_data)
-        response2 = client.post("/seller/v1/users", json=user_data)
+        response1 = client.post(USER_ALL, json=user_data)
+        response2 = client.post(USER_ALL, json=user_data)
         
         # Pelo menos uma deve dar erro
         assert response1.status_code in [201, 400, 422, 500]
@@ -385,14 +400,14 @@ class TestRouterAuthentication:
     def test_endpoints_without_auth_header(self, client: TestClient):
         """Testa endpoints sem header de autenticação"""
         endpoints = [
-            ("GET", "/seller/v1/sellers/test123"),
-            ("PATCH", "/seller/v1/sellers/test123"),
-            ("DELETE", "/seller/v1/sellers/test123"),
-            ("PUT", "/seller/v1/sellers/test123"),
-            ("GET", "/seller/v1/users/user123"),
-            ("DELETE", "/seller/v1/users/user123"),
-            ("PATCH", "/seller/v1/users/user123"),
-            ("GET", "/seller/v1/users"),
+            ("GET", SELLER_BY_ID),
+            ("PATCH", SELLER_BY_ID),
+            ("DELETE", SELLER_BY_ID),
+            ("PUT", SELLER_BY_ID),
+            ("GET", USER_BY_ID),
+            ("DELETE", USER_BY_ID),
+            ("PATCH", USER_BY_ID),
+            ("GET", USER_ALL),
         ]
         
         for method, endpoint in endpoints:
@@ -415,8 +430,8 @@ class TestRouterAuthentication:
         headers = {"Authorization": "Bearer invalid_token"}
         
         endpoints = [
-            ("GET", "/seller/v1/sellers/test123"),
-            ("GET", "/seller/v1/users/user123"),
+            ("GET", SELLER_BY_ID),
+            ("GET", USER_BY_ID),
         ]
         
         for method, endpoint in endpoints:

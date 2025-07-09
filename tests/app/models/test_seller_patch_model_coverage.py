@@ -198,7 +198,7 @@ class TestSellerPatchModelMissingCoverage:
             legal_rep_phone="11888888888",
             legal_rep_email="john@example.com",
             bank_name="Test Bank",
-            agency_account="1234-5/67890-1",
+            agency_account="1234-5/67890-2",
             account_type=AccountType.CURRENT,
             account_holder_name="Test Company Ltd",
             product_categories=[ProductCategory.COMPUTING],

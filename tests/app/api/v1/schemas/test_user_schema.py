@@ -1,6 +1,9 @@
 """
 Testes unitários para os schemas de usuário (user_schema.py).
 """
+
+import secrets
+import string
 import pytest
 from pydantic import ValidationError
 
@@ -8,6 +11,11 @@ from app.api.v1.schemas.user_schema import UserCreate, UserPatch, UserResponse
 
 # --- Testes para o schema UserCreate ---
 
+
+def generate_test_password(length: int = 12) -> str:
+    """Gera uma senha segura para testes"""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 def test_user_create_success():
     """Testa a criação bem-sucedida de UserCreate com todos os campos."""
@@ -43,7 +51,7 @@ def test_user_create_only_required_fields():
 @pytest.mark.parametrize("invalid_data, expected_error_msg", [
     ({"username": "a", "email": "test@example.com", "password": "a_strong_password"}, "at least 3 characters"),
     ({"username": "testuser", "email": "invalid-email", "password": "a_strong_password"}, "value is not a valid email address"),
-    ({"username": "testuser", "email": "test@example.com", "password": "short"}, "at least 8 characters"),
+    ({"username": "testuser", "email": "test@example.com", "password": generate_test_password(6)}, "at least 8 characters"),
 ])
 def test_user_create_validation_error(invalid_data, expected_error_msg):
     """Testa se UserCreate levanta ValidationError para dados inválidos."""
@@ -114,7 +122,7 @@ def test_user_patch_empty_data():
 
 @pytest.mark.parametrize("invalid_data, expected_error_msg", [
     ({"email": "not-an-email"}, "value is not a valid email address"),
-    ({"password": "short"}, "at least 8 characters"),
+    ({"password": generate_test_password(6)}, "at least 8 characters"),
 ])
 def test_user_patch_validation_error(invalid_data, expected_error_msg):
     """Testa se UserPatch levanta ValidationError para dados inválidos."""

@@ -1,8 +1,16 @@
+import secrets
+import string
 import pytest
 from unittest.mock import MagicMock, patch, call
 import os
 from app.services.consumer import RabbitmqConsumer, minha_callback
 
+
+
+def generate_test_password(length: int = 12) -> str:
+    """Gera uma senha segura para testes"""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 class TestRabbitmqConsumer:
     """Testes para o consumidor RabbitMQ"""
@@ -11,7 +19,7 @@ class TestRabbitmqConsumer:
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
         'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_PASSWORD': generate_test_password(),
         'RABBITMQ_QUEUE': 'test_queue'
     })
     @patch('app.services.consumer.pika.BlockingConnection')
@@ -25,18 +33,22 @@ class TestRabbitmqConsumer:
         mock_connection_instance.channel.return_value = mock_channel
         mock_connection.return_value = mock_connection_instance
         
-        consumer = RabbitmqConsumer(mock_callback)
+        # Gera senha de teste
+        test_password = generate_test_password()
         
-        # Verifica se as variáveis de ambiente foram lidas
-        assert consumer._RabbitmqConsumer__host == 'localhost'
-        assert consumer._RabbitmqConsumer__port == '5672'
-        assert consumer._RabbitmqConsumer__username == 'guest'
-        assert consumer._RabbitmqConsumer__password == 'guest'
-        assert consumer._RabbitmqConsumer__queue == 'test_queue'
-        assert consumer._RabbitmqConsumer__callback == mock_callback
-        
-        # Verifica se as credenciais foram criadas corretamente
-        mock_credentials.assert_called_once_with(username='guest', password='guest')
+        with patch.dict(os.environ, {'RABBITMQ_PASSWORD': test_password}):
+            consumer = RabbitmqConsumer(mock_callback)
+            
+            # Verifica se as variáveis de ambiente foram lidas
+            assert consumer._RabbitmqConsumer__host == 'localhost'
+            assert consumer._RabbitmqConsumer__port == '5672'
+            assert consumer._RabbitmqConsumer__username == 'guest'
+            assert consumer._RabbitmqConsumer__password == test_password
+            assert consumer._RabbitmqConsumer__queue == 'test_queue'
+            assert consumer._RabbitmqConsumer__callback == mock_callback
+            
+            # Verifica se as credenciais foram criadas corretamente
+            mock_credentials.assert_called_once_with(username='guest', password=test_password)
         
         # Verifica se os parâmetros de conexão foram criados
         mock_params.assert_called_once()
@@ -57,7 +69,7 @@ class TestRabbitmqConsumer:
         'RABBITMQ_HOST': 'test-host',
         'RABBITMQ_PORT': '5673',
         'RABBITMQ_USERNAME': 'test-user',
-        'RABBITMQ_PASSWORD': 'test-pass',
+        'RABBITMQ_PASSWORD': generate_test_password(),
         'RABBITMQ_QUEUE': 'test-queue'
     })
     @patch('app.services.consumer.pika.BlockingConnection')
@@ -75,10 +87,15 @@ class TestRabbitmqConsumer:
         mock_params_instance = MagicMock()
         mock_params.return_value = mock_params_instance
         
-        consumer = RabbitmqConsumer(mock_callback)
+        # Gera senha de teste para usar na verificação
+        test_password = generate_test_password()
         
-        # Verifica se as credenciais foram criadas com os valores corretos
-        mock_credentials.assert_called_once_with(username='test-user', password='test-pass')
+        # Patch temporário para usar a mesma senha
+        with patch.dict(os.environ, {'RABBITMQ_PASSWORD': test_password}):
+            consumer = RabbitmqConsumer(mock_callback)
+            
+            # Verifica se as credenciais foram criadas com os valores corretos
+            mock_credentials.assert_called_once_with(username='test-user', password=test_password)
         
         # Verifica se os parâmetros foram criados com os valores corretos
         mock_params.assert_called_once_with(
@@ -102,7 +119,7 @@ class TestRabbitmqConsumer:
         'RABBITMQ_HOST': 'localhost',
         'RABBITMQ_PORT': '5672',
         'RABBITMQ_USERNAME': 'guest',
-        'RABBITMQ_PASSWORD': 'guest',
+        'RABBITMQ_PASSWORD': generate_test_password(),
         'RABBITMQ_QUEUE': 'test_queue'
     })
     @patch('app.services.consumer.pika.BlockingConnection')

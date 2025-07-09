@@ -3,6 +3,8 @@ Testes para o cliente de administração do Keycloak: keycloak_admin_client.py
 """
 from unittest.mock import MagicMock, patch
 
+import secrets
+import string
 import httpx
 import pytest
 from fastapi import HTTPException
@@ -24,6 +26,12 @@ TEST_DATA = {
     "bad_request_error": "Bad request error",
     "conflict_error": '{"errorMessage": "User with username test_user already exists."}',
 }
+
+
+def generate_test_password(length: int = 12) -> str:
+    """Gera uma senha segura para testes"""
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 
 @pytest.fixture
@@ -92,7 +100,7 @@ async def test_create_user_conflict_409_raises_bad_request(keycloak_client):
             mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
             with pytest.raises(BadRequestException):
                 await keycloak_client.create_user(
-                    username="existing_user", email="e@e.com", password="p", first_name="f", last_name="l", sellers=[]
+                    username="existing_user", email="e@e.com", password=generate_test_password(), first_name="f", last_name="l", sellers=[]
                 )
 
 # --- Novos Testes para Cobertura ---

@@ -37,9 +37,9 @@ def valid_token_payload():
     """Token payload válido para um usuário normal"""
     return {
         "sub": "user-123",
-        "iss": "http://keycloak:8080/realms/test",
+        "iss": "https://keycloak:8080/realms/test1",
         "sellers": ["seller1", "seller2"],
-        "exp": 9999999999,  # Token não expirado
+        "exp": 9999999999,
     }
 
 
@@ -48,7 +48,7 @@ def admin_token_payload():
     """Token payload para um usuário administrador"""
     return {
         "sub": "admin-123",
-        "iss": "http://keycloak:8080/realms/test",
+        "iss": "https://keycloak:8080/realms/test2",
         "sellers": ["seller1", "seller2"],
         "realm_access": {
             "roles": ["realm-admin", "user"]
@@ -66,7 +66,7 @@ def admin_token_payload():
 def normal_user_auth_info(valid_token_payload):
     """UserAuthInfo para usuário normal"""
     return UserAuthInfo(
-        user=UserModel(name="user-123", server="http://keycloak:8080/realms/test"),
+        user=UserModel(name="user-123", server="https://keycloak:8080/realms/test"),
         trace_id="trace-123",
         sellers=["seller1", "seller2"],
         info_token=valid_token_payload
@@ -77,7 +77,7 @@ def normal_user_auth_info(valid_token_payload):
 def admin_user_auth_info(admin_token_payload):
     """UserAuthInfo para usuário administrador"""
     return UserAuthInfo(
-        user=UserModel(name="admin-123", server="http://keycloak:8080/realms/test"),
+        user=UserModel(name="admin-123", server="https://keycloak:8080/realms/test3"),
         trace_id="trace-123",
         sellers=["seller1", "seller2"],
         info_token=admin_token_payload

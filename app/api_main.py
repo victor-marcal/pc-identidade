@@ -25,13 +25,19 @@ logging.basicConfig(level=LoggingBuilder._log_level)
 logger = logging.getLogger(__name__)
 
 
+if hasattr(LoggingBuilder, '_log_level'):
+    logger.setLevel(LoggingBuilder._log_level)
+
 async def log_requests_middleware(request: Request, call_next):
     """
     Este middleware registra cada requisição recebida, seu status de resposta
     e o tempo de processamento.
     """
     start_time = time.time()
-    logger.info(f"Requisição recebida: {request.method} {request.url.path}")
+    
+    # Sanitize the URL path to prevent log injection
+    safe_path = request.url.path.replace('\n', '').replace('\r', '')
+    logger.info(f"Requisição recebida: {request.method} {safe_path}")
 
     response = await call_next(request)
 
@@ -39,10 +45,9 @@ async def log_requests_middleware(request: Request, call_next):
     formatted_process_time = f"{process_time:.2f}ms"
 
     logger.info(
-        f"Requisição finalizada: {request.method} {request.url.path} - Status: {response.status_code} - Duração: {formatted_process_time}"
+        f"Requisição finalizada: {request.method} {safe_path} - Status: {response.status_code} - Duração: {formatted_process_time}"
     )
     return response
-
 
 def init() -> FastAPI:
     from app.api.api_application import create_app

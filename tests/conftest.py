@@ -22,6 +22,19 @@ TEST_CONSTANTS = {
     "test_sellers": "1,2,3",
 }
 
+# Dados de teste seguros (não usar em produção)
+TEST_USER_DATA = {
+    "first_name": "João",
+    "last_name": "Silva", 
+    "email": "joao.test@example.com",
+    "password": "test_password_123!"  # Senha de teste - não usar em produção
+}
+
+TEST_PATCH_DATA = {
+    "first_name": "João Atualizado",
+    "last_name": "Silva Atualizado"
+}
+
 
 @pytest.fixture
 def mock_mongo_client():

@@ -10,7 +10,7 @@ from app.models.base import UserModel
 from app.common.exceptions import UnauthorizedException, ForbiddenException
 from app.integrations.auth.keycloak_adapter import TokenExpiredException, InvalidTokenException, OAuthException
 
-
+HTTP_TESTE = "https://test"
 class TestAuthHandler:
     """Testes para auth_handler.py para aumentar cobertura"""
     
@@ -60,7 +60,7 @@ class TestAuthHandler:
         mock_adapter = AsyncMock()
         mock_adapter.validate_token.return_value = {
             "sub": "user123",
-            "iss": "http://keycloak/realm/test",
+            "iss": "https://keycloak/realm/test1",
             "sellers": "seller1,seller2"
         }
         
@@ -77,7 +77,7 @@ class TestAuthHandler:
         mock_adapter = AsyncMock()
         mock_adapter.validate_token.return_value = {
             "sub": "user123", 
-            "iss": "http://keycloak/realm/test",
+            "iss": "https://keycloak/realm/test",
             "sellers": "seller1,seller2"
         }
         
@@ -87,7 +87,7 @@ class TestAuthHandler:
         assert hasattr(request.state, 'user')
         user_info = request.state.user
         assert user_info.user.name == "user123"
-        assert user_info.user.server == "http://keycloak/realm/test"
+        assert user_info.user.server == "https://keycloak/realm/test"
         assert "seller1" in user_info.sellers
         assert user_info.trace_id == "trace123"
     
@@ -95,7 +95,7 @@ class TestAuthHandler:
         """Test get_current_user"""
         request = MagicMock(spec=Request)
         user_info = UserAuthInfo(
-            user=UserModel(name="test", server="http://test"),
+            user=UserModel(name="test", server=HTTP_TESTE),
             trace_id="trace123",
             sellers=["seller1"],
             info_token={}
@@ -115,19 +115,19 @@ class TestAuthHandler:
         mock_adapter = AsyncMock()
         mock_adapter.validate_token.return_value = {
             "sub": "test",
-            "iss": "http://test",
+            "iss": HTTP_TESTE,
             "sellers": "seller1"
         }
         
         result = await get_current_user_info(request, "valid_token", mock_adapter)
         assert result.user.name == "test"
-        assert result.user.server == "http://test"
+        assert result.user.server == HTTP_TESTE
         assert result.sellers == ["seller1"]
     
     def test_require_seller_permission_success(self):
         """Test require_seller_permission with valid permission"""
         user_info = UserAuthInfo(
-            user=UserModel(name="test", server="http://test"),
+            user=UserModel(name="test", server=HTTP_TESTE),
             trace_id="trace123",
             sellers=["seller1", "seller2"],
             info_token={}
@@ -141,7 +141,7 @@ class TestAuthHandler:
     async def test_require_seller_permission_forbidden(self):
         """Test require_seller_permission with invalid permission"""
         user_info = UserAuthInfo(
-            user=UserModel(name="test", server="http://test"),
+            user=UserModel(name="test", server=HTTP_TESTE),
             trace_id="trace123",
             sellers=["seller1", "seller2"],
             info_token={}

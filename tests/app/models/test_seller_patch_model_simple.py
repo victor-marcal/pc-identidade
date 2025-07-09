@@ -7,6 +7,7 @@ from datetime import date
 from app.models.seller_patch_model import SellerPatch
 from app.models.enums import SellerStatus, BrazilianState, AccountType, ProductCategory
 
+TEST_COMPANY = "Test Company"
 
 class TestSellerPatch:
     """Testes para SellerPatch"""
@@ -18,8 +19,8 @@ class TestSellerPatch:
 
     def test_seller_patch_with_company_name(self):
         """Testa criação com nome da empresa"""
-        patch = SellerPatch(company_name="Test Company")
-        assert patch.company_name == "Test Company"
+        patch = SellerPatch(company_name=TEST_COMPANY)
+        assert patch.company_name == TEST_COMPANY
 
     def test_seller_patch_with_trade_name(self):
         """Testa criação com nome fantasia"""
@@ -75,10 +76,10 @@ class TestSellerPatch:
 
     def test_seller_patch_dict_conversion(self):
         """Testa conversão para dicionário"""
-        patch = SellerPatch(company_name="Test Company")
+        patch = SellerPatch(company_name=TEST_COMPANY)
         patch_dict = patch.model_dump()
         assert isinstance(patch_dict, dict)
-        assert patch_dict["company_name"] == "Test Company"
+        assert patch_dict["company_name"] == TEST_COMPANY
 
     def test_seller_patch_cnpj_validation(self):
         """Testa validação de CNPJ"""
@@ -113,21 +114,21 @@ class TestSellerPatch:
 
     def test_seller_patch_model_dump_exclude_none(self):
         """Testa dump do modelo excluindo valores None"""
-        patch = SellerPatch(company_name="Test Company")
+        patch = SellerPatch(company_name=TEST_COMPANY)
         patch_dict = patch.model_dump(exclude_none=True)
         assert "company_name" in patch_dict
-        assert patch_dict["company_name"] == "Test Company"
+        assert patch_dict["company_name"] == TEST_COMPANY
 
     def test_seller_patch_multiple_fields(self):
         """Testa criação com múltiplos campos"""
         patch = SellerPatch(
-            company_name="Test Company",
+            company_name=TEST_COMPANY,
             trade_name="Test Trade",
             cnpj="12345678901234",
             contact_phone="11999999999",
             contact_email="test@example.com"
         )
-        assert patch.company_name == "Test Company"
+        assert patch.company_name == TEST_COMPANY
         assert patch.trade_name == "Test Trade"
         assert patch.cnpj == "12345678901234"
         assert patch.contact_phone == "11999999999"

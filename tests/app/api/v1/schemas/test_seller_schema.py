@@ -24,7 +24,7 @@ valid_data = {
     "bank_name": "Banco do Brasil",
     "agency_account": "1234-5 / 12345-6",
     "account_type": AccountType.CURRENT,
-    "account_holder_name": "João Silva",
+    "account_holder_name": "João Silva1",
     "product_categories": [ProductCategory.AUDIO, ProductCategory.BOOKS],
     "business_description": "Comércio de eletrônicos e livros"
 }

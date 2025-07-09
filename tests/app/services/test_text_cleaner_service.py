@@ -2,6 +2,8 @@ import pytest
 from app.services.text_cleaner_service import TextCleanerService
 
 
+PLAIN_TEXT = "Just plain text"
+
 class TestTextCleanerService:
     """Testes para o serviço de limpeza de texto"""
     
@@ -12,7 +14,6 @@ class TestTextCleanerService:
     def test_init(self):
         """Testa inicialização do serviço"""
         service = TextCleanerService()
-        assert service is not None
         assert hasattr(service, '_html_pattern')
         assert hasattr(service, '_ansi_pattern')
         assert hasattr(service, '_markdown_patterns')
@@ -42,7 +43,7 @@ class TestTextCleanerService:
     
     def test_remove_html_no_tags(self):
         """Testa texto sem tags HTML"""
-        plain_text = "Just plain text"
+        plain_text = PLAIN_TEXT
         result = self.service.remove_html(plain_text)
         assert result == plain_text
     
@@ -77,7 +78,7 @@ class TestTextCleanerService:
     
     def test_remove_markdown_no_formatting(self):
         """Testa texto sem formatação markdown"""
-        plain_text = "Just plain text"
+        plain_text = PLAIN_TEXT
         result = self.service.remove_markdown(plain_text)
         assert result == plain_text
     
@@ -100,7 +101,7 @@ class TestTextCleanerService:
     
     def test_clean_text_plain_text(self):
         """Testa limpeza com texto simples"""
-        plain_text = "Just plain text"
+        plain_text = PLAIN_TEXT
         result = self.service.clean_text(plain_text)
         assert result == plain_text
     

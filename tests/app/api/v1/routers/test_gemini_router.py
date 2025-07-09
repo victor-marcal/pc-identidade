@@ -7,12 +7,14 @@ from dependency_injector import containers, providers
 from app.api.v1.routers.gemini_router import router
 from app.api.v1.schemas.gemini_schema import ChatRequest, ChatResponse
 
+RESPOSTA_GEMINI = "Resposta do Gemini"
+CHAT = "/chat"
 
 @pytest.fixture
 def mock_gemini_service():
     """Mock do serviço Gemini"""
     mock = Mock()
-    mock.chat = Mock(return_value="Resposta do Gemini")
+    mock.chat = Mock(return_value=RESPOSTA_GEMINI)
     return mock
 
 
@@ -38,13 +40,13 @@ def client(mock_gemini_service):
 
 def test_chat_success(client, mock_gemini_service):
     """Testa chat com sucesso."""
-    mock_gemini_service.chat.return_value = "Resposta do Gemini"
+    mock_gemini_service.chat.return_value = RESPOSTA_GEMINI
     
-    response = client.post("/chat", json={"text": "Olá"})
+    response = client.post(CHAT, json={"text": "Olá"})
     
     assert response.status_code == 200
     data = response.json()
-    assert data["response"] == "Resposta do Gemini"
+    assert data["response"] == RESPOSTA_GEMINI
     assert "timestamp" in data
     mock_gemini_service.chat.assert_called_once_with("Olá")
 
@@ -53,7 +55,7 @@ def test_chat_service_error(client, mock_gemini_service):
     """Testa erro no serviço."""
     mock_gemini_service.chat.side_effect = Exception("Erro do serviço")
     
-    response = client.post("/chat", json={"text": "Olá"})
+    response = client.post(CHAT, json={"text": "Olá"})
     
     assert response.status_code == 500
     data = response.json()
@@ -63,7 +65,7 @@ def test_chat_service_error(client, mock_gemini_service):
 
 def test_chat_invalid_input(client):
     """Testa entrada inválida."""
-    response = client.post("/chat", json={})
+    response = client.post(CHAT, json={})
     
     assert response.status_code == 422
     data = response.json()
@@ -72,7 +74,7 @@ def test_chat_invalid_input(client):
 
 def test_chat_empty_text(client):
     """Testa chat com texto vazio - deve retornar 422."""
-    response = client.post("/chat", json={"text": ""})
+    response = client.post(CHAT, json={"text": ""})
     
     assert response.status_code == 422
     data = response.json()
@@ -84,7 +86,7 @@ def test_chat_long_text(client, mock_gemini_service):
     long_text = "a" * 1000
     mock_gemini_service.chat.return_value = "Resposta para texto longo"
     
-    response = client.post("/chat", json={"text": long_text})
+    response = client.post(CHAT, json={"text": long_text})
     
     assert response.status_code == 200
     data = response.json()
@@ -97,7 +99,7 @@ def test_chat_special_characters(client, mock_gemini_service):
     special_text = "Olá! Como está? 😊 #hashtag @mention"
     mock_gemini_service.chat.return_value = "Resposta especial"
     
-    response = client.post("/chat", json={"text": special_text})
+    response = client.post(CHAT, json={"text": special_text})
     
     assert response.status_code == 200
     data = response.json()
@@ -139,7 +141,7 @@ def test_chat_with_different_exception_types(client, mock_gemini_service):
     """Testa diferentes tipos de exceções."""
     # Teste com ValueError
     mock_gemini_service.chat.side_effect = ValueError("Valor inválido")
-    response = client.post("/chat", json={"text": "teste"})
+    response = client.post(CHAT, json={"text": "teste"})
     assert response.status_code == 500
     assert "Valor inválido" in response.json()["detail"]
     
@@ -148,7 +150,7 @@ def test_chat_with_different_exception_types(client, mock_gemini_service):
     
     # Teste com TypeError
     mock_gemini_service.chat.side_effect = TypeError("Tipo inválido")
-    response = client.post("/chat", json={"text": "teste"})
+    response = client.post(CHAT, json={"text": "teste"})
     assert response.status_code == 500
     assert "Tipo inválido" in response.json()["detail"]
 
@@ -157,7 +159,7 @@ def test_chat_none_response(client, mock_gemini_service):
     """Testa quando o serviço retorna None."""
     mock_gemini_service.chat.return_value = None
     
-    response = client.post("/chat", json={"text": "Olá"})
+    response = client.post(CHAT, json={"text": "Olá"})
     
     assert response.status_code == 200
     data = response.json()
