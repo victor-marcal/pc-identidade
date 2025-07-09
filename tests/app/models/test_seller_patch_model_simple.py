@@ -8,14 +8,14 @@ from app.models.seller_patch_model import SellerPatch
 from app.models.enums import SellerStatus, BrazilianState, AccountType, ProductCategory
 
 TEST_COMPANY = "Test Company"
+EMAIL_TESTE = "test@example.com"
 
 class TestSellerPatch:
     """Testes para SellerPatch"""
 
     def test_seller_patch_empty_creation(self):
         """Testa criação vazia do SellerPatch"""
-        patch = SellerPatch()
-        assert patch is not None
+        SellerPatch()
 
     def test_seller_patch_with_company_name(self):
         """Testa criação com nome da empresa"""
@@ -39,8 +39,8 @@ class TestSellerPatch:
 
     def test_seller_patch_with_contact_email(self):
         """Testa criação com email de contato"""
-        patch = SellerPatch(contact_email="test@example.com")
-        assert patch.contact_email == "test@example.com"
+        patch = SellerPatch(contact_email=EMAIL_TESTE)
+        assert patch.contact_email == EMAIL_TESTE
 
     def test_seller_patch_with_legal_rep_info(self):
         """Testa criação com informações do representante legal"""
@@ -126,10 +126,10 @@ class TestSellerPatch:
             trade_name="Test Trade",
             cnpj="12345678901234",
             contact_phone="11999999999",
-            contact_email="test@example.com"
+            contact_email=EMAIL_TESTE
         )
         assert patch.company_name == TEST_COMPANY
         assert patch.trade_name == "Test Trade"
         assert patch.cnpj == "12345678901234"
         assert patch.contact_phone == "11999999999"
-        assert patch.contact_email == "test@example.com"
+        assert patch.contact_email == EMAIL_TESTE

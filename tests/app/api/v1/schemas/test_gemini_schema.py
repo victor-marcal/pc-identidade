@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from app.api.v1.schemas.gemini_schema import ChatRequest, ChatResponse, MessageItem, ChatHistoryResponse
 
+HELLO = "Hello!"
 
 def test_chat_request_valid():
     data = {"text": "Hello, how are you?"}
@@ -24,19 +25,19 @@ def test_chat_response():
 def test_message_item():
     data = {
         "message_type": "user",
-        "content": "Hello!",
+        "content": HELLO,
         "timestamp": datetime.now()
     }
     message_item = MessageItem(**data)
     assert message_item.message_type == "user"
-    assert message_item.content == "Hello!"
+    assert message_item.content == HELLO
     assert isinstance(message_item.timestamp, datetime)
 
 
 def test_chat_history_response():
     messages = [
         MessageItem(message_type="user", content="Hi!", timestamp=datetime.now()),
-        MessageItem(message_type="assistant", content="Hello!", timestamp=datetime.now())
+        MessageItem(message_type="assistant", content=HELLO, timestamp=datetime.now())
     ]
     data = {"messages": messages, "total": 2}
     chat_history = ChatHistoryResponse(**data)

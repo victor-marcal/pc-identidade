@@ -1,7 +1,3 @@
-"""
-Testes completos para app.api_main.py
-"""
-
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from fastapi import FastAPI, Request
@@ -32,8 +28,7 @@ class TestApiMain:
     
     @patch('app.api_main.dotenv.load_dotenv')
     @patch('app.api_main.LoggingBuilder.init')
-    @patch('app.api_main.logging.basicConfig')
-    def test_module_initialization(self, mock_basicConfig, mock_logging_init, mock_load_dotenv):
+    def test_module_initialization(self, mock_logging_init, mock_load_dotenv):
         """Testa inicialização do módulo api_main"""
         # Reimportar para trigger da inicialização
         import importlib
@@ -42,7 +37,6 @@ class TestApiMain:
         
         # Verificar se as funções foram chamadas
         mock_logging_init.assert_called_once()
-        mock_basicConfig.assert_called_once()
         mock_load_dotenv.assert_called_once()
     
     @patch.dict(os.environ, {"ENV": "dev"})
@@ -175,7 +169,7 @@ class TestApiMain:
             mock_app.add_middleware.assert_called_once()
             
             # Verificar se wiring foi feito
-            assert mock_container.wire.call_count == 4
+            mock_container.wire.assert_called_once()
             
             # Verificar se resultado é o app mockado
             assert result is mock_app

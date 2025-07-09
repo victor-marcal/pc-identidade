@@ -6,6 +6,7 @@ from app.services.gemini_service import GeminiService
 RESPOSTA_GEMINI = "Resposta do Gemini"
 PATH_LIB_GLOB = 'pathlib.Path.glob'
 PATH_LIB_EXISTS = 'pathlib.Path.exists'
+MENSAGE_TEST = "Mensagem de teste"
 
 @pytest.fixture
 def mock_api_key():
@@ -179,7 +180,7 @@ def test_generate_response_error(mock_gemini_service):
     """Testa erro na geração de resposta."""
     mock_gemini_service.chain.invoke.side_effect = Exception("Erro na chain")
     
-    result = mock_gemini_service.generate_response("Mensagem de teste")
+    result = mock_gemini_service.generate_response(MENSAGE_TEST)
     
     assert result == "Desculpe, ocorreu um erro ao processar sua mensagem."
 
@@ -203,10 +204,10 @@ def test_chat_method(mock_gemini_service):
     """Testa o método chat (compatibilidade com router)."""
     with patch.object(mock_gemini_service, 'generate_response', return_value="Resposta via chat") as mock_generate:
         
-        result = mock_gemini_service.chat("Mensagem de teste")
+        result = mock_gemini_service.chat(MENSAGE_TEST)
         
         assert result == "Resposta via chat"
-        mock_generate.assert_called_once_with("Mensagem de teste")
+        mock_generate.assert_called_once_with(MENSAGE_TEST)
 
 
 def test_reset_memory(mock_gemini_service):

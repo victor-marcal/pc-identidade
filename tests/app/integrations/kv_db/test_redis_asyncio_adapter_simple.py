@@ -39,7 +39,7 @@ class TestRedisAsyncioAdapter:
         
         # O método deve lidar com o erro graciosamente
         try:
-            result = await adapter.ping()
+            await adapter.ping()
             # Se não lançar exceção, está funcionando corretamente
         except Exception:
             # Se lançar exceção, também é comportamento válido
@@ -53,7 +53,7 @@ class TestRedisAsyncioAdapter:
         mock_redis.get.side_effect = asyncio.TimeoutError("Timeout")
         
         try:
-            result = await adapter.get("test_key")
+            await adapter.get("test_key")
             # Se não lançar exceção, está funcionando corretamente
         except Exception:
             # Se lançar exceção, também é comportamento válido
@@ -66,7 +66,7 @@ class TestRedisAsyncioAdapter:
         mock_redis.set.side_effect = Exception("Redis error")
         
         try:
-            result = await adapter.set("key", "value")
+            await adapter.set("key", "value")
         except Exception:
             # Erro é esperado
             pass
@@ -99,18 +99,17 @@ class TestRedisAsyncioAdapter:
         mock_redis.exists.return_value = True
         mock_redis.ping.return_value = True
 
-        # Testa operações básicas se os métodos existirem
         if hasattr(adapter, 'get'):
-            result = await adapter.get("test_key")
-        
+            await adapter.get("test_key")
+
         if hasattr(adapter, 'set'):
-            result = await adapter.set("test_key", "test_value")
-        
+            await adapter.set("test_key", "test_value")
+
         if hasattr(adapter, 'delete'):
-            result = await adapter.delete("test_key")
-        
+            await adapter.delete("test_key")
+
         if hasattr(adapter, 'exists'):
-            result = await adapter.exists("test_key")
-        
+            await adapter.exists("test_key")
+
         if hasattr(adapter, 'ping'):
-            result = await adapter.ping()
+            await adapter.ping()

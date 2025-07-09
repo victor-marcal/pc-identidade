@@ -8,6 +8,11 @@ import httpx
 import jwt
 from app.integrations.auth.keycloak_adapter import KeycloakAdapter, TokenExpiredException, InvalidTokenException, OAuthException
 
+KEYCLOAK_EXEMPLO = "https://keycloak.example.com/jwks"
+JWT_GET = 'jwt.get_unverified_header'
+JWT_CODE = 'jwt.decode'
+TOKEN_EXPIRED = "Token expired"
+INVALID_TOKEN = "Invalid token"
 
 class TestKeycloakAdapterSimple:
     """Testes simples para KeycloakAdapter"""
@@ -24,7 +29,7 @@ class TestKeycloakAdapterSimple:
     def keycloak_adapter(self, mock_well_known_url, mock_redis_adapter):
         with patch('httpx.Client') as mock_client:
             mock_response = Mock()
-            mock_response.json.return_value = {"jwks_uri": "https://keycloak.example.com/jwks"}
+            mock_response.json.return_value = {"jwks_uri": KEYCLOAK_EXEMPLO}
             mock_response.raise_for_status.return_value = None
             mock_client.return_value.__enter__.return_value.get.return_value = mock_response
             
@@ -38,8 +43,8 @@ class TestKeycloakAdapterSimple:
         expected_payload = {"sub": "user123", "email": "user@example.com"}
         
         # Mock jwt operations
-        with patch('jwt.get_unverified_header') as mock_header, \
-             patch('jwt.decode') as mock_decode, \
+        with patch(JWT_GET) as mock_header, \
+             patch(JWT_CODE) as mock_decode, \
              patch.object(keycloak_adapter.jwks_client, 'get_signing_key_from_jwt') as mock_signing_key:
             
             mock_header.return_value = {"alg": "RS256"}
@@ -60,12 +65,12 @@ class TestKeycloakAdapterSimple:
         token = "expired_token"
         
         # Mock jwt operations
-        with patch('jwt.get_unverified_header') as mock_header, \
-             patch('jwt.decode') as mock_decode, \
+        with patch(JWT_GET) as mock_header, \
+             patch(JWT_CODE) as mock_decode, \
              patch.object(keycloak_adapter.jwks_client, 'get_signing_key_from_jwt') as mock_signing_key:
             
             mock_header.return_value = {"alg": "RS256"}
-            mock_decode.side_effect = jwt.ExpiredSignatureError("Token expired")
+            mock_decode.side_effect = jwt.ExpiredSignatureError(TOKEN_EXPIRED)
             mock_signing_key.return_value = Mock(key="test_key")
             
             # Act & Assert
@@ -79,12 +84,12 @@ class TestKeycloakAdapterSimple:
         token = "invalid_token"
         
         # Mock jwt operations
-        with patch('jwt.get_unverified_header') as mock_header, \
-             patch('jwt.decode') as mock_decode, \
+        with patch(JWT_GET) as mock_header, \
+             patch(JWT_CODE) as mock_decode, \
              patch.object(keycloak_adapter.jwks_client, 'get_signing_key_from_jwt') as mock_signing_key:
             
             mock_header.return_value = {"alg": "RS256"}
-            mock_decode.side_effect = jwt.InvalidTokenError("Invalid token")
+            mock_decode.side_effect = jwt.InvalidTokenError(INVALID_TOKEN)
             mock_signing_key.return_value = Mock(key="test_key")
             
             # Act & Assert
@@ -98,8 +103,8 @@ class TestKeycloakAdapterSimple:
         token = "problematic_token"
         
         # Mock jwt operations
-        with patch('jwt.get_unverified_header') as mock_header, \
-             patch('jwt.decode') as mock_decode, \
+        with patch(JWT_GET) as mock_header, \
+             patch(JWT_CODE) as mock_decode, \
              patch.object(keycloak_adapter.jwks_client, 'get_signing_key_from_jwt') as mock_signing_key:
             
             mock_header.return_value = {"alg": "RS256"}
@@ -152,8 +157,8 @@ class TestKeycloakAdapterSimple:
         keycloak_adapter.inmemory_adapter.get_json.return_value = None
         
         # Mock jwt operations
-        with patch('jwt.get_unverified_header') as mock_header, \
-             patch('jwt.decode') as mock_decode, \
+        with patch(JWT_GET) as mock_header, \
+             patch(JWT_CODE) as mock_decode, \
              patch.object(keycloak_adapter.jwks_client, 'get_signing_key_from_jwt') as mock_signing_key, \
              patch('httpx.AsyncClient') as mock_client:
             
@@ -179,7 +184,7 @@ class TestKeycloakAdapterSimple:
         """Testa obtenção da URI JWKS"""
         with patch('httpx.Client') as mock_client:
             mock_response = Mock()
-            mock_response.json.return_value = {"jwks_uri": "https://keycloak.example.com/jwks"}
+            mock_response.json.return_value = {"jwks_uri": KEYCLOAK_EXEMPLO}
             mock_response.raise_for_status.return_value = None
             mock_client.return_value.__enter__.return_value.get.return_value = mock_response
             
@@ -189,7 +194,7 @@ class TestKeycloakAdapterSimple:
             jwks_uri = adapter._get_jwks_uri()
             
             # Assert
-            assert jwks_uri == "https://keycloak.example.com/jwks"
+            assert jwks_uri == KEYCLOAK_EXEMPLO
             mock_client.return_value.__enter__.return_value.get.assert_called_with(mock_well_known_url)
     
     def test_exceptions_instantiation(self):
@@ -198,8 +203,8 @@ class TestKeycloakAdapterSimple:
         oauth_exc = OAuthException("Test message")
         assert str(oauth_exc) == "Test message"
         
-        token_exp_exc = TokenExpiredException("Token expired")
-        assert str(token_exp_exc) == "Token expired"
+        token_exp_exc = TokenExpiredException(TOKEN_EXPIRED)
+        assert str(token_exp_exc) == TOKEN_EXPIRED
         
-        invalid_token_exc = InvalidTokenException("Invalid token")
-        assert str(invalid_token_exc) == "Invalid token"
+        invalid_token_exc = InvalidTokenException(INVALID_TOKEN)
+        assert str(invalid_token_exc) == INVALID_TOKEN

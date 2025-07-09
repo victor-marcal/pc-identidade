@@ -11,6 +11,7 @@ from app.api.v1.schemas.user_schema import UserCreate, UserPatch, UserResponse
 
 # --- Testes para o schema UserCreate ---
 
+EMAIL_TESTE = "test@example.com"
 
 def generate_test_password(length: int = 12) -> str:
     """Gera uma senha segura para testes"""
@@ -21,7 +22,7 @@ def test_user_create_success():
     """Testa a criação bem-sucedida de UserCreate com todos os campos."""
     data = {
         "username": "testuser",
-        "email": "test@example.com",
+        "email": EMAIL_TESTE,
         "password": "a_strong_password",
         "first_name": "Test",
         "last_name": "User"
@@ -38,7 +39,7 @@ def test_user_create_only_required_fields():
     """Testa a criação bem-sucedida de UserCreate apenas com campos obrigatórios."""
     data = {
         "username": "testuser",
-        "email": "test@example.com",
+        "email": EMAIL_TESTE,
         "password": "a_strong_password"
     }
     schema = UserCreate(**data)
@@ -49,9 +50,9 @@ def test_user_create_only_required_fields():
 
 
 @pytest.mark.parametrize("invalid_data, expected_error_msg", [
-    ({"username": "a", "email": "test@example.com", "password": "a_strong_password"}, "at least 3 characters"),
+    ({"username": "a", "email": EMAIL_TESTE, "password": "a_strong_password"}, "at least 3 characters"),
     ({"username": "testuser", "email": "invalid-email", "password": "a_strong_password"}, "value is not a valid email address"),
-    ({"username": "testuser", "email": "test@example.com", "password": generate_test_password(6)}, "at least 8 characters"),
+    ({"username": "testuser", "email": EMAIL_TESTE, "password": generate_test_password(6)}, "at least 8 characters"),
 ])
 def test_user_create_validation_error(invalid_data, expected_error_msg):
     """Testa se UserCreate levanta ValidationError para dados inválidos."""
@@ -67,7 +68,7 @@ def test_user_response_success():
     data = {
         "id": "user_id_123",
         "username": "testuser",
-        "email": "test@example.com",
+        "email": EMAIL_TESTE,
         "first_name": "Test",
         "last_name": "User",
         "enabled": True,

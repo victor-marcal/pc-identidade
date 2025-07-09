@@ -3,6 +3,7 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 from app.integrations.kv_db.redis_asyncio_adapter import RedisAsyncioAdapter
 
+REDIS_URL = "redis://localhost:6379"
 
 @pytest.fixture
 def mock_redis():
@@ -15,7 +16,7 @@ def mock_redis():
 def redis_adapter(mock_redis):
     """Create RedisAsyncioAdapter with mocked Redis client."""
     with patch('app.integrations.kv_db.redis_asyncio_adapter.Redis.from_url', return_value=mock_redis):
-        adapter = RedisAsyncioAdapter("redis://localhost:6379")
+        adapter = RedisAsyncioAdapter(REDIS_URL)
     return adapter
 
 
@@ -28,11 +29,11 @@ class TestRedisAsyncioAdapter:
             mock_redis = AsyncMock()
             mock_from_url.return_value = mock_redis
             
-            adapter = RedisAsyncioAdapter("redis://localhost:6379")
+            adapter = RedisAsyncioAdapter(REDIS_URL)
             
-            assert adapter.redis_url == "redis://localhost:6379"
+            assert adapter.redis_url == REDIS_URL
             assert adapter.redis_client == mock_redis
-            mock_from_url.assert_called_once_with("redis://localhost:6379")
+            mock_from_url.assert_called_once_with(REDIS_URL)
 
     @pytest.mark.asyncio
     async def test_aclose(self, redis_adapter, mock_redis):
@@ -163,14 +164,3 @@ class TestRedisAsyncioAdapter:
         await redis_adapter.delete("test_key")
         
         mock_redis.delete.assert_called_once_with("test_key")
-
-    # TODO: Fix context manager tests - mock setup issue
-    # @pytest.mark.asyncio
-    # async def test_locks_context_manager(self, redis_adapter):
-    #     """Test locks context manager."""
-    #     pass
-
-    # @pytest.mark.asyncio
-    # async def test_locks_default_prefix(self, redis_adapter):
-    #     """Test locks context manager with default prefix."""
-    #     pass

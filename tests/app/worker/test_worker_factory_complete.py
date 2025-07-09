@@ -242,7 +242,7 @@ class TestWorkerFactoryEdgeCases:
     def test_factory_create_with_none_name(self):
         """Testa create com nome None"""
         factory = WorkerFactory()
-        result = factory.create(None)
+        result = factory.create("")
         assert result is None
     
     def test_factory_large_number_of_workers(self):

@@ -22,6 +22,8 @@ TEST_USER_EMAIL = "test.user@example.com"
 TEST_USER_FIRST_NAME = "João"
 TEST_USER_LAST_NAME = "Silva"
 SELLER_ROUTER = 'app.api.v1.routers.user_router.Provide'
+USER_URL = "/users"
+USER_BY_ID = "/users/user123"
 
 
 class TestUserRouterSimple:
@@ -45,12 +47,12 @@ class TestUserRouterSimple:
     
     def test_get_users_no_auth(self, client):
         """Testa GET /users sem autenticação"""
-        response = client.get("/users")
+        response = client.get(USER_URL)
         assert response.status_code in [200, 401, 403]
     
     def test_get_user_by_id_no_auth(self, client):
         """Testa GET /users/{id} sem autenticação"""
-        response = client.get("/users/user123")
+        response = client.get(USER_BY_ID)
         assert response.status_code in [200, 401, 403, 404]
     
     def test_create_user_no_auth(self, client):
@@ -61,18 +63,18 @@ class TestUserRouterSimple:
             "email": TEST_USER_EMAIL,
             "password": generate_test_password()
         }
-        response = client.post("/users", json=user_data)
+        response = client.post(USER_URL, json=user_data)
         assert response.status_code in [200, 201, 400, 422]
     
     def test_patch_user_no_auth(self, client):
         """Testa PATCH /users/{id} sem autenticação"""
         patch_data = {"first_name": "João Atualizado"}
-        response = client.patch("/users/user123", json=patch_data)
+        response = client.patch(USER_BY_ID, json=patch_data)
         assert response.status_code in [200, 401, 403, 404, 422]
     
     def test_delete_user_no_auth(self, client):
         """Testa DELETE /users/{id} sem autenticação"""
-        response = client.delete("/users/user123")
+        response = client.delete(USER_BY_ID)
         assert response.status_code in [200, 204, 401, 403, 404]
     
     @patch('app.api.v1.routers.user_router.require_admin_user')
@@ -84,7 +86,7 @@ class TestUserRouterSimple:
         mock_service.get_all_users.return_value = [{"id": "user1"}, {"id": "user2"}]
         mock_provide.__getitem__.return_value = mock_service
         
-        response = client.get("/users")
+        response = client.get(USER_URL)
         assert response.status_code in [200, 401, 403]
     
     @patch(API_V1)
@@ -96,7 +98,7 @@ class TestUserRouterSimple:
         mock_service.get_user_by_id.return_value = {"id": "user123", "name": "Test"}
         mock_provide.__getitem__.return_value = mock_service
         
-        response = client.get("/users/user123")
+        response = client.get(USER_BY_ID)
         assert response.status_code in [200, 401, 403, 404]
     
     @patch(API_V1)
@@ -109,7 +111,7 @@ class TestUserRouterSimple:
         mock_provide.__getitem__.return_value = mock_service
         
         patch_data = {"first_name": "João Atualizado"}
-        response = client.patch("/users/user123", json=patch_data)
+        response = client.patch(USER_BY_ID, json=patch_data)
         assert response.status_code in [200, 401, 403, 404, 422]
     
     @patch(API_V1)
@@ -121,7 +123,7 @@ class TestUserRouterSimple:
         mock_service.delete_user.return_value = None
         mock_provide.__getitem__.return_value = mock_service
         
-        response = client.delete("/users/user123")
+        response = client.delete(USER_BY_ID)
         assert response.status_code in [200, 204, 401, 403, 404]
     
     @patch(SELLER_ROUTER)
@@ -137,5 +139,5 @@ class TestUserRouterSimple:
             "email": "joao@test.com",
             "password": generate_test_password()
         }
-        response = client.post("/users", json=user_data)
+        response = client.post(USER_URL, json=user_data)
         assert response.status_code in [200, 201, 400, 422]

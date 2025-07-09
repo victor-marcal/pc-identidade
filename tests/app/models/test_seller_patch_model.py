@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 from app.models.seller_patch_model import SellerPatch
 
+FANTASIA_3_CARACTER = "O nome_fantasia deve conter ao menos 3 caracteres"
 
 class TestSellerPatchValidation:
     """Test SellerPatch validation following SOLID principles"""
@@ -19,7 +20,7 @@ class TestSellerPatchValidation:
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(errors[0]["ctx"]["error"])
+        assert FANTASIA_3_CARACTER in str(errors[0]["ctx"]["error"])
 
     def test_nome_fantasia_whitespace_only(self):
         """Test trade_name validation with whitespace only"""
@@ -28,7 +29,7 @@ class TestSellerPatchValidation:
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(errors[0]["ctx"]["error"])
+        assert FANTASIA_3_CARACTER in str(errors[0]["ctx"]["error"])
 
     def test_nome_fantasia_none_valid(self):
         """Test trade_name validation with None value"""
@@ -38,7 +39,7 @@ class TestSellerPatchValidation:
     def test_cnpj_invalid_format(self):
         """Test CNPJ validation with invalid format"""
         with pytest.raises(ValidationError) as exc_info:
-            SellerPatch(cnpj="12345678901")  # Only 11 digits
+            SellerPatch(cnpj="12345678901") 
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
@@ -88,7 +89,7 @@ class TestSellerPatchValidation:
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(errors[0]["ctx"]["error"])
+        assert FANTASIA_3_CARACTER in str(errors[0]["ctx"]["error"])
 
     def test_seller_patch_cnpj_non_digit_characters(self):
         """Test CNPJ with non-digit characters"""

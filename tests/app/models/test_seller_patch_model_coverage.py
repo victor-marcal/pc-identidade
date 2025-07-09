@@ -8,6 +8,11 @@ from datetime import date
 from app.models.seller_patch_model import SellerPatch
 from app.models.enums import BrazilianState, AccountType, ProductCategory
 
+FANTASIA_3_CARACTER = "O nome_fantasia deve conter ao menos 3 caracteres"
+EMAIL_TESTE = "test@example.com"
+CNPJ_14_DIG = "O CNPJ deve conter exatamente 14 dígitos numéricos"
+STREET = "123 Main Street"
+COMPANY = "Test Company Ltd"
 
 class TestSellerPatchModelMissingCoverage:
     """Testes para cobrir branches não cobertas do seller_patch_model.py"""
@@ -22,21 +27,21 @@ class TestSellerPatchModelMissingCoverage:
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(trade_name="")
         
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(exc_info.value)
+        assert FANTASIA_3_CARACTER in str(exc_info.value)
     
     def test_trade_name_validation_whitespace_only(self):
         """Test trade_name validation with whitespace only"""
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(trade_name="   ")
         
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(exc_info.value)
+        assert FANTASIA_3_CARACTER in str(exc_info.value)
     
     def test_trade_name_validation_too_short(self):
         """Test trade_name validation with string too short"""
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(trade_name="ab")
         
-        assert "O nome_fantasia deve conter ao menos 3 caracteres" in str(exc_info.value)
+        assert FANTASIA_3_CARACTER in str(exc_info.value)
     
     def test_trade_name_validation_valid(self):
         """Test trade_name validation with valid string"""
@@ -53,21 +58,21 @@ class TestSellerPatchModelMissingCoverage:
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(cnpj="")
         
-        assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)
+        assert CNPJ_14_DIG in str(exc_info.value)
     
     def test_cnpj_validation_wrong_length(self):
         """Test cnpj validation with wrong length"""
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(cnpj="123456789")
         
-        assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)
+        assert CNPJ_14_DIG in str(exc_info.value)
     
     def test_cnpj_validation_non_numeric(self):
         """Test cnpj validation with non-numeric characters"""
         with pytest.raises(ValidationError) as exc_info:
             SellerPatch(cnpj="1234567800010a")
         
-        assert "O CNPJ deve conter exatamente 14 dígitos numéricos" in str(exc_info.value)
+        assert CNPJ_14_DIG in str(exc_info.value)
     
     def test_cnpj_validation_valid(self):
         """Test cnpj validation with valid CNPJ"""
@@ -119,8 +124,8 @@ class TestSellerPatchModelMissingCoverage:
     
     def test_commercial_address_validation_valid(self):
         """Test commercial_address validation with valid string"""
-        patch = SellerPatch(commercial_address="123 Main Street")
-        assert patch.commercial_address == "123 Main Street"
+        patch = SellerPatch(commercial_address=STREET)
+        assert patch.commercial_address == STREET
     
     def test_contact_phone_validation_none(self):
         """Test contact_phone validation with None value"""
@@ -152,8 +157,8 @@ class TestSellerPatchModelMissingCoverage:
     
     def test_contact_email_validation_valid(self):
         """Test contact_email validation with valid string"""
-        patch = SellerPatch(contact_email="test@example.com")
-        assert patch.contact_email == "test@example.com"
+        patch = SellerPatch(contact_email=EMAIL_TESTE)
+        assert patch.contact_email == EMAIL_TESTE
     
     def test_all_optional_fields_none(self):
         """Test that all fields can be None"""
@@ -185,11 +190,11 @@ class TestSellerPatchModelMissingCoverage:
         patch = SellerPatch(
             trade_name="Test Company",
             cnpj="12345678000100",
-            company_name="Test Company Ltd",
+            company_name=COMPANY,
             state_municipal_registration="123456789",
-            commercial_address="123 Main Street",
+            commercial_address=STREET,
             contact_phone="11999999999",
-            contact_email="test@example.com",
+            contact_email=EMAIL_TESTE,
             legal_rep_full_name="John Doe",
             legal_rep_cpf="12345678901",
             legal_rep_rg_number="123456789",
@@ -200,11 +205,11 @@ class TestSellerPatchModelMissingCoverage:
             bank_name="Test Bank",
             agency_account="1234-5/67890-2",
             account_type=AccountType.CURRENT,
-            account_holder_name="Test Company Ltd",
+            account_holder_name=COMPANY,
             product_categories=[ProductCategory.COMPUTING],
             business_description="Test business description"
         )
         
         assert patch.trade_name == "Test Company"
         assert patch.cnpj == "12345678000100"
-        assert patch.company_name == "Test Company Ltd"
+        assert patch.company_name == COMPANY
