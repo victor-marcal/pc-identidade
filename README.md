@@ -1,11 +1,20 @@
 # pc-identidade
 
-## 📌 Identidade do Varejista
+## 📌 Identidade do Varejista e Gerenciamento de Acesso
 
-O projeto pc-identidade é responsável por estruturar e definir quem é o varejista dentro do sistema do marketplace. A proposta é identificar, validar e organizar as informações que permitem que o varejista seja reconhecido, aprovado e integrado com segurança e clareza ao ecossistema do marketplace.
-Esta camada de identidade será essencial para garantir a confiabilidade dos vendedores na plataforma, atender requisitos legais, e oferecer um processo de onboarding eficiente.
+O projeto **pc-identidade** é o pilar central para a gestão do ciclo de vida de **Varejistas (Sellers)** e de seus respectivos **Usuários** no ecossistema do marketplace. Ele não apenas garante a integridade dos dados cadastrais, mas também provê uma camada de segurança robusta para controle de acesso, atuando como a fonte da verdade sobre quem são os participantes da plataforma e o que eles podem fazer.
 
-[Documentação do Projeto](https://docs.google.com/document/d/11eIj0-f68q7rLtMQsC7VShPTmDfvgnPDPt6HPMMM_Z4/edit?tab=t.0#heading=h.4bbpjvh4rnth)
+As responsabilidades do serviço foram expandidas para incluir:
+
+* **API Completa para Sellers:** Oferece endpoints RESTful para o ciclo de vida completo de um seller (CRUD), incluindo validações de dados, regras de negócio e um sistema de exclusão lógica ("soft delete") através de um campo de `status`.
+* **Integração com Keycloak:** Automatiza a criação e gerenciamento de usuários no Keycloak. Cada novo seller ou usuário criado na plataforma tem sua identidade correspondente gerenciada pelo serviço.
+* **Autenticação e Autorização:** Protege os endpoints da API utilizando tokens JWT. A validação dos tokens é otimizada com um sistema de cache em **Redis** para garantir alta performance.
+* **Controle de Acesso Granular:** Implementa permissões detalhadas. Um usuário comum só pode visualizar e modificar os dados dos sellers aos quais está explicitamente associado (através do atributo `sellers` no Keycloak).
+* **Fluxos de Segurança:** Notifica outros sistemas sobre eventos importantes (como a criação de um seller) de forma assíncrona via **RabbitMQ**.
+* **Gerenciamento de Dados:** Inclui uma estratégia de "Cold Storage", com um banco de dados secundário para arquivar sellers inativos, mantendo a base de dados principal enxuta e performática.
+* **Observabilidade:** Utiliza um sistema de logging estruturado para registrar o fluxo de requisições, operações de negócio e erros, facilitando a depuração e o monitoramento.
+
+[Documentação completa do Projeto](https://docs.google.com/document/d/11eIj0-f68q7rLtMQsC7VShPTmDfvgnPDPt6HPMMM_Z4/edit?tab=t.0#heading=h.4bbpjvh4rnth)
 
 ## 🎯 Objetivos principais:
 - Identificação e validação da identidade do varejista
@@ -24,7 +33,7 @@ Esta camada de identidade será essencial para garantir a confiabilidade dos ven
 
 ## 🐳 Instalação do Docker
 
-Para instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/), siga o manual disponível no site oficial.
+Para instalação do [Docker](https://www.docker.com/products/docker-desktop/), siga o manual disponível no site oficial.
 
 ## 🚀 Ambiente de Desenvolvimento Local (Windows)
 
@@ -57,7 +66,7 @@ Crie um arquivo chamado `.env` na raiz do projeto. Ele é crucial para a comunic
 ENV=dev
 
 # MongoDB
-APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/bd01?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
+APP_DB_URL_MONGO=mongodb://admin:admin@localhost:27017/pc_identidade?authSource=admin&connectTimeoutMS=1000&socketTimeoutMS=1000
 MONGO_DB=pc_identidade
 
 # Keycloak

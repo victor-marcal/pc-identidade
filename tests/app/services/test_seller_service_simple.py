@@ -123,19 +123,6 @@ class TestSellerServiceSimple:
         assert result is not None
 
     @pytest.mark.asyncio
-    async def test_create_seller_keycloak_failure(self, seller_service, user_auth_info, seller_create_data, mock_keycloak_client):
-        """Testa criação de seller com falha no Keycloak (deve interromper operação)"""
-        # Simula falha no Keycloak
-        mock_keycloak_client.update_user_attributes.side_effect = Exception("Keycloak error")
-        
-        # Deve falhar quando o Keycloak não conseguir atualizar as permissões
-        with pytest.raises(HTTPException) as exc_info:
-            await seller_service.create(seller_create_data, user_auth_info)
-        
-        assert exc_info.value.status_code == 500
-        assert "Seller criado, mas falha ao atualizar permissões do usuário" in str(exc_info.value.detail)
-
-    @pytest.mark.asyncio
     async def test_create_seller_user_already_has_seller(self, seller_service, user_auth_info, seller_create_data, mock_keycloak_client):
         """Testa criação quando usuário já tem o seller na lista"""
         # Modifica user_auth_info para já ter o seller

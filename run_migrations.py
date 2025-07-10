@@ -9,7 +9,7 @@ from pymongo import MongoClient
 
 def get_mongo_url():
     """Pega a URL do MongoDB das variáveis de ambiente ou usa padrão"""
-    return os.getenv('APP_DB_URL_MONGO', 'mongodb://admin:admin@localhost:27017/bd01?authSource=admin')
+    return os.getenv('APP_DB_URL_MONGO', 'mongodb://admin:admin@localhost:27017/pc_identidade?authSource=admin')
 
 def load_migration_module(filepath):
     """Carrega um módulo Python de migration"""
@@ -22,9 +22,17 @@ def run_migrations():
     """Execute todas as migrations na pasta migrations/ em sequência"""
     
     mongo_url = get_mongo_url()
-    client = MongoClient(mongo_url)
-    db = client.bd01
-    
+    try:
+        client = MongoClient(mongo_url)
+        # O comando ping força a conexão e a autenticação (se houver)
+        client.admin.command('ping')
+        db = client.get_database()  # Obtém o DB a partir da URL
+    except Exception as e:
+        print(f"❌ Falha ao conectar ao MongoDB com a URL: {mongo_url}")
+        print(f"   Erro: {e}")
+        print("\n   Verifique se os contêineres do Docker estão rodando e se a URL no seu .env está correta.")
+        return
+
     print(f"🔗 Conectado ao MongoDB: {mongo_url}")
     print(f"📋 Collections disponíveis: {db.list_collection_names()}")
     

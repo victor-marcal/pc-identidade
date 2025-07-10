@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 JSON = "application/json"
 
+
 class KeycloakAdminClient:
     def __init__(self):
         self.settings = settings
@@ -104,15 +105,27 @@ class KeycloakAdminClient:
         headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
         user_url = f"{self.base_url}/users/{user_id}"
         async with httpx.AsyncClient() as client:
-            current_user_response = await client.get(user_url, headers=headers)
-            current_user_response.raise_for_status()
-            user_data = current_user_response.json()
+            try:
+                current_user_response = await client.get(user_url, headers=headers)
+                current_user_response.raise_for_status()
+                user_data = current_user_response.json()
 
-            user_data['attributes'] = attributes
+                existing_attributes = user_data.get('attributes', {})
+                existing_attributes.update(attributes)
+                user_data['attributes'] = existing_attributes
 
-            response = await client.put(user_url, headers=headers, json=user_data)
-            response.raise_for_status()
-            logger.info(f"Atributos do usuário {user_id} atualizados com sucesso.")
+                response = await client.put(user_url, headers=headers, json=user_data)
+                response.raise_for_status()
+
+                logger.info(f"Atributos do usuário {user_id} atualizados com sucesso.")
+
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    f"Erro ao tentar atualizar atributos para o usuário {user_id} no Keycloak. "
+                    f"Status: {e.response.status_code}, Resposta: {e.response.text}",
+                    exc_info=True
+                )
+                raise
 
     async def delete_user(self, user_id: str) -> bool:
         logger.info(f"Deletando usuário ID: {user_id}")
@@ -179,16 +192,45 @@ class KeycloakAdminClient:
             response.raise_for_status()
             logger.info(f"Senha do usuário {user_id} redefinida com sucesso.")
 
-    async def remove_seller_from_user(self, user_id: str, seller_to_remove: str):
+    async def add_seller_to_user(self, user_id: str, seller_to_add: str):
         """
-        Busca os atributos de um usuário, remove um seller específico da lista
-        e atualiza o usuário no Keycloak.
+        Busca um usuário, adiciona um novo seller à sua lista de atributos 'sellers'
+        e salva o usuário de volta no Keycloak.
         """
-        logger.info(f"Iniciando remoção do seller '{seller_to_remove}' do usuário Keycloak ID: {user_id}")
+        logger.info(f"Adicionando seller '{seller_to_add}' ao usuário Keycloak ID: {user_id}")
 
         user_data = await self.get_user(user_id)
         if not user_data:
-            logger.error(f"Tentativa de remover seller de um usuário inexistente no Keycloak: {user_id}")
+            logger.error(f"Usuário não encontrado no Keycloak: {user_id}")
+            raise Exception(f"Falha ao adicionar seller: usuário {user_id} não existe.")
+
+        current_attributes = user_data.get("attributes", {})
+        current_sellers = current_attributes.get("sellers", [])
+
+        if isinstance(current_sellers, str):
+            current_sellers = [current_sellers]
+
+        if seller_to_add not in current_sellers:
+            current_sellers.append(seller_to_add)
+            current_attributes["sellers"] = current_sellers
+
+            user_data["attributes"] = current_attributes
+
+            await self._update_user_representation(user_id, user_data)
+            logger.info(f"Seller '{seller_to_add}' adicionado com sucesso ao usuário '{user_id}'.")
+        else:
+            logger.warning(f"O seller '{seller_to_add}' já estava associado ao usuário '{user_id}'.")
+
+    async def remove_seller_from_user(self, user_id: str, seller_to_remove: str):
+        """
+        Busca um usuário, remove um seller de sua lista de atributos 'sellers'
+        e salva o usuário de volta no Keycloak.
+        """
+        logger.info(f"Removendo o seller '{seller_to_remove}' do usuário Keycloak ID: {user_id}")
+
+        user_data = await self.get_user(user_id)
+        if not user_data:
+            logger.warning(f"Tentativa de remover seller de um usuário inexistente: {user_id}")
             return
 
         current_attributes = user_data.get("attributes", {})
@@ -201,10 +243,19 @@ class KeycloakAdminClient:
             updated_sellers = [s for s in current_sellers if s != seller_to_remove]
             current_attributes["sellers"] = updated_sellers
 
-            await self.update_user_attributes(user_id, current_attributes)
+            await self._update_user_representation(user_id, user_data)
             logger.info(f"Seller '{seller_to_remove}' removido com sucesso do usuário '{user_id}'.")
         else:
-            logger.warning(
-                f"O seller '{seller_to_remove}' não foi encontrado nos atributos do usuário '{user_id}'. Nenhuma alteração foi feita.")
+            logger.warning(f"O seller '{seller_to_remove}' não foi encontrado nos atributos do usuário '{user_id}'.")
 
+    async def _update_user_representation(self, user_id: str, user_data: dict):
+        """
+        Método privado que realiza o PUT com a representação completa do usuário.
+        """
+        admin_token = await self._get_admin_token()
+        headers = {"Authorization": f"Bearer {admin_token}", "Content-Type": JSON}
+        user_url = f"{self.base_url}/users/{user_id}"
+        async with httpx.AsyncClient() as client:
+            response = await client.put(user_url, headers=headers, json=user_data)
+            response.raise_for_status()
 

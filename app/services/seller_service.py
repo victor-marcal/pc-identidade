@@ -86,9 +86,17 @@ class SellerService(CrudService[Seller, str]):
             audit_updated_at=now,
         )
 
-        logger.debug(f"Enviando dados do seller '{data.seller_id}' para o repositório.")
+        user_keycloak_id = auth_info.user.name
+        logger.debug(f"Tentando associar o novo seller '{data.seller_id}' ao usuário '{user_keycloak_id}' no Keycloak.")
+        await self.keycloak_client.add_seller_to_user(
+            user_id=user_keycloak_id,
+            seller_to_add=data.seller_id
+        )
+        logger.info("Associação no Keycloak bem-sucedida.")
+
+        logger.debug(f"Salvando o seller '{data.seller_id}' no repositório.")
         created_seller = await self.repository.create(seller_to_create)
-        logger.info(f"Seller '{data.seller_id}' criado com sucesso no banco de dados.")
+        logger.info(f"Seller '{data.seller_id}' e associação de usuário criados com sucesso.")
 
         try:
             seller_dict = created_seller.model_dump()
@@ -107,29 +115,6 @@ class SellerService(CrudService[Seller, str]):
             )
         except Exception as e:
             logger.error(f"Falha ao enviar notificação webhook para seller criado '{data.seller_id}': {str(e)}")
-            # Não falha a operação principal, apenas loga o erro
-
-        try:
-            logger.debug(f"Atualizando usuário '{auth_info.user.name}' no Keycloak com o novo seller.")
-            user_keycloak_id = auth_info.user.name  # O 'sub' do token
-
-            # Pega os sellers atuais do usuário e adiciona o novo
-            current_sellers = auth_info.sellers
-            if data.seller_id not in current_sellers:
-                updated_sellers = current_sellers + [data.seller_id]
-                await self.keycloak_client.update_user_attributes(
-                    user_id=user_keycloak_id,
-                    attributes={"sellers": updated_sellers}
-                )
-                logger.info(f"Atributo 'sellers' do usuário '{auth_info.user.name}' atualizado no Keycloak.")
-
-        except Exception as e:
-            logger.error(
-                f"Falha ao atualizar o usuário no Keycloak após criar o seller '{data.seller_id}'. Reversão manual pode ser necessária.",
-                exc_info=True)
-            # Considere uma lógica de compensação aqui se necessário
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail="Seller criado, mas falha ao atualizar permissões do usuário.")
 
         return created_seller
 
@@ -152,12 +137,10 @@ class SellerService(CrudService[Seller, str]):
         user_identifier = f"{auth_info.user.server}:{auth_info.user.name}"
         logger.info(f"Usuário '{user_identifier}' iniciando exclusão lógica para o seller_id: {entity_id}")
 
-        # Primeiro, verifica se o seller existe e está ativo
         current_seller = await self.repository.find_by_id(entity_id)
         if not current_seller or current_seller.status == SellerStatus.INACTIVE:
             raise NotFoundException(message=MSG_SELLER_NAO_ENCONTRADO.format(entity_id=entity_id))
 
-        # Prepara os campos para a atualização (PATCH)
         now = utcnow()
         update_data = {
             "status": SellerStatus.INACTIVE,
@@ -169,7 +152,6 @@ class SellerService(CrudService[Seller, str]):
         updated_seller = await self.repository.patch(entity_id, update_data)
         logger.info(f"Seller '{entity_id}' marcado como 'Inativo' com sucesso pelo usuário '{user_identifier}'.")
 
-        # Enviar notificação webhook
         try:
             await self.webhook_service.send_update_message(
                 message=f"Seller '{entity_id}' foi marcado como inativo",
@@ -177,7 +159,6 @@ class SellerService(CrudService[Seller, str]):
             )
         except Exception as e:
             logger.error(f"Falha ao enviar notificação webhook para seller excluído '{entity_id}': {str(e)}")
-            # Não falha a operação principal, apenas loga o erro
 
         try:
             user_keycloak_id = auth_info.user.name  # 'name' é o 'sub' (ID do usuário)
@@ -187,7 +168,6 @@ class SellerService(CrudService[Seller, str]):
             )
         except Exception:
             # Se a atualização do Keycloak falhar, o seller já foi inativado.
-            # É crucial logar este erro.
             logger.error(
                 f"ALERTA: O seller '{entity_id}' foi inativado no banco, mas a remoção "
                 f"do atributo no Keycloak para o usuário '{user_identifier}' FALHOU. "

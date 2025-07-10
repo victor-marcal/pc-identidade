@@ -128,7 +128,7 @@ def configure_user_profile(token):
                     "view": ["admin", "user"],
                     "edit": ["admin"]
                 },
-                "multivalued": False,
+                "multivalued": True,
                 "annotations": {},
             }
             profile_config['attributes'].append(new_attribute)
