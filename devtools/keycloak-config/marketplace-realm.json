@@ -21,7 +21,8 @@
                         "json.type.label": "String",
                         "access.token.claim": "true",
                         "id.token.claim": "false",
-                        "userinfo.token.claim": "false"
+                        "userinfo.token.claim": "false",
+                        "multivalued": "true"
                     }
                 },
                 {

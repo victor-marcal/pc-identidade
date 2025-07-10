@@ -33,7 +33,7 @@ As responsabilidades do serviço foram expandidas para incluir:
 
 ## 🐳 Instalação do Docker
 
-Para instalação do [Docker](https://docs.docker.com/engine/install/ubuntu/), siga o manual disponível no site oficial.
+Para instalação do [Docker](https://www.docker.com/products/docker-desktop/), siga o manual disponível no site oficial.
 
 ## 🚀 Ambiente de Desenvolvimento Local (Windows)
 
