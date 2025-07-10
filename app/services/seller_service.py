@@ -309,3 +309,9 @@ class SellerService(CrudService[Seller, str]):
             # Não falha a operação principal, apenas loga o erro
 
         return result
+
+    async def find_by_id(self, seller_id: str) -> Seller | None:
+        seller = await self.repository.find_by_id(seller_id)
+        if not seller or seller.status != "Ativo":
+            return None
+        return seller

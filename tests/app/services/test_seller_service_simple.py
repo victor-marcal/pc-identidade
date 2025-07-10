@@ -14,6 +14,7 @@ from app.api.v1.schemas.seller_schema import SellerCreate, SellerUpdate, SellerR
 from app.common.exceptions.bad_request_exception import BadRequestException
 from app.common.exceptions.not_found_exception import NotFoundException
 from app.models.enums import BrazilianState, AccountType, ProductCategory
+from unittest.mock import MagicMock
 
 
 class TestSellerServiceSimple:
@@ -198,9 +199,13 @@ class TestSellerServiceSimple:
     @pytest.mark.asyncio
     async def test_find_by_id_existing_seller(self, seller_service, mock_repository):
         """Testa buscar seller existente"""
-        mock_seller = {"seller_id": "test_seller", "trade_name": "Test"}
+        mock_seller = MagicMock()
+        mock_seller.seller_id = "test_seller"
+        mock_seller.trade_name = "Test"
+        mock_seller.status = "Ativo"
+
         mock_repository.find_by_id.return_value = mock_seller
-        
+
         result = await seller_service.find_by_id("test_seller")
         assert result == mock_seller
 
