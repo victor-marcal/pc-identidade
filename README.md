@@ -1,5 +1,14 @@
 # pc-identidade
 
+## 📄 Objetivo do Projeto
+
+Desenvolvi essa aplicação durante o Projeto Carreira Desenvolvedor Back-End Junior do LuizaLabs. 
+
+O objetivo do projeto era cada grupo desenvolver um módulo de um Marketplace e meu grupo ficou responsável pela Identidade do varejista.
+
+A aplicação foi desenvolvida utilizando Python com FastAPI, além de utilizar diversas tecnologias, como Docker, Redis, RabbitMQ, MongoDB e Keycloak.
+
+
 ## 📌 Identidade do Varejista e Gerenciamento de Acesso
 
 O projeto **pc-identidade** é o pilar central para a gestão do ciclo de vida de **Varejistas (Sellers)** e de seus respectivos **Usuários** no ecossistema do marketplace. Ele não apenas garante a integridade dos dados cadastrais, mas também provê uma camada de segurança robusta para controle de acesso, atuando como a fonte da verdade sobre quem são os participantes da plataforma e o que eles podem fazer.
