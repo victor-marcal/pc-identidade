@@ -23,7 +23,7 @@ As responsabilidades do serviço foram expandidas para incluir:
 * **Gerenciamento de Dados:** Inclui uma estratégia de "Cold Storage", com um banco de dados secundário para arquivar sellers inativos, mantendo a base de dados principal enxuta e performática.
 * **Observabilidade:** Utiliza um sistema de logging estruturado para registrar o fluxo de requisições, operações de negócio e erros, facilitando a depuração e o monitoramento.
 
-[Documentação completa do Projeto](https://docs.google.com/document/d/11eIj0-f68q7rLtMQsC7VShPTmDfvgnPDPt6HPMMM_Z4/edit?tab=t.0#heading=h.4bbpjvh4rnth)
+[Documentação completa do Projeto](https://docs.google.com/document/d/18UmqZwHXrsCcxbGn8raetuuCkwxFn-MVRGkGLvDxTzA/edit?usp=sharing)
 
 ## 🎯 Objetivos principais:
 - Identificação e validação da identidade do varejista
